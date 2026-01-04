@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pinoy Pool</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- Tone.js for audio synthesis -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
 
@@ -14552,6 +14553,73 @@ if (spinBtn) spinBtn.addEventListener('click', startSpin);
 </div>
 
 <script>
+
+// --- TELEGRAM INIT & GATEKEEPER ---
+
+// 1. Tawagin ang Telegram Object
+const tg = window.Telegram.WebApp;
+
+// 2. I-expand ang screen (Full Screen Mode)
+tg.expand(); 
+
+// 3. I-set ang Header Color (Para bumagay sa Dark Theme natin)
+tg.setHeaderColor('#0f0f13'); // Kulay itim/dark
+tg.setBackgroundColor('#0f0f13');
+
+// 4. THE GATEKEEPER: Check kung nasa Telegram ba talaga
+if (!tg.initDataUnsafe || Object.keys(tg.initDataUnsafe).length === 0) {
+    // KUNG WALA SA TELEGRAM (Naka-open sa Chrome/Safari outside TG)
+    
+    // Pwede mong i-uncomment to pag LIVE na. 
+    // Sa ngayon, naka-comment muna para matest mo sa browser.
+    
+    
+    document.body.innerHTML = `
+        <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#000; color:#fff; text-align:center; font-family:sans-serif;">
+            <h1>🚫 ACCESS DENIED</h1>
+            <p>Please open this game inside Telegram!</p>
+            <a href="https://t.me/YOUR_BOT_USERNAME" style="color:#FFD700; margin-top:20px; text-decoration:none; border:1px solid #FFD700; padding:10px 20px; border-radius:10px;">OPEN IN TELEGRAM</a>
+        </div>
+    `;
+    throw new Error("Game stopped: Not in Telegram Environment");
+    
+    
+    console.log("⚠️ WARNING: You are running outside Telegram. Some features won't work.");
+} else {
+    console.log("✅ SUCCESS: Telegram Environment Detected!");
+}
+
+// --- GET USER DATA ---
+let playerID = "Guest";
+let playerName = "Player 1";
+let playerUsername = "";
+
+// Check kung may user data galing sa Telegram
+if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    const user = tg.initDataUnsafe.user;
+    
+    playerID = user.id; // Unique ID (Ito ang importante sa database later)
+    playerName = user.first_name + (user.last_name ? " " + user.last_name : "");
+    playerUsername = user.username ? "@" + user.username : "";
+    
+    console.log(`👤 Welcome, ${playerName} (${playerID})`);
+} else {
+    // Fallback kung testing sa browser
+    console.log("👤 Using Guest Mode (Testing)");
+}
+
+// UPDATE UI (Kung may element ka na nagpapakita ng pangalan)
+// Siguraduhin mong may element na id="player-name-display" sa HTML mo kung gusto mo ipakita
+function updateProfileUI() {
+    const nameDisplay = document.getElementById('player-name-display'); // Gawa ka nito sa HTML
+    if (nameDisplay) {
+        nameDisplay.innerText = playerName;
+    }
+}
+
+// Tawagin agad para mag-update
+window.addEventListener('load', updateProfileUI);
+// ==========================================
     // --- 1. GLOBAL IMAGE VIEWER LOGIC ---
     window.viewFullPhoto = function(src) {
         // Basic checks
@@ -14606,35 +14674,35 @@ if (spinBtn) spinBtn.addEventListener('click', startSpin);
         attachSafeCloseListener('settings-close-btn', 'settings-modal');
     });
 
-    // --- 3. SAFE CLOSE LISTENER (Back Button Fix) ---
-    function attachSafeCloseListener(btnId, modalId) {
-        const btn = document.getElementById(btnId);
-        const modal = document.getElementById(modalId);
+    // --- 3. SAFE CLOSE LISTENER (Telegram Fixed Version) ---
+function attachSafeCloseListener(btnId, modalId) {
+    const btn = document.getElementById(btnId);
+    const modal = document.getElementById(modalId);
 
-        if (btn) {
-            // Tanggalin ang lumang listener para iwas conflict
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
+    if (btn) {
+        // Tanggalin ang lumang listener para iwas conflict
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
 
-            newBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Play sound kung available
-                if (typeof playButtonSound === 'function') playButtonSound();
+        newBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Play sound kung available
+            if (typeof playButtonSound === 'function') playButtonSound();
 
-                // Itaas ang Flag para alam ng system na safe ito
-                if (window) window.isClosingModal = true; 
-                if (typeof gameState !== 'undefined') gameState = 'modal_open'; 
+            // FIX #1: Ibalik sa 'lobby' para makagalaw ulit ang laro
+            if (typeof gameState !== 'undefined') gameState = 'lobby'; 
 
-                if (modal) modal.classList.remove('show');
-                
-                // Trigger Back
-                history.back();
-            });
-        }
+            if (modal) modal.classList.remove('show');
+            
+            // FIX #2: Imbes na history.back(), itago lang ang Telegram Back Button
+            if (tg && tg.BackButton) {
+                tg.BackButton.hide();
+            }
+        });
     }
-
+}
 </script>
 
 </body>
