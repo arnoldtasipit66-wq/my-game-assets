@@ -14559,20 +14559,20 @@ if (spinBtn) spinBtn.addEventListener('click', startSpin);
 // 1. Tawagin ang Telegram Object
 const tg = window.Telegram.WebApp;
 
-// 2. I-expand ang screen (Full Screen Mode)
+// 1. Sabihan si Telegram na READY na tayo
+tg.ready();
+
+// 2. Unang utos: EXPAND!
 tg.expand(); 
 
-// 3. I-set ang Header Color (Para bumagay sa Dark Theme natin)
-tg.setHeaderColor('#0f0f13'); // Kulay itim/dark
-tg.setBackgroundColor('#0f0f13');
+// 3. Pangalawang utos (Safety Net): EXPAND ULIT after 100ms!
+// (Para sa mga mababagal na phone, uulitin niya ang utos)
+setTimeout(() => {
+    tg.expand();
+}, 100);
 
-// 4. THE GATEKEEPER: Check kung nasa Telegram ba talaga
-if (!tg.initDataUnsafe || Object.keys(tg.initDataUnsafe).length === 0) {
-    // KUNG WALA SA TELEGRAM (Naka-open sa Chrome/Safari outside TG)
-    
-    // Pwede mong i-uncomment to pag LIVE na. 
-    // Sa ngayon, naka-comment muna para matest mo sa browser.
-    
+// 4. Force Full Height (Para walang puti sa ilalim)
+document.body.style.height = window.innerHeight + "px";
     
     document.body.innerHTML = `
         <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#000; color:#fff; text-align:center; font-family:sans-serif;">
