@@ -14858,7 +14858,7 @@ function showAdReward() {
 }
 
 // ==========================================
-    // 💎 TON CONNECT (SMART SAVE VERSION)
+    // 💎 TON CONNECT: AUTO-SYNC FORCE SAVE
     // ==========================================
 
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -14866,44 +14866,45 @@ function showAdReward() {
         buttonRootId: 'ton-connect-button'
     });
 
-    // Function na matiyagang naghihintay kay Firebase
-    function saveWalletWithRetry(address, attempts = 0) {
-        // 1. Check kung naka-login na si Player
+    // 1. Function para i-save ang address (Reusable)
+    function saveToFirebase(address) {
         if (localPlayerUid && db) {
-            console.log("Saving wallet for:", localPlayerUid);
             const playerRef = doc(db, "players", localPlayerUid);
             updateDoc(playerRef, {
                 walletAddress: address
             }).then(() => {
-                showMessage("Wallet Linked! Airdrop Ready 💎", 3000);
-                console.log("SUCCESS: Wallet saved to database!");
+                console.log("✅ WALLET SYNCED TO FIREBASE:", address);
+                // Optional: Pwede mong tanggalin ang showMessage kung ayaw mo ng popup tuwing refresh
+                // showMessage("Wallet Synced! 💎", 2000); 
             }).catch((err) => {
-                console.error("Firebase Save Error:", err);
+                console.error("Save Error:", err);
             });
-        } 
-        // 2. Kung hindi pa login, maghintay ng 1 segundo at subukan ulit
-        else {
-            if (attempts < 20) { // Subukan hanggang 20 seconds
-                console.log("Waiting for login... Attempt:", attempts);
-                setTimeout(() => saveWalletWithRetry(address, attempts + 1), 1000);
-            } else {
-                console.error("Timeout: Player login took too long.");
-            }
         }
     }
 
-    // Listener
+    // 2. Listener: Kapag nag-connect o disconnect (Manual Action)
     tonConnectUI.onStatusChange(wallet => {
         if (wallet && wallet.account.address) {
-            const rawAddress = wallet.account.address;
-            console.log("Wallet detected via TON Connect:", rawAddress);
-            
-            // Tawagin ang matiyagang function
-            saveWalletWithRetry(rawAddress);
-        } else {
-            console.log("Wallet Disconnected");
+            console.log("Status Changed: Connected");
+            saveToFirebase(wallet.account.address);
         }
     });
+
+    // 3. INTERVAL CHECKER (Ang Solusyon sa "Already Connected")
+    // Che-check nito bawat 3 segundo kung may wallet at player ID na, tapos isa-save.
+    const syncInterval = setInterval(() => {
+        // Check kung may laman ang wallet object ng library
+        if (tonConnectUI.wallet && tonConnectUI.wallet.account.address && localPlayerUid) {
+            const currentAddress = tonConnectUI.wallet.account.address;
+            console.log("🔄 Auto-Syncing Wallet...");
+            saveToFirebase(currentAddress);
+            
+            // Kapag okay na, tigil na ang pag-check para hindi paulit-ulit
+            clearInterval(syncInterval);
+        } else {
+            console.log("⏳ Waiting for Wallet + Player ID...");
+        }
+    }, 3000); // Check every 3 seconds
 </script>
 
 </body>
