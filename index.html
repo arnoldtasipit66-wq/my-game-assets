@@ -14857,42 +14857,40 @@ function showAdReward() {
 }
 
 // ==========================================
-    // 💎 TON CONNECT: REALTIME DB SAVE (The Easy Way)
+    // 💎 TON CONNECT: REALTIME DB SAVER (FIXED)
     // ==========================================
-
-    // Siguraduhing naka-import ito sa taas (kasama ng iba):
-    // import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: 'https://arnoldtasipit66-wq.github.io/my-game-assets/tonconnect-manifest.json', 
         buttonRootId: 'ton-connect-button'
     });
 
-    // Simple at mabilis na checker
+    // Checker na walang kapaguran (Every 2 seconds)
     setInterval(() => {
-        // 1. Check kung may Wallet at Login
+        // 1. Check Wallet
         let currentWallet = null;
         if (tonConnectUI.wallet && tonConnectUI.wallet.account) {
             currentWallet = tonConnectUI.wallet.account.address;
         }
 
-        // Gamitin ang 'rtdb' (Realtime Database) variable
+        // 2. Check kung may Database, ID, at Wallet
         if (rtdb && localPlayerUid && currentWallet) {
             
-            // SA REALTIME DB TAYO MAGSE-SAVE (Mas madali 'to!)
-            // Path: players/USER_ID
+            // Path: players -> UID
             const playerRef = ref(rtdb, 'players/' + localPlayerUid);
 
+            // Gamit ang 'update' (Requires the import fix above!)
             update(playerRef, {
                 walletAddress: currentWallet,
-                lastSync: Date.now()
+                lastSync: Date.now(),
+                name: localPlayerName || "Unknown" // Save din natin name para madali makita
             }).then(() => {
-                console.log("✅ Wallet saved to REALTIME DB!");
+                console.log("✅ SUCCESS: Wallet saved to Realtime Database!");
             }).catch((err) => {
-                console.error("RTDB Error:", err);
+                console.error("❌ RTDB Save Error:", err);
             });
         }
-    }, 3000);
+    }, 2000);
 </script>
 
 </body>
