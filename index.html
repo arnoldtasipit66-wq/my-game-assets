@@ -14858,32 +14858,39 @@ function showAdReward() {
 }
 
     // ==========================================
-// 💎 TON CONNECT & SAVE TO FIREBASE
-// ==========================================
+    // 💎 TON CONNECT WALLET SETUP (FINAL STEP)
+    // ==========================================
 
-// 1. Initialize (Palitan mo yung URL ng GitHub Page mo mamaya)
-const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
- manifestUrl: 'https://arnoldtasipit66-wq.github.io/my-game-assets/tonconnect-manifest.json',⚠️ GAGAWA TAYO NITO SA STEP 4     buttonRootId: 'ton-connect-button'
-});
+    // 1. Initialize TON Connect
+    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: 'https://arnoldtasipit66-wq.github.io/my-game-assets/tonconnect-manifest.json', 
+        buttonRootId: 'ton-connect-button' // Dito lalabas ang button sa Profile
+    });
 
-// 2. Listener: Kapag nag-connect o nag-disconnect
-tonConnectUI.onStatusChange(wallet => {
-    if (wallet && wallet.account.address) {
-        const rawAddress = wallet.account.address;
-        console.log("Wallet Connected:", rawAddress);
-        
-        // I-save sa Database kung naka-login
-        if (localPlayerUid && db) {
-            updateDoc(doc(db, "players", localPlayerUid), {
-                walletAddress: rawAddress
-            }).then(() => {
-                showMessage("Wallet Linked! Airdrop Ready. 💎", 3000);
-            });
+    // 2. Listener: Kapag nag-connect o nag-disconnect
+    tonConnectUI.onStatusChange(wallet => {
+        if (wallet && wallet.account.address) {
+            const rawAddress = wallet.account.address;
+            console.log("Wallet Connected:", rawAddress);
+            
+            // Ipakita sa screen na connected na
+            showMessage("Wallet Linked! Airdrop Ready 💎", 3000);
+
+            // 3. I-SAVE SA FIREBASE (Kung naka-login na ang player)
+            if (localPlayerUid && db) {
+                const playerRef = doc(db, "players", localPlayerUid);
+                updateDoc(playerRef, {
+                    walletAddress: rawAddress
+                }).then(() => {
+                    console.log("Address saved to database!");
+                }).catch((err) => {
+                    console.error("Error saving address:", err);
+                });
+            }
+        } else {
+            console.log("Wallet Disconnected");
         }
-    } else {
-        console.log("Wallet Disconnected");
-    }
-});
+    });
 </script>
 
 </body>
