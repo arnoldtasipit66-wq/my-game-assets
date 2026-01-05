@@ -14858,7 +14858,7 @@ function showAdReward() {
 }
 
 // ==========================================
-    // 💎 TON CONNECT: REALTIME DB SAVER (FIXED)
+    // 💎 TON CONNECT & SAVE TO FIREBASE (DEBUG VERSION)
     // ==========================================
 
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -14866,32 +14866,37 @@ function showAdReward() {
         buttonRootId: 'ton-connect-button'
     });
 
-    // Checker na walang kapaguran (Every 2 seconds)
-    setInterval(() => {
-        // 1. Check Wallet
-        let currentWallet = null;
-        if (tonConnectUI.wallet && tonConnectUI.wallet.account) {
-            currentWallet = tonConnectUI.wallet.account.address;
-        }
-
-        // 2. Check kung may Database, ID, at Wallet
-        if (rtdb && localPlayerUid && currentWallet) {
+    tonConnectUI.onStatusChange(wallet => {
+        if (wallet && wallet.account.address) {
+            const rawAddress = wallet.account.address;
+            console.log("Wallet Connected:", rawAddress);
             
-            // Path: players -> UID
-            const playerRef = ref(rtdb, 'players/' + localPlayerUid);
-
-            // Gamit ang 'update' (Requires the import fix above!)
-            update(playerRef, {
-                walletAddress: currentWallet,
-                lastSync: Date.now(),
-                name: localPlayerName || "Unknown" // Save din natin name para madali makita
-            }).then(() => {
-                console.log("✅ SUCCESS: Wallet saved to Realtime Database!");
-            }).catch((err) => {
-                console.error("❌ RTDB Save Error:", err);
-            });
+            // CHECKER: Naka-login na ba?
+            if (!localPlayerUid) {
+                showMessage("⚠️ Wait! Logging in...", 2000);
+                // Hintayin natin ang auth (simpleng retry logic)
+                setTimeout(() => {
+                    if(localPlayerUid && db) saveWalletToDb(rawAddress);
+                    else showMessage("❌ Error: Player not logged in.", 3000);
+                }, 2000);
+            } else {
+                saveWalletToDb(rawAddress);
+            }
         }
-    }, 2000);
+    });
+
+    function saveWalletToDb(address) {
+        showMessage("Saving Wallet... ⏳", 2000);
+        const playerRef = doc(db, "players", localPlayerUid);
+        updateDoc(playerRef, {
+            walletAddress: address
+        }).then(() => {
+            showMessage("✅ Wallet SAVED to Database!", 3000);
+        }).catch((err) => {
+            console.error(err);
+            showMessage("❌ Save Failed: Check Rules", 3000);
+        });
+    }
 </script>
 
 </body>
