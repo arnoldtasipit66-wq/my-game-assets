@@ -14834,7 +14834,7 @@ function showAdReward() {
 }
 
 // ==========================================
-// 💎 TON CONNECT & SAVE TO FIREBASE (FIXED)
+// 💎 TON CONNECT & SAVE TO FIREBASE (FINAL FIX)
 // ==========================================
 
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -14847,19 +14847,27 @@ tonConnectUI.onStatusChange(async (wallet) => {
         const rawAddress = wallet.account.address;
         console.log("Wallet Connected:", rawAddress);
         
-        // --- TIMING FIX ---
-        // Sa halip na setTimeout, gagamit tayo ng loop para hintayin ang localPlayerUid
-        const waitForAuth = setInterval(() => {
+        // Loop para hintayin ang localPlayerUid bago mag-save
+        const authCheck = setInterval(() => {
             if (localPlayerUid && db) {
-                clearInterval(waitForAuth); // Stop na ang pag-aantay
-                saveWalletToDb(rawAddress);
-            } else {
-                console.log("Waiting for Firebase login...");
+                clearInterval(authCheck);
+                
+                // SAVE PROCESS
+                const playerRef = doc(db, "players", localPlayerUid);
+                setDoc(playerRef, {
+                    walletAddress: rawAddress,
+                    lastWalletLink: serverTimestamp()
+                }, { merge: true })
+                .then(() => {
+                    console.log("✅ Wallet Address saved to Firestore!");
+                    showMessage("✅ Wallet Linked Successfully!", 3000);
+                })
+                .catch(err => console.error("❌ Wallet Save Error:", err));
             }
-        }, 1000); // Mag-check bawat 1 segundo
+        }, 1000);
 
-        // Proteksyon para hindi mag-loop forever (stop after 10 seconds)
-        setTimeout(() => clearInterval(waitForAuth), 10000);
+        // Auto-stop loop after 10 seconds para 'di mag-hang
+        setTimeout(() => clearInterval(authCheck), 10000);
     }
 });
 
