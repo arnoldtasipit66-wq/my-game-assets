@@ -13309,7 +13309,15 @@ function closeDailyRewardModal() {
 
 // Function para i-save ang currency (para reusable)
 function saveCurrency() {
-     localStorage.setItem('pinoyPoolCurrency', playerTotalCurrency.toString());
+    // 1. Save sa Phone (Local Backup - Mabilis)
+    localStorage.setItem('pinoyPoolCurrency', playerTotalCurrency.toString());
+
+    // 2. Save sa Database (Cloud - Para hindi mawala kahit mag-uninstall)
+    if (localPlayerUid && db) {
+        // Tawagin ang updatePlayerData para i-upload ang bagong coin balance
+        updatePlayerData(localPlayerUid); 
+        console.log("Coins synced to Firebase: " + playerTotalCurrency);
+    }
 }
 
 // ▼▼▼ UPDATED LOBBY LOGIC (WITH RANK CARD) ▼▼▼
