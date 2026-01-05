@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pinoy Pool</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- Tone.js for audio synthesis -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
 
@@ -5102,78 +5101,10 @@ div#opponent-info.hud-active {
     }
 }
 
-            /* --- LANDSCAPE ENFORCER --- */
-
-    /* Default: Nakatago ang harang */
-    #rotate-warning {
-        display: none; 
-    }
-
-    /* MEDIA QUERY: Dito ang magic. Pag PORTRAIT, gagana 'to: */
-    @media only screen and (orientation: portrait) {
-        
-        /* 1. Itago ang Laro at UI */
-        #game-container, #ui-layer, .bottom-nav, canvas {
-            display: none !important;
-        }
-
-        /* 2. Ipakita ang Harang (Full Screen Black) */
-        #rotate-warning {
-            display: flex;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            background-color: #0b0c15; /* Kulay ng background mo */
-            z-index: 999999; /* Siguradong nasa ibabaw */
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            color: white;
-        }
-
-        /* 3. Animation ng Icon para Cute */
-        .phone-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-            animation: rotate-anim 2s infinite ease-in-out;
-        }
-
-        .rotate-content h1 {
-            font-family: 'Luckiest Guy', cursive;
-            font-size: 30px;
-            color: #00ff88; /* Neon Green */
-            margin: 0;
-        }
-        
-        .rotate-content p {
-            font-family: sans-serif;
-            color: #888;
-        }
-
-        @keyframes rotate-anim {
-            0% { transform: rotate(0deg); }
-            25% { transform: rotate(-90deg); } /* Iikot pahalang */
-            50% { transform: rotate(-90deg); } /* Tigil sandali */
-            100% { transform: rotate(0deg); }
-        }
-    }
-
-
         
 </style>
 </head>
 <body>
-
-    <body>
-    <div id="rotate-warning">
-        <div class="rotate-content">
-            <div class="phone-icon">📱 ➡️ 🔄</div>
-            <h1>PAKI-LANDSCAPE PO</h1>
-            <p>Mas masarap tumira kapag pahalang, Boss.</p>
-        </div>
-    </div>
-    <div id="game-container"> ...
-
 
 <div id="private-chat-modal" class="modal-overlay">
     <div class="content" style="width: 90%; max-width: 450px; height: 80vh; padding: 0;">
@@ -6070,13 +6001,13 @@ ghostHand = document.getElementById('ghost-hand'),
         // END: Tutorial variables
 
         const TABLE_ASPECT_RATIO = 1.9, 
-       BALL_RADIUS = 15,     // <-- Pinalitan galing 16
-              CUE_BALL_RADIUS = 17,  // <-- Pinalitan galing 18
-              HOLE_RADIUS = 32,    // <-- Pinalitan galing 35
+       BALL_RADIUS = 16,     // <-- Pinalitan galing 16
+              CUE_BALL_RADIUS = 18,  // <-- Pinalitan galing 18
+              HOLE_RADIUS = 35,    // <-- Pinalitan galing 35
               
               
-              CUE_CHIP_MASS = 4.5,     // Bigat ng Cue Chip (mas mabigat)
-              OBJECT_CHIP_MASS = 2.5,  // Bigat ng Object Chip (mas magaan)
+              CUE_CHIP_MASS = 3.5,     // Bigat ng Cue Chip (mas mabigat)
+              OBJECT_CHIP_MASS = 1.5,  // Bigat ng Object Chip (mas magaan)
               
               COLLISION_FRICTION = 0.5, // 0 = Walang preno sa banggaan, 1 = Sobrang preno
        
@@ -14621,73 +14552,6 @@ if (spinBtn) spinBtn.addEventListener('click', startSpin);
 </div>
 
 <script>
-
-// --- TELEGRAM INIT & GATEKEEPER ---
-
-// 1. Tawagin ang Telegram Object
-const tg = window.Telegram.WebApp;
-
-// 1. Sabihan si Telegram na READY na tayo
-tg.ready();
-
-// 2. Unang utos: EXPAND!
-tg.expand(); 
-
-// 3. Pangalawang utos (Safety Net): EXPAND ULIT after 100ms!
-// (Para sa mga mababagal na phone, uulitin niya ang utos)
-setTimeout(() => {
-    tg.expand();
-}, 100);
-
-// 4. Force Full Height (Para walang puti sa ilalim)
-document.body.style.height = window.innerHeight + "px";
-    
-    document.body.innerHTML = `
-        <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#000; color:#fff; text-align:center; font-family:sans-serif;">
-            <h1>🚫 ACCESS DENIED</h1>
-            <p>Please open this game inside Telegram!</p>
-            <a href="https://t.me/YOUR_BOT_USERNAME" style="color:#FFD700; margin-top:20px; text-decoration:none; border:1px solid #FFD700; padding:10px 20px; border-radius:10px;">OPEN IN TELEGRAM</a>
-        </div>
-    `;
-    throw new Error("Game stopped: Not in Telegram Environment");
-    
-    
-    console.log("⚠️ WARNING: You are running outside Telegram. Some features won't work.");
-} else {
-    console.log("✅ SUCCESS: Telegram Environment Detected!");
-}
-
-// --- GET USER DATA ---
-let playerID = "Guest";
-let playerName = "Player 1";
-let playerUsername = "";
-
-// Check kung may user data galing sa Telegram
-if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-    const user = tg.initDataUnsafe.user;
-    
-    playerID = user.id; // Unique ID (Ito ang importante sa database later)
-    playerName = user.first_name + (user.last_name ? " " + user.last_name : "");
-    playerUsername = user.username ? "@" + user.username : "";
-    
-    console.log(`👤 Welcome, ${playerName} (${playerID})`);
-} else {
-    // Fallback kung testing sa browser
-    console.log("👤 Using Guest Mode (Testing)");
-}
-
-// UPDATE UI (Kung may element ka na nagpapakita ng pangalan)
-// Siguraduhin mong may element na id="player-name-display" sa HTML mo kung gusto mo ipakita
-function updateProfileUI() {
-    const nameDisplay = document.getElementById('player-name-display'); // Gawa ka nito sa HTML
-    if (nameDisplay) {
-        nameDisplay.innerText = playerName;
-    }
-}
-
-// Tawagin agad para mag-update
-window.addEventListener('load', updateProfileUI);
-// ==========================================
     // --- 1. GLOBAL IMAGE VIEWER LOGIC ---
     window.viewFullPhoto = function(src) {
         // Basic checks
@@ -14742,35 +14606,35 @@ window.addEventListener('load', updateProfileUI);
         attachSafeCloseListener('settings-close-btn', 'settings-modal');
     });
 
-    // --- 3. SAFE CLOSE LISTENER (Telegram Fixed Version) ---
-function attachSafeCloseListener(btnId, modalId) {
-    const btn = document.getElementById(btnId);
-    const modal = document.getElementById(modalId);
+    // --- 3. SAFE CLOSE LISTENER (Back Button Fix) ---
+    function attachSafeCloseListener(btnId, modalId) {
+        const btn = document.getElementById(btnId);
+        const modal = document.getElementById(modalId);
 
-    if (btn) {
-        // Tanggalin ang lumang listener para iwas conflict
-        const newBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newBtn, btn);
+        if (btn) {
+            // Tanggalin ang lumang listener para iwas conflict
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
 
-        newBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Play sound kung available
-            if (typeof playButtonSound === 'function') playButtonSound();
+            newBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Play sound kung available
+                if (typeof playButtonSound === 'function') playButtonSound();
 
-            // FIX #1: Ibalik sa 'lobby' para makagalaw ulit ang laro
-            if (typeof gameState !== 'undefined') gameState = 'lobby'; 
+                // Itaas ang Flag para alam ng system na safe ito
+                if (window) window.isClosingModal = true; 
+                if (typeof gameState !== 'undefined') gameState = 'modal_open'; 
 
-            if (modal) modal.classList.remove('show');
-            
-            // FIX #2: Imbes na history.back(), itago lang ang Telegram Back Button
-            if (tg && tg.BackButton) {
-                tg.BackButton.hide();
-            }
-        });
+                if (modal) modal.classList.remove('show');
+                
+                // Trigger Back
+                history.back();
+            });
+        }
     }
-}
+
 </script>
 
 </body>
