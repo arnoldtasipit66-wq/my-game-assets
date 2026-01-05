@@ -11223,14 +11223,27 @@ function showColorAssignmentPopup(message, color) {
         popup.remove();
     }, 4000); // Mananatili ng 2.5 segundo
 }
+// 1. IMPORTANT: Siguraduhin na nasa pinakataas ng script mo ito:
+// let pendingWalletAddress = null; 
+
 function signInPlayer() { 
     onAuthStateChanged(auth, (user) => { 
         if (user) { 
             localPlayerUid = user.uid; 
             isAuthReady = true; 
+            
+            // ▼▼▼ NEW CODE: DITO ISINGIT ANG CHECK ▼▼▼
+            // Kung may wallet na nag-connect habang loading pa ang login:
+            if (typeof pendingWalletAddress !== 'undefined' && pendingWalletAddress) {
+                console.log("🔗 May pending wallet address! Saving now...", pendingWalletAddress);
+                saveWalletToDb(pendingWalletAddress); // Tawagin ang save function
+                pendingWalletAddress = null; // Reset para hindi maulit
+            }
+            // ▲▲▲ END NEW CODE ▲▲▲
+
             onlineButton.disabled = false; 
             
-            // UI Update (Yung gusto mong design)
+            // UI Update
             const sub = document.querySelector('#online-button .card-subtitle');
             if(sub) {
                 sub.textContent = "Ranked Match • Online";
@@ -11238,41 +11251,31 @@ function signInPlayer() {
             }
 
             // ============================================================
-            // 💰 COIN SYNC LOGIC (BAGONG DAGDAG)
+            // 💰 COIN SYNC LOGIC 
             // ============================================================
             const playerDocRef = doc(db, "players", localPlayerUid);
             
             getDoc(playerDocRef).then((snap) => {
                 if (snap.exists()) {
                     const data = snap.data();
-                    
-                    // 1. Kunin ang Coins sa Database (Server)
-                    // (Check natin kung 'coins' o 'playerTotalCurrency' ang na-save mo dati)
                     const serverCoins = data.coins || data.playerTotalCurrency || 0;
-                    
-                    // 2. Kunin ang Coins sa Local Storage (Backup sa Phone)
                     const localCoins = parseInt(localStorage.getItem('pinoyPoolCurrency') || '0');
 
                     console.log(`Sync Check: Local(${localCoins}) vs Server(${serverCoins})`);
 
-                    // 3. COMPARE: Masusunod ang MAS MALAKI
                     if (localCoins > serverCoins) {
-                        // Kung mas malaki ang sa phone (kasi naglaro offline), i-upload sa server
                         console.log("🔼 Syncing: Uploading Local to Server...");
                         playerTotalCurrency = localCoins;
-                        updateDoc(playerDocRef, { coins: localCoins }); // Save to DB
+                        updateDoc(playerDocRef, { coins: localCoins });
                     } else {
-                        // Kung mas malaki ang sa server (kasi naglaro sa ibang device), i-download sa phone
                         console.log("🔽 Syncing: Downloading Server to Local...");
                         playerTotalCurrency = serverCoins;
-                        localStorage.setItem('pinoyPoolCurrency', serverCoins); // Save to Local
+                        localStorage.setItem('pinoyPoolCurrency', serverCoins);
                     }
                 } else {
-                    // New User? Hayaan ang createPlayerDocument ang bahala
                     console.log("New user detected, creating profile...");
                 }
                 
-                // IMPORTANT: I-update ang display sa taas para makita agad ang coins
                 if (typeof updateCurrencyDisplay === 'function') updateCurrencyDisplay();
             }).catch((err) => {
                 console.error("Sync Error:", err);
