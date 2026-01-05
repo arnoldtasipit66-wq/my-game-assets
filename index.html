@@ -14858,7 +14858,7 @@ function showAdReward() {
 }
 
 // ==========================================
-// 💎 TON CONNECT & SAVE TO FIREBASE (OPTIMIZED)
+// 💎 TON CONNECT & SAVE TO FIREBASE (FIXED)
 // ==========================================
 
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -14871,20 +14871,19 @@ tonConnectUI.onStatusChange(async (wallet) => {
         const rawAddress = wallet.account.address;
         console.log("Wallet Connected:", rawAddress);
         
-        // Gagamit tayo ng interval para hintayin ang localPlayerUid 
-        // imbes na isang beses na setTimeout lang.
-        const checkAuthInterval = setInterval(() => {
+        // --- TIMING FIX ---
+        // Sa halip na setTimeout, gagamit tayo ng loop para hintayin ang localPlayerUid
+        const waitForAuth = setInterval(() => {
             if (localPlayerUid && db) {
-                clearInterval(checkAuthInterval); // Itigil na ang pag-check
+                clearInterval(waitForAuth); // Stop na ang pag-aantay
                 saveWalletToDb(rawAddress);
             } else {
-                console.log("Waiting for Firebase Auth...");
-                // Magpapakita lang ng message kung matagal talaga
+                console.log("Waiting for Firebase login...");
             }
         }, 1000); // Mag-check bawat 1 segundo
 
-        // Proteksyon: Kung lumipas ang 10 seconds at wala pa rin, itigil na
-        setTimeout(() => clearInterval(checkAuthInterval), 10000);
+        // Proteksyon para hindi mag-loop forever (stop after 10 seconds)
+        setTimeout(() => clearInterval(waitForAuth), 10000);
     }
 });
 
@@ -14896,18 +14895,17 @@ async function saveWalletToDb(address) {
     try {
         const playerRef = doc(db, "players", localPlayerUid);
         
-        // Pinalitan ang updateDoc ng setDoc + merge:true
+        // ✅ GINAMIT ANG setDoc + merge PARA SIGURADONG GAGANA KAHIT BAGONG USER
         await setDoc(playerRef, {
             walletAddress: address,
-            lastWalletUpdate: serverTimestamp() // Optional: para alam mo kailan huling nag-link
+            lastWalletUpdate: serverTimestamp() // Importante para sa tracking
         }, { merge: true });
 
-        console.log("✅ Wallet Address saved!");
-        showMessage("✅ Wallet Linked Successfully!", 3000);
+        console.log("✅ Wallet Address saved successfully!");
+        showMessage("✅ Wallet Linked to Account!", 3000);
     } catch (err) {
         console.error("Firestore Error:", err);
-        // Karaniwang error dito ay permission-denied (Rules issue)
-        showMessage("❌ Save Failed: Check Rules", 3000);
+        showMessage("❌ Error: Check Console", 3000);
     }
 }
 </script>
