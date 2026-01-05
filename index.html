@@ -14858,40 +14858,41 @@ function showAdReward() {
 }
 
 // ==========================================
-    // 💎 TON CONNECT: THE "CREATOR" SAVE
+    // 💎 TON CONNECT: REALTIME DB SAVE (The Easy Way)
     // ==========================================
+
+    // Siguraduhing naka-import ito sa taas (kasama ng iba):
+    // import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: 'https://arnoldtasipit66-wq.github.io/my-game-assets/tonconnect-manifest.json', 
         buttonRootId: 'ton-connect-button'
     });
 
-    // Eto ang magic. Check every 3 seconds.
+    // Simple at mabilis na checker
     setInterval(() => {
-        // Check kung Connected sa Wallet
+        // 1. Check kung may Wallet at Login
         let currentWallet = null;
         if (tonConnectUI.wallet && tonConnectUI.wallet.account) {
             currentWallet = tonConnectUI.wallet.account.address;
         }
 
-        // Kung may Database + Login + Wallet Address
-        if (db && localPlayerUid && currentWallet) {
+        // Gamitin ang 'rtdb' (Realtime Database) variable
+        if (rtdb && localPlayerUid && currentWallet) {
             
-            // GAMITIN ANG setDoc + merge: true
-            // Ito ang solusyon sa "Missing Document" error
-            const playerRef = doc(db, "players", localPlayerUid);
-            
-            setDoc(playerRef, { 
+            // SA REALTIME DB TAYO MAGSE-SAVE (Mas madali 'to!)
+            // Path: players/USER_ID
+            const playerRef = ref(rtdb, 'players/' + localPlayerUid);
+
+            update(playerRef, {
                 walletAddress: currentWallet,
-                lastWalletSync: new Date().toISOString() // Para alam natin kailan na-save
-            }, { merge: true }) // <--- ITO ANG SUSI!
-            .then(() => {
-                console.log("✅ WALLET SAVED (Created/Updated)!");
-            })
-            .catch((err) => {
-                console.error("Save Error:", err);
+                lastSync: Date.now()
+            }).then(() => {
+                console.log("✅ Wallet saved to REALTIME DB!");
+            }).catch((err) => {
+                console.error("RTDB Error:", err);
             });
-        } 
+        }
     }, 3000);
 </script>
 
