@@ -14858,7 +14858,7 @@ function showAdReward() {
 }
 
 // ==========================================
-    // 💎 TON CONNECT: DEBUGGER & FORCE SAVE
+    // 💎 TON CONNECT: SUPER DEBUGGER (GOD MODE)
     // ==========================================
 
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -14866,54 +14866,73 @@ function showAdReward() {
         buttonRootId: 'ton-connect-button'
     });
 
-    // 1. Gumawa ng "Force Save" Button sa Screen
+    // 1. Gumawa ng GIANT RED BUTTON sa Gitna
     const debugBtn = document.createElement('button');
-    debugBtn.innerText = "🛠️ FORCE SAVE WALLET";
-    debugBtn.style.cssText = "position: fixed; top: 10px; right: 10px; z-index: 10000; padding: 10px; background: red; color: white; border: 2px solid white; font-weight: bold;";
+    debugBtn.innerHTML = "🛠️ PINDUTIN MO AKO!<br>(Force Save Wallet)";
+    
+    // CSS Para Lumutang sa Ibabaw ng Lahat
+    debugBtn.style.cssText = `
+        position: fixed; 
+        top: 50%; 
+        left: 50%; 
+        transform: translate(-50%, -50%); 
+        z-index: 2147483647; /* Pinaka-mataas na number sa computer */
+        padding: 30px; 
+        background: red; 
+        color: white; 
+        border: 5px solid yellow; 
+        font-weight: bold; 
+        font-size: 24px;
+        border-radius: 20px;
+        box-shadow: 0 0 50px black;
+        cursor: pointer;
+        pointer-events: auto !important; /* Pilitin na mapindot */
+    `;
     document.body.appendChild(debugBtn);
 
-    debugBtn.onclick = function() {
-        // DIAGNOSTIC REPORT
-        let statusMsg = "🔍 DIAGNOSIS:\n";
+    // 2. Ang Logic pag pinindot (Mouse & Touch supported)
+    const runDebugCheck = function(e) {
+        if(e) e.preventDefault();
         
-        statusMsg += "Database (db): " + (db ? "✅ OK" : "❌ MISSING") + "\n";
-        statusMsg += "Player ID: " + (localPlayerUid ? "✅ " + localPlayerUid : "❌ MISSING (Not logged in)") + "\n";
+        let statusMsg = "🔍 DIAGNOSIS:\n\n";
         
+        // Check 1: Database
+        statusMsg += "Database: " + (db ? "✅ OK" : "❌ MISSING") + "\n";
+        
+        // Check 2: Player ID (Wait 1 sec kung loading pa)
+        statusMsg += "Player ID: " + (localPlayerUid ? "✅ FOUND" : "❌ MISSING") + "\n";
+        
+        // Check 3: Wallet
         let walletAddr = null;
         if(tonConnectUI.wallet && tonConnectUI.wallet.account){
              walletAddr = tonConnectUI.wallet.account.address;
         }
-        statusMsg += "Wallet: " + (walletAddr ? "✅ DETECTED" : "❌ NOT DETECTED") + "\n";
+        statusMsg += "Wallet: " + (walletAddr ? "✅ CONNECTED" : "❌ NOT CONNECTED") + "\n\n";
 
-        alert(statusMsg); // Ipakita ang status
-
-        // KUNG KUMPLETO, SUBUKANG I-SAVE
+        // ACTION: I-save kung kumpleto
         if (db && localPlayerUid && walletAddr) {
-            showMessage("Attempting to SAVE...", 2000);
-            
-            // GAMITIN ANG setDoc (Merge) PARA SIGURADO
+            statusMsg += "🚀 ATTEMPTING TO SAVE...";
             const playerRef = doc(db, "players", localPlayerUid);
+            
+            // Gamit ang setDoc + merge para sureball
             setDoc(playerRef, { 
                 walletAddress: walletAddr 
-            }, { merge: true }) // Merge: True para hindi mabura ang coins mo
+            }, { merge: true })
             .then(() => {
-                alert("✅ SUCCESS! Check mo na ang Firestore!");
-                showMessage("Wallet Saved to DB! 💎", 3000);
+                alert(statusMsg + "\n\n🎉 SUCCESS! NA-SAVE NA SA DATABASE!");
+                debugBtn.style.display = 'none'; // Tago na ang button pag okay na
             })
             .catch((err) => {
-                alert("❌ ERROR: " + err.message);
+                alert(statusMsg + "\n\n❌ SAVE ERROR: " + err.message);
             });
         } else {
-            alert("❌ KULANG ANG REQUIREMENTS! Tignan ang Diagnosis sa taas.");
+            statusMsg += "⚠️ KULANG PA! Connect wallet or wait for login.";
+            alert(statusMsg);
         }
     };
 
-    // 2. Auto-Listener (Gaya ng dati)
-    tonConnectUI.onStatusChange(wallet => {
-        if (wallet && wallet.account.address && localPlayerUid) {
-            debugBtn.click(); // Pindutin kusa ang button pag may pagbabago
-        }
-    });
+    debugBtn.addEventListener('click', runDebugCheck);
+    debugBtn.addEventListener('touchstart', runDebugCheck); // Para sa mobile
 </script>
 
 </body>
