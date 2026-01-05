@@ -6426,8 +6426,7 @@ setCueForCurrentTurn(); // Update history state
 
         function waitForCardPick() { return new Promise(resolve => { pokerFoulCardPickModal.classList.add('show'); pokerFoulCardsContainer.innerHTML = ''; const cardsToDraw = []; for (let i = 0; i < 5; i++) if (deck.length > 0) cardsToDraw.push(deck.splice(Math.floor(Math.random() * deck.length), 1)[0]); if (cardsToDraw.length === 0) { pokerFoulCardPickModal.classList.remove('show'); resolve(null); return; } cardsToDraw.forEach(card => { const cardDiv = document.createElement('div'); cardDiv.className = 'card face-down'; cardDiv.onclick = () => { playButtonSound(); cardDiv.classList.remove('face-down'); const color = (card.suit === '♥' || card.suit === '♦') ? '#ff0000' : '#212121'; cardDiv.innerHTML = `<span class="card-rank" style="color: ${color};">${card.rank}</span><span class="card-suit" style="color: ${color};">${card.suit}</span>`; pokerFoulCardsContainer.querySelectorAll('.card').forEach(c => { c.onclick = null; c.style.cursor = 'default'; }); setTimeout(() => { pokerFoulCardPickModal.classList.remove('show'); cardsToDraw.forEach(c => { if (c !== card) deck.push(c); }); resolve(card); }, 1500); }; pokerFoulCardsContainer.appendChild(cardDiv); }); }); }
         
-       
-async function endGame(winnerTextMessage, finalGameData = null) {
+    async function endGame(winnerTextMessage, finalGameData = null) {
     if (gameState === 'gameover') return;
 
     // --- 🔊 SOUND EFFECT LOGIC ---
@@ -6459,16 +6458,13 @@ async function endGame(winnerTextMessage, finalGameData = null) {
         if (winnerTextMessage.includes("You Win")) {
             bonus = REWARD_WIN_BONUS;
             xpBonus = XP_WIN_BONUS;
-            
-            // ✅ FIX: Gawing 5 para maka-rank up kahit sa AI
             trophiesChange = 5; 
-            
             reason = "Practice Win!";
             triggerFireworks(); 
         } else if (winnerTextMessage.includes("You Lose")) {
             bonus = REWARD_LOSE_CONSOLATION;
             xpBonus = XP_LOSE_CONSOLATION;
-            trophiesChange = 0; // Wala ring bawas sa AI
+            trophiesChange = 0; 
             reason = "Good Game!";
         }
         if(bonus > 0) {
@@ -6526,39 +6522,46 @@ async function endGame(winnerTextMessage, finalGameData = null) {
 
     // --- VISUALS ---
     let finalWinnerText = winnerTextMessage;
-    winnerText.style.color = "#FFFFFF"; 
-    winnerText.style.textShadow = "4px 4px 0 #000";
+    const winnerDisplay = document.getElementById('winner-text');
+    winnerDisplay.style.color = "#FFFFFF"; 
+    winnerDisplay.style.textShadow = "4px 4px 0 #000";
 
     if (winnerTextMessage.includes("You Win") || winnerTextMessage.includes("Opponent Forfeited")) {
-        winnerText.style.color = "#FFD700"; 
-        winnerText.style.textShadow = "4px 4px 0 #000, 0 0 20px gold";
+        winnerDisplay.style.color = "#FFD700"; 
+        winnerDisplay.style.textShadow = "4px 4px 0 #000, 0 0 20px gold";
         if (winnerTextMessage.includes("Opponent Forfeited")) { finalWinnerText = "OPPONENT<br>FORFEITED"; }
     } else if (winnerTextMessage.includes("You Lose") || winnerTextMessage.includes("You Forfeited")) {
-        winnerText.style.color = "#FF4444"; 
-        winnerText.style.textShadow = "4px 4px 0 #000, 0 0 20px red";
+        winnerDisplay.style.color = "#FF4444"; 
+        winnerDisplay.style.textShadow = "4px 4px 0 #000, 0 0 20px red";
         if (winnerTextMessage.includes("You Forfeited")) { finalWinnerText = "YOU<br>FORFEITED"; }
     } else if (winnerTextMessage.includes("Draw")) {
-        winnerText.style.color = "#AAAAAA"; 
+        winnerDisplay.style.color = "#AAAAAA"; 
         finalWinnerText = "DRAW GAME";
     }
 
     if (gameMode.includes('61-ball')) {
-        winnerText.innerHTML = `${finalWinnerText}<br><div style="font-size: 0.4em; margin-top: 10px; color: #eee; font-weight: normal;">${player61Score} - ${opponent61Score}</div>`;
+        winnerDisplay.innerHTML = `${finalWinnerText}<br><div style="font-size: 0.4em; margin-top: 10px; color: #eee; font-weight: normal;">${player61Score} - ${opponent61Score}</div>`;
     } else {
-        winnerText.innerHTML = finalWinnerText;
+        winnerDisplay.innerHTML = finalWinnerText;
     }
     
+    // --- DATABASE UPDATE ---
+    updatePlayerData(localPlayerUid, winnerTextMessage.includes("You Win"));
+
+    // --- BUTTON CONTROLS ---
     const onlineRematchButton = document.getElementById('rematch-button');
+    const aiRematchBtn = document.getElementById('ai-rematch-button');
+    const menuBtn = document.getElementById('back-to-menu-button');
+
     if (isOnlineGame) {
-        updatePlayerData(localPlayerUid, winnerTextMessage.includes("You Win"));
-        aiRematchButton.style.display = 'none';
-        backToMenuButton.style.display = 'block';
+        aiRematchBtn.style.display = 'none';
+        menuBtn.style.display = 'block';
         onlineRematchButton.style.display = 'block';
         onlineRematchButton.disabled = false;
         onlineRematchButton.textContent = 'Request Rematch';
     } else {
-        aiRematchButton.style.display = 'block';
-        backToMenuButton.style.display = 'block';
+        aiRematchBtn.style.display = 'block';
+        menuBtn.style.display = 'block';
         onlineRematchButton.style.display = 'none';
     }
     
@@ -6605,7 +6608,8 @@ async function endGame(winnerTextMessage, finalGameData = null) {
         opponentHandReveal.innerHTML = ''; opponentHandReveal.style.display = 'none';
     }
     setTimeout(() => { winnerModal.classList.add('show'); history.pushState({ modal: 'winner' }, 'Winner', '#winner'); }, 1000);
-}
+}   
+
 async function resetToMenu() {
     playButtonSound();
 window.isInGame = false;
@@ -8938,45 +8942,36 @@ async function handleRematchRequest() {
 }
 
 async function updatePlayerData(uid, didWin = false) {
-    // Tinanggal natin ang check na "!didWin" para ma-save din kapag natalo (bawas trophies)
-    if (!uid) return; 
-    
+    if (!uid || !db) return; 
+
     const playerDocRef = doc(db, "players", uid);
-    
+    const displayName = localStorage.getItem('pinoyPoolPlayerName') || "Anonymous";
+
     try {
-        const playerDoc = await getDoc(playerDocRef);
-        const displayName = localStorage.getItem('pinoyPoolPlayerName') || "Anonymous";
-        
-        // Ito ang mga data na ise-save natin sa server
+        // Ihanda ang lahat ng data na laging dapat updated
         const dataToSave = {
             displayName: displayName,
             searchableName: displayName.toLowerCase(),
-            trophies: playerTrophies, // <-- IMPORTANTE: Save Trophies
-            level: playerLevel,       // Save Level
-            xp: playerXP,           // Save XP
-            coins: playerTotalCurrency,
+            trophies: playerTrophies || 0,
+            level: playerLevel || 1,
+            xp: playerXP || 0,
+            coins: playerTotalCurrency || 0,
             lastPlayed: serverTimestamp()
         };
 
-        // Kung nanalo lang tsaka magdadagdag ng "Wins" count
+        // Kung nanalo, idagdag ang increment command sa object
         if (didWin) {
             dataToSave.wins = increment(1);
         }
-        
-        // Kung bago pa lang o nagpalit ng pangalan
-        if (!playerDoc.exists() || playerDoc.data().displayName !== displayName) {
-            await setDoc(playerDocRef, dataToSave, { merge: true });
-        } else {
-            // Kung existing player, update lang ang stats
-            delete dataToSave.displayName; // 'Wag na galawin ang pangalan
-            delete dataToSave.searchableName;
-            await updateDoc(playerDocRef, dataToSave);
-        }
-        
-        console.log("Player stats updated successfully on server.");
-        
+
+        // Isang bagsakan na save gamit ang setDoc + merge.
+        // Gagawa ito ng record kung wala pa, at mag-uupdate lang kung meron na.
+        // HINDI na kailangan ng getDoc o if(playerDoc.exists())
+        await setDoc(playerDocRef, dataToSave, { merge: true });
+
+        console.log("✅ Stats successfully synced to Firestore");
     } catch (error) {
-        console.error("Error updating player data:", error);
+        console.error("❌ Error updating player data:", error);
     }
 }
 
@@ -11421,15 +11416,9 @@ function showInvitePopup(fromName, gameType, inviteId, inviteData) { // Note: Ad
     modal.classList.add('show');
 }
 
-/**
- * Tinitingnan kung may player document na, kung wala, gagawa ng bago.
- * Ito ang titiyak na lahat ng player ay may 'searchableName' agad.
- */
 async function createPlayerDocument() {
     // Siguraduhin na may UID, database, AT pangalan na bago sumubok magsulat
     if (!localPlayerUid || !db || !localPlayerName || localPlayerName === "Guest") {
-        // Kung wala pa ang isa sa mga 'to, huwag munang ituloy.
-        // Tatawagin ulit 'to mamaya kapag kumpleto na.
         console.log("Waiting for UID and Name before creating player document...");
         return; 
     }
@@ -11437,33 +11426,22 @@ async function createPlayerDocument() {
     const playerDocRef = doc(db, "players", localPlayerUid);
 
     try {
-        const playerDoc = await getDoc(playerDocRef);
+        // Gagamit tayo ng setDoc na may merge: true para siguradong gagana
+        // Gagawa ito ng doc kung wala pa, o mag-a-update lang kung mayroon na.
+        await setDoc(playerDocRef, {
+            displayName: localPlayerName,
+            searchableName: localPlayerName.toLowerCase(),
+            wins: 0,
+            level: playerLevel || 1,
+            xp: playerXP || 0,
+            coins: playerTotalCurrency || 0,
+            equippedCueId: 'default',
+            lastPlayed: serverTimestamp()
+        }, { merge: true });
 
-        if (!playerDoc.exists()) {
-            // --- BAGO PA LANG ANG PLAYER ---
-            // Gagawa tayo ng bagong document para sa kanila
-            console.log("Creating new player document for:", localPlayerName);
-            await setDoc(playerDocRef, {
-                displayName: localPlayerName,
-                searchableName: localPlayerName.toLowerCase(), // ETO NA YUN!
-                wins: 0,
-                level: 1, // Kunin natin sa global variable
-                xp: 0,    // Kunin natin sa global variable
-                equippedCueId: 'default',
-                lastPlayed: serverTimestamp()
-            });
-        } else {
-            // --- BUMALIK NA PLAYER ---
-            // I-update lang natin ang pangalan at searchableName
-            // para kung nag-iba man, updated pa rin.
-            console.log("Player document exists. Updating name...");
-            await updateDoc(playerDocRef, {
-                displayName: localPlayerName,
-                searchableName: localPlayerName.toLowerCase() // ETO NA YUN!
-            });
-        }
+        console.log("✅ Player profile initialized in Firestore");
     } catch (error) {
-        console.error("Error creating or updating player document:", error);
+        console.error("Error initializing player document:", error);
     }
 }
 
@@ -14887,26 +14865,29 @@ tonConnectUI.onStatusChange(async (wallet) => {
     }
 });
 
-async function saveWalletToDb(address) {
-    if (!localPlayerUid) return;
-
+function saveWalletToDb(address) {
+    if (!localPlayerUid || !db) {
+        showMessage("❌ Please log in first", 3000);
+        return;
+    }
+    
     showMessage("Saving Wallet... ⏳", 2000);
     
-    try {
-        const playerRef = doc(db, "players", localPlayerUid);
-        
-        // ✅ GINAMIT ANG setDoc + merge PARA SIGURADONG GAGANA KAHIT BAGONG USER
-        await setDoc(playerRef, {
-            walletAddress: address,
-            lastWalletUpdate: serverTimestamp() // Importante para sa tracking
-        }, { merge: true });
-
-        console.log("✅ Wallet Address saved successfully!");
-        showMessage("✅ Wallet Linked to Account!", 3000);
-    } catch (err) {
-        console.error("Firestore Error:", err);
-        showMessage("❌ Error: Check Console", 3000);
-    }
+    const playerRef = doc(db, "players", localPlayerUid);
+    
+    // Ginamitan ng setDoc + merge para gumana kahit wala pang record sa database
+    setDoc(playerRef, {
+        walletAddress: address,
+        lastWalletUpdate: serverTimestamp()
+    }, { merge: true })
+    .then(() => {
+        showMessage("✅ Wallet Linked to DB!", 3000);
+        console.log("Wallet address saved successfully.");
+    })
+    .catch((err) => {
+        console.error("Wallet Save Error:", err);
+        showMessage("❌ Save Failed: Check Rules", 3000);
+    });
 }
 </script>
 
