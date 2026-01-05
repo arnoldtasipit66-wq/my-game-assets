@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Pinoy Pool</title>
+     <script src="https://telegram.org/js/telegram-web-app.js"></script
     <!-- Tone.js for audio synthesis -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
 
@@ -14,24 +15,40 @@
     <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
+    /* --- PINOY POOL TELEGRAM THEME (NEON) --- */
     :root {
-        --felt-green: #006A4E;
-        --wood-brown: #6B4226;
-        --light-wood: #A0522D;
-        --gold-accent: #FFD700;
-        --dark-bg: rgba(20, 20, 35, 0.95); 
-        --light-text: #FFFFFF;
+        --bg-dark: #0b0c15; 
+        --felt-color: #1a1b2e;
+        --neon-blue: #00f3ff;
+        --neon-pink: #ff00ff;
+        --neon-green: #00ff9d;
+        --glass-panel: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --text-main: #ffffff;
     }
 
     body, html {
-    margin: 0;
-    padding: 0;
-    width: 100vw;
-    height: 100vh;
-    
-    
-    background-color: #2c2c2c; 
-    
+        margin: 0; padding: 0;
+        width: 100%; height: 100%;
+        background-color: var(--bg-dark);
+        color: var(--text-main);
+        font-family: 'Nunito', sans-serif;
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+        /* Disable long press context menu */
+        -webkit-touch-callout: none; 
+    }
+
+    /* BACKGROUND EFFECT */
+    body::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: radial-gradient(circle at 50% 50%, rgba(0, 243, 255, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: -1;
+    } 
     
 background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');    
     background-repeat: repeat; 
@@ -5102,9 +5119,97 @@ div#opponent-info.hud-active {
 }
 
         
+
+    /* --- LANDSCAPE ENFORCER (Ang Harang) --- */
+    #rotate-warning {
+        display: none; 
+    }
+
+    @media only screen and (orientation: portrait) {
+        #game-container, #ui-layer, .bottom-nav, canvas, #game-wrapper, #lobby-screen {
+            display: none !important;
+        }
+
+        #rotate-warning {
+            display: flex;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: #0b0c15;
+            z-index: 999999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+        }
+
+        .phone-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: rotate-anim 2s infinite ease-in-out;
+        }
+
+        .rotate-content h1 {
+            font-family: 'Luckiest Guy', cursive;
+            font-size: 30px;
+            color: #00ff88;
+            margin: 0;
+        }
+        
+        @keyframes rotate-anim {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(-90deg); }
+            50% { transform: rotate(-90deg); }
+            100% { transform: rotate(0deg); }
+        }
+    }
+
+    /* BUTTON STYLES (Neon) */
+    button, .menu-button {
+        background: linear-gradient(135deg, #00ff88 0%, #00bd65 100%) !important;
+        border: none !important;
+        border-radius: 12px !important;
+        color: #000 !important;
+        font-weight: bold;
+        text-transform: uppercase;
+        box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+    }
+    
+    button:active { transform: scale(0.95); }
+
+    /* MODAL STYLES (Glass) */
+    .modal-overlay .content {
+        background: rgba(20, 20, 35, 0.95) !important;
+        border: 1px solid var(--neon-blue) !important;
+        box-shadow: 0 0 30px rgba(0, 243, 255, 0.2) !important;
+        border-radius: 20px !important;
+        color: white !important;
+    }
+
+    h2 { color: var(--neon-blue) !important; text-shadow: 0 0 10px var(--neon-blue) !important; }
+    
+    /* LOADING SCREEN */
+    #preloader-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: #0b0c15; z-index: 99999;
+        display: flex; justify-content: center; align-items: center;
+    }
 </style>
 </head>
 <body>
+
+ 
+
+    <div id="rotate-warning">
+        <div class="rotate-content">
+            <div class="phone-icon">📱 ➡️ 🔄</div>
+            <h1>PAKI-LANDSCAPE PO</h1>
+            <p>Mas masarap tumira kapag pahalang, Boss.</p>
+        </div>
+    </div>
+    <script> ... </script> 
+    <div id="game-container"> ...
 
 <div id="private-chat-modal" class="modal-overlay">
     <div class="content" style="width: 90%; max-width: 450px; height: 80vh; padding: 0;">
@@ -5689,6 +5794,28 @@ div#opponent-info.hud-active {
     </div>
     
     <script type="module">
+// --- TELEGRAM INIT & FULLSCREEN FORCE ---
+    const tg = window.Telegram.WebApp;
+    
+    // 1. Ready & Expand
+    tg.ready();
+    tg.expand();
+    
+    // 2. Kulitin natin mag-expand (Safety Loop)
+    let expandInterval = setInterval(() => {
+        if (!tg.isExpanded) {
+            tg.expand();
+        } else {
+            clearInterval(expandInterval);
+        }
+    }, 500);
+
+    // 3. Setup Colors
+    tg.setHeaderColor('#0b0c15');
+    tg.setBackgroundColor('#0b0c15');
+    
+    // 4. Force Height (Iwas puti sa baba)
+    document.body.style.height = window.innerHeight + "px";
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, serverTimestamp, increment, collection, query, orderBy, limit, getDocs, addDoc, runTransaction, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -14606,13 +14733,12 @@ if (spinBtn) spinBtn.addEventListener('click', startSpin);
         attachSafeCloseListener('settings-close-btn', 'settings-modal');
     });
 
-    // --- 3. SAFE CLOSE LISTENER (Back Button Fix) ---
     function attachSafeCloseListener(btnId, modalId) {
         const btn = document.getElementById(btnId);
         const modal = document.getElementById(modalId);
 
         if (btn) {
-            // Tanggalin ang lumang listener para iwas conflict
+            // Clone button para matanggal ang lumang listeners
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
 
@@ -14620,17 +14746,16 @@ if (spinBtn) spinBtn.addEventListener('click', startSpin);
                 e.preventDefault();
                 e.stopPropagation();
                 
-                // Play sound kung available
                 if (typeof playButtonSound === 'function') playButtonSound();
 
-                // Itaas ang Flag para alam ng system na safe ito
-                if (window) window.isClosingModal = true; 
-                if (typeof gameState !== 'undefined') gameState = 'modal_open'; 
-
+                // Itago ang modal
                 if (modal) modal.classList.remove('show');
                 
-                // Trigger Back
-                history.back();
+                // IMPORTANT: Huwag gamitin ang history.back() sa Telegram kung isasara lang ang modal
+                // Ibalik sa 'lobby' state o kung ano man ang previous state
+                if (tg.BackButton.isVisible) {
+                    tg.BackButton.hide();
+                }
             });
         }
     }
