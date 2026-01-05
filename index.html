@@ -14773,30 +14773,33 @@ if (spinBtn) spinBtn.addEventListener('click', startSpin);
         attachSafeCloseListener('settings-close-btn', 'settings-modal');
     });
 
-    function attachSafeCloseListener(btnId, modalId) {
+// --- FIXED SAFE CLOSE LISTENER ---
+function attachSafeCloseListener(btnId, modalId) {
     const btn = document.getElementById(btnId);
     const modal = document.getElementById(modalId);
-    // const tg = window.Telegram.WebApp; // Siguraduhing na-define ito sa taas
+
+    // Gamitin ang global 'tg' variable kung meron, kung wala, kunin sa window
+    const telegramApp = window.Telegram.WebApp;
 
     if (btn) {
-        // Clone button para malinis ang lumang listeners
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
 
         newBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            
             if (typeof playButtonSound === 'function') playButtonSound();
 
             // 1. Isara ang Modal
             if (modal) modal.classList.remove('show');
             
-            // 2. Ibalik sa 'Lobby' state ang laro
+            // 2. Ibalik sa 'Lobby' state
             if (typeof gameState !== 'undefined') gameState = 'lobby';
 
-            // 3. Telegram Specific: Itago ang Back Button (Wag history.back!)
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.BackButton) {
-                window.Telegram.WebApp.BackButton.hide();
+            // 3. Telegram Back Button Handling
+            if (telegramApp && telegramApp.BackButton && telegramApp.BackButton.isVisible) {
+                telegramApp.BackButton.hide();
             }
         });
     }
