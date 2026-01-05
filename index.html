@@ -5818,7 +5818,7 @@ div#opponent-info.hud-active {
                let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
 window.isInGame = false;
 
-
+let pendingWalletAddress = null; 
 let tempInviteFriendUid = null;
 let tempInviteFriendName = null;
 
@@ -11232,15 +11232,11 @@ function signInPlayer() {
             localPlayerUid = user.uid; 
             isAuthReady = true; 
             
-            // ▼▼▼ NEW CODE: DITO ISINGIT ANG CHECK ▼▼▼
-            // Kung may wallet na nag-connect habang loading pa ang login:
-            if (typeof pendingWalletAddress !== 'undefined' && pendingWalletAddress) {
-                console.log("🔗 May pending wallet address! Saving now...", pendingWalletAddress);
-                saveWalletToDb(pendingWalletAddress); // Tawagin ang save function
-                pendingWalletAddress = null; // Reset para hindi maulit
+            if (pendingWalletAddress) {
+                console.log("Saving pending wallet...");
+                saveWalletToDb(pendingWalletAddress);
+                pendingWalletAddress = null;
             }
-            // ▲▲▲ END NEW CODE ▲▲▲
-
             onlineButton.disabled = false; 
             
             // UI Update
@@ -14859,16 +14855,20 @@ tonConnectUI.onStatusChange(async (wallet) => {
 });
 
 function saveWalletToDb(address) {
+    // ▼▼▼ BINAGO: Logic para sa Pending Save ▼▼▼
+    // Kung wala pang User ID, i-save muna sa variable na ginawa natin
     if (!localPlayerUid || !db) {
-        showMessage("❌ Please log in first", 3000);
+        console.log("⚠️ Wala pang User ID. I-save muna sa pending list...");
+        pendingWalletAddress = address; // <--- DITO NAPUPUNTA YUNG ADDRESS HABANG NAGLOLOAAD
         return;
     }
+    // ▲▲▲ ▲▲▲
     
+    // Kung may User ID na (o tinawag mula sa signInPlayer), ituloy ang saving...
     showMessage("Saving Wallet... ⏳", 2000);
     
     const playerRef = doc(db, "players", localPlayerUid);
     
-    // Ginamitan ng setDoc + merge para gumana kahit wala pang record sa database
     setDoc(playerRef, {
         walletAddress: address,
         lastWalletUpdate: serverTimestamp()
@@ -14876,6 +14876,7 @@ function saveWalletToDb(address) {
     .then(() => {
         showMessage("✅ Wallet Linked to DB!", 3000);
         console.log("Wallet address saved successfully.");
+        pendingWalletAddress = null; // Clear na natin dahil nai-save na
     })
     .catch((err) => {
         console.error("Wallet Save Error:", err);
