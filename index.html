@@ -14857,36 +14857,49 @@ function showAdReward() {
     });
 }
 
-    // ==========================================
-    // 💎 TON CONNECT WALLET SETUP (FINAL STEP)
+// ==========================================
+    // 💎 TON CONNECT (SMART SAVE VERSION)
     // ==========================================
 
-    // 1. Initialize TON Connect
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: 'https://arnoldtasipit66-wq.github.io/my-game-assets/tonconnect-manifest.json', 
-        buttonRootId: 'ton-connect-button' // Dito lalabas ang button sa Profile
+        buttonRootId: 'ton-connect-button'
     });
 
-    // 2. Listener: Kapag nag-connect o nag-disconnect
+    // Function na matiyagang naghihintay kay Firebase
+    function saveWalletWithRetry(address, attempts = 0) {
+        // 1. Check kung naka-login na si Player
+        if (localPlayerUid && db) {
+            console.log("Saving wallet for:", localPlayerUid);
+            const playerRef = doc(db, "players", localPlayerUid);
+            updateDoc(playerRef, {
+                walletAddress: address
+            }).then(() => {
+                showMessage("Wallet Linked! Airdrop Ready 💎", 3000);
+                console.log("SUCCESS: Wallet saved to database!");
+            }).catch((err) => {
+                console.error("Firebase Save Error:", err);
+            });
+        } 
+        // 2. Kung hindi pa login, maghintay ng 1 segundo at subukan ulit
+        else {
+            if (attempts < 20) { // Subukan hanggang 20 seconds
+                console.log("Waiting for login... Attempt:", attempts);
+                setTimeout(() => saveWalletWithRetry(address, attempts + 1), 1000);
+            } else {
+                console.error("Timeout: Player login took too long.");
+            }
+        }
+    }
+
+    // Listener
     tonConnectUI.onStatusChange(wallet => {
         if (wallet && wallet.account.address) {
             const rawAddress = wallet.account.address;
-            console.log("Wallet Connected:", rawAddress);
+            console.log("Wallet detected via TON Connect:", rawAddress);
             
-            // Ipakita sa screen na connected na
-            showMessage("Wallet Linked! Airdrop Ready 💎", 3000);
-
-            // 3. I-SAVE SA FIREBASE (Kung naka-login na ang player)
-            if (localPlayerUid && db) {
-                const playerRef = doc(db, "players", localPlayerUid);
-                updateDoc(playerRef, {
-                    walletAddress: rawAddress
-                }).then(() => {
-                    console.log("Address saved to database!");
-                }).catch((err) => {
-                    console.error("Error saving address:", err);
-                });
-            }
+            // Tawagin ang matiyagang function
+            saveWalletWithRetry(rawAddress);
         } else {
             console.log("Wallet Disconnected");
         }
