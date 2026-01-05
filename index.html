@@ -14858,7 +14858,7 @@ function showAdReward() {
 }
 
 // ==========================================
-    // 💎 TON CONNECT: AUTO-PILOT SAVE (NO BUTTONS)
+    // 💎 TON CONNECT: THE "CREATOR" SAVE
     // ==========================================
 
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -14866,49 +14866,33 @@ function showAdReward() {
         buttonRootId: 'ton-connect-button'
     });
 
-    let hasSuccessfullySaved = false; // Flag para di mag-spam
-
-    // Eto ang "Guard" na iikot bawat 2 segundo
+    // Eto ang magic. Check every 3 seconds.
     setInterval(() => {
-        // 1. Kung na-save na, wag na umulit
-        if (hasSuccessfullySaved) return;
-
-        // 2. Check kung may laman na ang Wallet Address galing kay TON
+        // Check kung Connected sa Wallet
         let currentWallet = null;
         if (tonConnectUI.wallet && tonConnectUI.wallet.account) {
             currentWallet = tonConnectUI.wallet.account.address;
         }
 
-        // 3. THE GRAND CHECK:
-        // Kung may Database + May Player ID + May Wallet Address... TIRA!
+        // Kung may Database + Login + Wallet Address
         if (db && localPlayerUid && currentWallet) {
             
-            console.log("⚡ Auto-detecting wallet...", currentWallet);
-            
-            // Ipakita sa screen na sinusubukan niyang i-save
-            showMessage("Syncing Wallet... ⏳", 1000);
-
+            // GAMITIN ANG setDoc + merge: true
+            // Ito ang solusyon sa "Missing Document" error
             const playerRef = doc(db, "players", localPlayerUid);
             
-            // Gamit ang setDoc + merge (Pinaka-safe na paraan)
             setDoc(playerRef, { 
-                walletAddress: currentWallet 
-            }, { merge: true })
+                walletAddress: currentWallet,
+                lastWalletSync: new Date().toISOString() // Para alam natin kailan na-save
+            }, { merge: true }) // <--- ITO ANG SUSI!
             .then(() => {
-                hasSuccessfullySaved = true; // SUCCESS! Tigil na ang loop.
-                showMessage("✅ WALLET SAVED SA DATABASE!", 5000);
-                console.log("✅ FIRESTORE UPDATE COMPLETE");
+                console.log("✅ WALLET SAVED (Created/Updated)!");
             })
             .catch((err) => {
-                console.error("Auto-Save Error:", err);
+                console.error("Save Error:", err);
             });
         } 
-        else {
-            // Debugging logs sa console (F12) kung sakaling ayaw pa rin
-            console.log("Waiting... ID:", localPlayerUid, "| Wallet:", currentWallet ? "Yes" : "No");
-        }
-
-    }, 2000); // Check every 2 seconds
+    }, 3000);
 </script>
 
 </body>
