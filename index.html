@@ -11234,22 +11234,61 @@ function showColorAssignmentPopup(message, color) {
         popup.remove();
     }, 4000); // Mananatili ng 2.5 segundo
 }
-// ▲▲▲ HANGGANG DITO ANG BAGONG FUNCTION ▲▲▲
-        function signInPlayer() { 
+function signInPlayer() { 
     onAuthStateChanged(auth, (user) => { 
         if (user) { 
             localPlayerUid = user.uid; 
             isAuthReady = true; 
             onlineButton.disabled = false; 
             
-            // onlineButton.textContent = "Online Multiplayer"; // <--- BINURA KO NA ITO! (Ang salarin)
-            
-            // Sa halip na palitan ang lahat, yung SUBTITLE lang ang i-update natin (Optional)
+            // UI Update (Yung gusto mong design)
             const sub = document.querySelector('#online-button .card-subtitle');
             if(sub) {
                 sub.textContent = "Ranked Match • Online";
-                sub.style.color = "#00FF00"; // Gawing Green para alam mong connected
+                sub.style.color = "#00FF00"; 
             }
+
+            // ============================================================
+            // 💰 COIN SYNC LOGIC (BAGONG DAGDAG)
+            // ============================================================
+            const playerDocRef = doc(db, "players", localPlayerUid);
+            
+            getDoc(playerDocRef).then((snap) => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    
+                    // 1. Kunin ang Coins sa Database (Server)
+                    // (Check natin kung 'coins' o 'playerTotalCurrency' ang na-save mo dati)
+                    const serverCoins = data.coins || data.playerTotalCurrency || 0;
+                    
+                    // 2. Kunin ang Coins sa Local Storage (Backup sa Phone)
+                    const localCoins = parseInt(localStorage.getItem('pinoyPoolCurrency') || '0');
+
+                    console.log(`Sync Check: Local(${localCoins}) vs Server(${serverCoins})`);
+
+                    // 3. COMPARE: Masusunod ang MAS MALAKI
+                    if (localCoins > serverCoins) {
+                        // Kung mas malaki ang sa phone (kasi naglaro offline), i-upload sa server
+                        console.log("🔼 Syncing: Uploading Local to Server...");
+                        playerTotalCurrency = localCoins;
+                        updateDoc(playerDocRef, { coins: localCoins }); // Save to DB
+                    } else {
+                        // Kung mas malaki ang sa server (kasi naglaro sa ibang device), i-download sa phone
+                        console.log("🔽 Syncing: Downloading Server to Local...");
+                        playerTotalCurrency = serverCoins;
+                        localStorage.setItem('pinoyPoolCurrency', serverCoins); // Save to Local
+                    }
+                } else {
+                    // New User? Hayaan ang createPlayerDocument ang bahala
+                    console.log("New user detected, creating profile...");
+                }
+                
+                // IMPORTANT: I-update ang display sa taas para makita agad ang coins
+                if (typeof updateCurrencyDisplay === 'function') updateCurrencyDisplay();
+            }).catch((err) => {
+                console.error("Sync Error:", err);
+            });
+            // ============================================================
 
             createPlayerDocument(); 
             startInviteListener(); 
@@ -11258,8 +11297,6 @@ function showColorAssignmentPopup(message, color) {
             signInAnonymously(auth).catch((error) => { 
                 console.error("Sign-in failed:", error); 
                 isAuthReady = false; 
-                
-                // onlineButton.textContent = "Auth Failed"; // <--- BINURA KO RIN ITO
                 onlineButton.disabled = true; 
             }); 
         } 
@@ -14734,32 +14771,33 @@ if (spinBtn) spinBtn.addEventListener('click', startSpin);
     });
 
     function attachSafeCloseListener(btnId, modalId) {
-        const btn = document.getElementById(btnId);
-        const modal = document.getElementById(modalId);
+    const btn = document.getElementById(btnId);
+    const modal = document.getElementById(modalId);
+    // const tg = window.Telegram.WebApp; // Siguraduhing na-define ito sa taas
 
-        if (btn) {
-            // Clone button para matanggal ang lumang listeners
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
+    if (btn) {
+        // Clone button para malinis ang lumang listeners
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
 
-            newBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                if (typeof playButtonSound === 'function') playButtonSound();
+        newBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof playButtonSound === 'function') playButtonSound();
 
-                // Itago ang modal
-                if (modal) modal.classList.remove('show');
-                
-                // IMPORTANT: Huwag gamitin ang history.back() sa Telegram kung isasara lang ang modal
-                // Ibalik sa 'lobby' state o kung ano man ang previous state
-                if (tg.BackButton.isVisible) {
-                    tg.BackButton.hide();
-                }
-            });
-        }
+            // 1. Isara ang Modal
+            if (modal) modal.classList.remove('show');
+            
+            // 2. Ibalik sa 'Lobby' state ang laro
+            if (typeof gameState !== 'undefined') gameState = 'lobby';
+
+            // 3. Telegram Specific: Itago ang Back Button (Wag history.back!)
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.BackButton) {
+                window.Telegram.WebApp.BackButton.hide();
+            }
+        });
     }
-
+}
 </script>
 
 </body>
