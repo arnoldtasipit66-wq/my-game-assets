@@ -14858,7 +14858,7 @@ function showAdReward() {
 }
 
 // ==========================================
-    // 💎 TON CONNECT: AUTO-SYNC FORCE SAVE
+    // 💎 TON CONNECT: DEBUGGER & FORCE SAVE
     // ==========================================
 
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -14866,45 +14866,54 @@ function showAdReward() {
         buttonRootId: 'ton-connect-button'
     });
 
-    // 1. Function para i-save ang address (Reusable)
-    function saveToFirebase(address) {
-        if (localPlayerUid && db) {
-            const playerRef = doc(db, "players", localPlayerUid);
-            updateDoc(playerRef, {
-                walletAddress: address
-            }).then(() => {
-                console.log("✅ WALLET SYNCED TO FIREBASE:", address);
-                // Optional: Pwede mong tanggalin ang showMessage kung ayaw mo ng popup tuwing refresh
-                // showMessage("Wallet Synced! 💎", 2000); 
-            }).catch((err) => {
-                console.error("Save Error:", err);
-            });
-        }
-    }
+    // 1. Gumawa ng "Force Save" Button sa Screen
+    const debugBtn = document.createElement('button');
+    debugBtn.innerText = "🛠️ FORCE SAVE WALLET";
+    debugBtn.style.cssText = "position: fixed; top: 10px; right: 10px; z-index: 10000; padding: 10px; background: red; color: white; border: 2px solid white; font-weight: bold;";
+    document.body.appendChild(debugBtn);
 
-    // 2. Listener: Kapag nag-connect o disconnect (Manual Action)
+    debugBtn.onclick = function() {
+        // DIAGNOSTIC REPORT
+        let statusMsg = "🔍 DIAGNOSIS:\n";
+        
+        statusMsg += "Database (db): " + (db ? "✅ OK" : "❌ MISSING") + "\n";
+        statusMsg += "Player ID: " + (localPlayerUid ? "✅ " + localPlayerUid : "❌ MISSING (Not logged in)") + "\n";
+        
+        let walletAddr = null;
+        if(tonConnectUI.wallet && tonConnectUI.wallet.account){
+             walletAddr = tonConnectUI.wallet.account.address;
+        }
+        statusMsg += "Wallet: " + (walletAddr ? "✅ DETECTED" : "❌ NOT DETECTED") + "\n";
+
+        alert(statusMsg); // Ipakita ang status
+
+        // KUNG KUMPLETO, SUBUKANG I-SAVE
+        if (db && localPlayerUid && walletAddr) {
+            showMessage("Attempting to SAVE...", 2000);
+            
+            // GAMITIN ANG setDoc (Merge) PARA SIGURADO
+            const playerRef = doc(db, "players", localPlayerUid);
+            setDoc(playerRef, { 
+                walletAddress: walletAddr 
+            }, { merge: true }) // Merge: True para hindi mabura ang coins mo
+            .then(() => {
+                alert("✅ SUCCESS! Check mo na ang Firestore!");
+                showMessage("Wallet Saved to DB! 💎", 3000);
+            })
+            .catch((err) => {
+                alert("❌ ERROR: " + err.message);
+            });
+        } else {
+            alert("❌ KULANG ANG REQUIREMENTS! Tignan ang Diagnosis sa taas.");
+        }
+    };
+
+    // 2. Auto-Listener (Gaya ng dati)
     tonConnectUI.onStatusChange(wallet => {
-        if (wallet && wallet.account.address) {
-            console.log("Status Changed: Connected");
-            saveToFirebase(wallet.account.address);
+        if (wallet && wallet.account.address && localPlayerUid) {
+            debugBtn.click(); // Pindutin kusa ang button pag may pagbabago
         }
     });
-
-    // 3. INTERVAL CHECKER (Ang Solusyon sa "Already Connected")
-    // Che-check nito bawat 3 segundo kung may wallet at player ID na, tapos isa-save.
-    const syncInterval = setInterval(() => {
-        // Check kung may laman ang wallet object ng library
-        if (tonConnectUI.wallet && tonConnectUI.wallet.account.address && localPlayerUid) {
-            const currentAddress = tonConnectUI.wallet.account.address;
-            console.log("🔄 Auto-Syncing Wallet...");
-            saveToFirebase(currentAddress);
-            
-            // Kapag okay na, tigil na ang pag-check para hindi paulit-ulit
-            clearInterval(syncInterval);
-        } else {
-            console.log("⏳ Waiting for Wallet + Player ID...");
-        }
-    }, 3000); // Check every 3 seconds
 </script>
 
 </body>
