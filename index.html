@@ -14858,7 +14858,7 @@ function showAdReward() {
 }
 
 // ==========================================
-    // 💎 TON CONNECT: SUPER DEBUGGER (GOD MODE)
+    // 💎 TON CONNECT: AUTO-PILOT SAVE (NO BUTTONS)
     // ==========================================
 
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -14866,73 +14866,49 @@ function showAdReward() {
         buttonRootId: 'ton-connect-button'
     });
 
-    // 1. Gumawa ng GIANT RED BUTTON sa Gitna
-    const debugBtn = document.createElement('button');
-    debugBtn.innerHTML = "🛠️ PINDUTIN MO AKO!<br>(Force Save Wallet)";
-    
-    // CSS Para Lumutang sa Ibabaw ng Lahat
-    debugBtn.style.cssText = `
-        position: fixed; 
-        top: 50%; 
-        left: 50%; 
-        transform: translate(-50%, -50%); 
-        z-index: 2147483647; /* Pinaka-mataas na number sa computer */
-        padding: 30px; 
-        background: red; 
-        color: white; 
-        border: 5px solid yellow; 
-        font-weight: bold; 
-        font-size: 24px;
-        border-radius: 20px;
-        box-shadow: 0 0 50px black;
-        cursor: pointer;
-        pointer-events: auto !important; /* Pilitin na mapindot */
-    `;
-    document.body.appendChild(debugBtn);
+    let hasSuccessfullySaved = false; // Flag para di mag-spam
 
-    // 2. Ang Logic pag pinindot (Mouse & Touch supported)
-    const runDebugCheck = function(e) {
-        if(e) e.preventDefault();
-        
-        let statusMsg = "🔍 DIAGNOSIS:\n\n";
-        
-        // Check 1: Database
-        statusMsg += "Database: " + (db ? "✅ OK" : "❌ MISSING") + "\n";
-        
-        // Check 2: Player ID (Wait 1 sec kung loading pa)
-        statusMsg += "Player ID: " + (localPlayerUid ? "✅ FOUND" : "❌ MISSING") + "\n";
-        
-        // Check 3: Wallet
-        let walletAddr = null;
-        if(tonConnectUI.wallet && tonConnectUI.wallet.account){
-             walletAddr = tonConnectUI.wallet.account.address;
+    // Eto ang "Guard" na iikot bawat 2 segundo
+    setInterval(() => {
+        // 1. Kung na-save na, wag na umulit
+        if (hasSuccessfullySaved) return;
+
+        // 2. Check kung may laman na ang Wallet Address galing kay TON
+        let currentWallet = null;
+        if (tonConnectUI.wallet && tonConnectUI.wallet.account) {
+            currentWallet = tonConnectUI.wallet.account.address;
         }
-        statusMsg += "Wallet: " + (walletAddr ? "✅ CONNECTED" : "❌ NOT CONNECTED") + "\n\n";
 
-        // ACTION: I-save kung kumpleto
-        if (db && localPlayerUid && walletAddr) {
-            statusMsg += "🚀 ATTEMPTING TO SAVE...";
+        // 3. THE GRAND CHECK:
+        // Kung may Database + May Player ID + May Wallet Address... TIRA!
+        if (db && localPlayerUid && currentWallet) {
+            
+            console.log("⚡ Auto-detecting wallet...", currentWallet);
+            
+            // Ipakita sa screen na sinusubukan niyang i-save
+            showMessage("Syncing Wallet... ⏳", 1000);
+
             const playerRef = doc(db, "players", localPlayerUid);
             
-            // Gamit ang setDoc + merge para sureball
+            // Gamit ang setDoc + merge (Pinaka-safe na paraan)
             setDoc(playerRef, { 
-                walletAddress: walletAddr 
+                walletAddress: currentWallet 
             }, { merge: true })
             .then(() => {
-                alert(statusMsg + "\n\n🎉 SUCCESS! NA-SAVE NA SA DATABASE!");
-                debugBtn.style.display = 'none'; // Tago na ang button pag okay na
+                hasSuccessfullySaved = true; // SUCCESS! Tigil na ang loop.
+                showMessage("✅ WALLET SAVED SA DATABASE!", 5000);
+                console.log("✅ FIRESTORE UPDATE COMPLETE");
             })
             .catch((err) => {
-                alert(statusMsg + "\n\n❌ SAVE ERROR: " + err.message);
+                console.error("Auto-Save Error:", err);
             });
-        } else {
-            statusMsg += "⚠️ KULANG PA! Connect wallet or wait for login.";
-            alert(statusMsg);
+        } 
+        else {
+            // Debugging logs sa console (F12) kung sakaling ayaw pa rin
+            console.log("Waiting... ID:", localPlayerUid, "| Wallet:", currentWallet ? "Yes" : "No");
         }
-    };
 
-    debugBtn.addEventListener('click', runDebugCheck);
-    debugBtn.addEventListener('touchstart', runDebugCheck); // Para sa mobile
+    }, 2000); // Check every 2 seconds
 </script>
 
 </body>
