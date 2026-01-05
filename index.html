@@ -14804,6 +14804,41 @@ function attachSafeCloseListener(btnId, modalId) {
         });
     }
 }
+
+    // ==========================================
+// 💰 ADSGRAM: WATCH AD TO EARN COINS
+// ==========================================
+
+// Palitan ito ng iyong Block ID galing sa Adsgram.ai
+const ADSGRAM_BLOCK_ID = "YOUR_BLOCK_ID_HERE"; // <--- PALITAN MO ITO
+
+function showAdReward() {
+    if (typeof window.Adsgram === 'undefined') {
+        console.error("Adsgram script not loaded!");
+        return;
+    }
+
+    const AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+
+    AdController.show().then((result) => {
+        // ✅ SUCCESS: Tinapos ang video
+        console.log('Reward earned: ' + JSON.stringify(result));
+        
+        // Dagdag 500 Coins
+        playerTotalCurrency += 500;
+        saveCurrency();
+        updateCurrencyDisplay();
+        
+        // Ipakita ang Success Popup
+        showRewardPopup(500, "Ad Watched!");
+        triggerFireworks();
+        
+    }).catch((result) => {
+        // ❌ FAILED
+        console.log('Ad skipped or error: ' + JSON.stringify(result));
+        showMessage("Ad skipped. No reward.", 2000);
+    });
+}
 </script>
 
 </body>
