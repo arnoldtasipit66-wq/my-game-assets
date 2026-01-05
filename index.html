@@ -8942,7 +8942,8 @@ async function updatePlayerData(uid, didWin = false) {
             searchableName: displayName.toLowerCase(),
             trophies: playerTrophies, // <-- IMPORTANTE: Save Trophies
             level: playerLevel,       // Save Level
-            xp: playerXP,             // Save XP
+            xp: playerXP,           // Save XP
+            coins: playerTotalCurrency,
             lastPlayed: serverTimestamp()
         };
 
