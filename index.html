@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
     <title>Pinoy Pool</title>
     <!-- Tone.js for audio synthesis -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
@@ -6007,6 +6008,11 @@ const tableSurfaceImage = new Image();
         // === END PLAYER NAME UPDATE ===
 
         function init() {
+    // 1. Sabihin sa Telegram na ready na ang app
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand(); // Para mag-fullscreen sa Telegram
+    }
     
     
             resizeCanvas();
@@ -9714,16 +9720,36 @@ function loadCurrency() {
 }
 
 function loadPlayerName() {
-    const savedPlayerName = localStorage.getItem('pinoyPoolPlayerName');
-    if (savedPlayerName) {
-        localPlayerName = savedPlayerName;
-        return true; // May pangalan na (Returning Player)
-    } else {
-        localPlayerName = "Guest"; // Pansamantalang pangalan
-        return false; // Walang pangalan (New Player)
-    }
-}
+    // 1. I-check kung nasa loob tayo ng Telegram Mini App
+    const tg = window.Telegram?.WebApp;
+    
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        const user = tg.initDataUnsafe.user;
+        
+        // 2. Kunin ang pangalan mula sa Telegram (First Name + Last Name)
+        localPlayerName = user.first_name + (user.last_name ? " " + user.last_name : "");
+        
+        // I-save sa localStorage para consistent sa system mo
+        localStorage.setItem('pinoyPoolPlayerName', localPlayerName);
+        
+        // 3. I-save din ang Telegram Profile Photo kung mayroon para lumitaw sa HUD
+        if (user.photo_url) {
+            localStorage.setItem('pinoyPoolPlayerPhoto', user.photo_url);
+        }
+        
+        return true; // I-skip na ang "Enter Name" screen dahil may data na tayo
+    }
 
+    // --- Fallback: Kung wala sa Telegram (e.g. testing sa browser), gamitin ang dati mong logic ---
+    const savedPlayerName = localStorage.getItem('pinoyPoolPlayerName');
+    if (savedPlayerName) {
+        localPlayerName = savedPlayerName;
+        return true;
+    } else {
+        localPlayerName = "Guest";
+        return false;
+    }
+}
 function loadInventory() {
     const savedInventory = localStorage.getItem('pinoyPoolInventory');
     const savedEquipped = localStorage.getItem('pinoyPoolEquipped');
