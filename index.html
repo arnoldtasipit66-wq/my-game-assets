@@ -7363,63 +7363,44 @@ updateAndDrawFireworks();
 function toggleMusic() { const isMuted = backgroundPlaylist[0].muted; backgroundPlaylist.forEach(player => { player.muted = !isMuted; }); muteButton.textContent = isMuted ? "🎵" : "🔇"; }
         // ▼▼▼ PALITAN MO ITONG BUONG FUNCTION ▼▼▼
         function resizeCanvas() {
-    const oldCanvasWidth = canvas.width;
-    const oldCanvasHeight = canvas.height;
-    let chipRatios;
+    const containerWidth = window.innerWidth;
+    const containerHeight = window.innerHeight;
+    
+    // 1. PADDING: Gawin nating 0.85 (85%) para may 15% na 'hinga' sa paligid.
+    // Ito ang pipigil sa 'pagsobra' ng mesa sa screen.
+    const paddingPercentage = 0.85; 
 
-    if (!isBreakShot && chips.length > 0 && oldCanvasWidth > 0 && oldCanvasHeight > 0) {
-        
-        chipRatios = chips.map(c => ({ x: c.x / VIRTUAL_WIDTH, y: c.y / VIRTUAL_HEIGHT }));
-    }
+    const screenAspectRatio = containerWidth / containerHeight;
+    const tableFrame = document.getElementById('table-frame');
+    let frameWidth, frameHeight;
 
-    const containerWidth = window.innerWidth;
-    const containerHeight = window.innerHeight;
-    const screenAspectRatio = containerWidth / containerHeight;
-    const tableFrame = document.getElementById('table-frame');
-    let frameWidth, frameHeight;
+    // 2. Kalkulahin ang sukat ng mesa para laging sakto sa gitna
+    if (screenAspectRatio > TABLE_ASPECT_RATIO) {
+        frameHeight = containerHeight * paddingPercentage;
+        frameWidth = frameHeight * TABLE_ASPECT_RATIO;
+    } else {
+        frameWidth = containerWidth * paddingPercentage;
+        frameHeight = frameWidth / TABLE_ASPECT_RATIO;
+    }
 
-    const paddingPercentage = 0.90; 
+    // I-apply ang sukat sa 'Kahoy' o Frame ng mesa
+    tableFrame.style.width = `${frameWidth}px`;
+    tableFrame.style.height = `${frameHeight}px`;
 
-    if (screenAspectRatio > TABLE_ASPECT_RATIO) {
-        frameHeight = containerHeight * paddingPercentage; // <-- NILAGYAN NG PADDING
-        frameWidth = frameHeight * TABLE_ASPECT_RATIO;
-    } else {
-        frameWidth = containerWidth * paddingPercentage; // <-- NILAGYAN NG PADDING
-        frameHeight = frameWidth / TABLE_ASPECT_RATIO;
-    }
-    
-    tableFrame.style.width = `${frameWidth}px`;
-    tableFrame.style.height = `${frameHeight}px`;
+    // 3. VIRTUAL WORLD: Wag galawin ang canvas.width/height 
+    // para hindi magbago ang physics ng laro.
+    canvas.width = VIRTUAL_WIDTH;
+    canvas.height = VIRTUAL_HEIGHT;
+    backgroundCanvas.width = VIRTUAL_WIDTH;
+    backgroundCanvas.height = VIRTUAL_HEIGHT;
 
-    canvas.width = VIRTUAL_WIDTH;
-    canvas.height = VIRTUAL_HEIGHT;
-
-    
-    backgroundCanvas.width = VIRTUAL_WIDTH;
-    backgroundCanvas.height = VIRTUAL_HEIGHT;
-
-    table.width = VIRTUAL_WIDTH;
-    table.height = VIRTUAL_HEIGHT;
-   
-    setupHoles();     if (isBreakShot || !chipRatios) {
-        setupChips(); // Gagamit na rin ng scale=1
-    } else if (chipRatios) {
-        chips.forEach((chip, i) => {
-            const radiusConstant = chip.id === 0 ? CUE_BALL_RADIUS : BALL_RADIUS;
-            if (chipRatios[i]) {
-                // I-multiply sa VIRTUAL_WIDTH/HEIGHT
-                chip.x = chipRatios[i].x * VIRTUAL_WIDTH;
-                chip.y = chipRatios[i].y * VIRTUAL_HEIGHT;
-            }
-            
-            chip.radius = radiusConstant; 
-        });
-    }
-
-    
-    drawBackgroundLayer();
-}
-        function setupHoles() { const hr = HOLE_RADIUS * scale; holes = [ { x: 0, y: 0, radius: hr }, { x: canvas.width, y: 0, radius: hr }, { x: 0, y: canvas.height, radius: hr }, { x: canvas.width, y: canvas.height, radius: hr } ]; }
+    // I-setup ang mga butas at background
+    setupHoles();
+    drawBackgroundLayer();
+    
+    // I-redraw ang laro
+    draw();
+}        function setupHoles() { const hr = HOLE_RADIUS * scale; holes = [ { x: 0, y: 0, radius: hr }, { x: canvas.width, y: 0, radius: hr }, { x: 0, y: canvas.height, radius: hr }, { x: canvas.width, y: canvas.height, radius: hr } ]; }
         function setupChips() { chips = []; const newCueChip = { id: 0, value: 0, x: canvas.width * 0.25, y: canvas.height / 2, vx: 0, vy: 0, radius: CUE_BALL_RADIUS * scale, inPlay: true, color: '#1a1a1a', type: 'cue', isPocketing: false, pocketingProgress: 0, pocketingHole: null, rotation: 0, rotationSpeed: 0, currentSideSpin: 0 }; chips.push(newCueChip); const objectChipRadius = BALL_RADIUS * scale; if (gameMode.includes('straight-ball') || gameMode.includes('poker')) { const redChipsSource = []; const blueChipsSource = []; for (let i = 1; i <= 12; i++) { if (i <= 6) { redChipsSource.push({ id: i, color: '#C8102E', type: 'red', value: i }); } else { blueChipsSource.push({ id: i, color: '#0033A0', type: 'blue', value: i }); } } const startX = canvas.width * 0.7; const startY = canvas.height / 2; const colSpacing = objectChipRadius * 2.1; const rowSpacing = objectChipRadius * 1.8; const positions = []; const rows = 4; const cols = 3; const totalHeight = (rows - 1) * rowSpacing; const initialY = startY - totalHeight / 2; for (let row = 0; row < rows; row++) { for (let col = 0; col < cols; col++) { positions.push({ x: startX + col * colSpacing, y: initialY + row * rowSpacing }); } } const chipDataOrder = [ ...redChipsSource, ...blueChipsSource ]; for (let i = 0; i < positions.length; i++) { let chipData = chipDataOrder[i]; if (chipData) { const newObjectChip = { id: chipData.id, value: chipData.value, x: positions[i].x, y: positions[i].y, vx: 0, vy: 0, radius: objectChipRadius, inPlay: true, color: chipData.color, type: chipData.type, isPocketing: false, pocketingProgress: 0, pocketingHole: null, rotation: 0, rotationSpeed: 0 }; chips.push(newObjectChip); } } } else if (gameMode.includes('61-ball')) { const chipColors = [ null, '#FFD700', '#0000FF', '#FF0000', '#800080', '#FFA500', '#008000', '#964B00', '#212121', '#FFC107', '#03A9F4', '#F44336', '#9C27B0', '#FF9800', '#4CAF50', '#795548' ]; let chipIds = Array.from({length: 15}, (_, i) => i + 1); const startX = canvas.width * 0.7; const startY = canvas.height / 2; const rowSpacing = objectChipRadius * 1.8; const rackPositions = []; for (let row = 0; row < 5; row++) { for (let col = 0; col <= row; col++) { rackPositions.push({ x: startX + row * rowSpacing, y: startY + (col * objectChipRadius * 2.1) - (row * objectChipRadius * 1.05) }); } } for (let i = 0; i < 15; i++) { const chipId = chipIds[i]; const newObjectChip = { id: chipId, value: chipId, x: rackPositions[i].x, y: rackPositions[i].y, vx: 0, vy: 0, radius: objectChipRadius, inPlay: true, color: chipColors[chipId], type: 'numbered', isPocketing: false, pocketingProgress: 0, pocketingHole: null, rotation: 0, rotationSpeed: 0 }; chips.push(newObjectChip); } } }
         
 
