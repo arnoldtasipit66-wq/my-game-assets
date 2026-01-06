@@ -6007,7 +6007,21 @@ const tableSurfaceImage = new Image();
         let vsScreenShownThisGame = false;
         // === END PLAYER NAME UPDATE ===
 
-        function init() {
+        // --- ADGRAM AD LOGIC ---
+const ADGRAM_BLOCK_ID = "YOUR_BLOCK_ID"; // Palitan ito ng totoong ID mamaya
+
+async function showAdgramAd() {
+    if (window.Adgram) {
+        try {
+            const result = await window.Adgram.showAd(ADGRAM_BLOCK_ID);
+            console.log("Adgram Result:", result);
+        } catch (error) {
+            console.error("Adgram Error:", error);
+        }
+    }
+}
+
+function init() { // Dito na magsisimula yung dati mong init function...
     // --- 1. TELEGRAM INITIALIZATION (CLEAN BLOCK) ---
     if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
