@@ -6450,6 +6450,7 @@ async function endGame(winnerTextMessage, finalGameData = null) {
     } else {
         opponentHandReveal.innerHTML = ''; opponentHandReveal.style.display = 'none';
     }
+    showAdgramAd();
     setTimeout(() => { winnerModal.classList.add('show'); history.pushState({ modal: 'winner' }, 'Winner', '#winner'); }, 1000);
 }
 async function resetToMenu() {
