@@ -11223,23 +11223,29 @@ function showColorAssignmentPopup(message, color) {
         popup.remove();
     }, 4000); // Mananatili ng 2.5 segundo
 }
-// 1. IMPORTANT: Siguraduhin na nasa pinakataas ng script mo ito:
-// let pendingWalletAddress = null; 
+async function signInPlayer() { 
+    // 1. Kuhanin ang Telegram Data
+    const tg = window.Telegram.WebApp;
+    const tgUser = tg.initDataUnsafe?.user;
 
-function signInPlayer() { 
-    onAuthStateChanged(auth, (user) => { 
+    onAuthStateChanged(auth, async (user) => { 
         if (user) { 
-            localPlayerUid = user.uid; 
+            // Gamitin ang Telegram ID bilang UID para permanent ang account
+            // Kung wala sa Telegram (testing), gamitin ang Firebase UID
+            localPlayerUid = tgUser ? "tg_" + tgUser.id : user.uid; 
             isAuthReady = true; 
             
+            console.log("Logged in as:", localPlayerUid);
+
+            // 2. I-save ang Pending Wallet kung meron
             if (pendingWalletAddress) {
                 console.log("Saving pending wallet...");
                 saveWalletToDb(pendingWalletAddress);
                 pendingWalletAddress = null;
             }
+
+            // 3. UI Update (Online Status)
             onlineButton.disabled = false; 
-            
-            // UI Update
             const sub = document.querySelector('#online-button .card-subtitle');
             if(sub) {
                 sub.textContent = "Ranked Match • Online";
@@ -11247,41 +11253,51 @@ function signInPlayer() {
             }
 
             // ============================================================
-            // 💰 COIN SYNC LOGIC 
+            // 💰 SECURE COIN SYNC LOGIC (ANTI-CHEAT)
             // ============================================================
             const playerDocRef = doc(db, "players", localPlayerUid);
             
-            getDoc(playerDocRef).then((snap) => {
+            try {
+                const snap = await getDoc(playerDocRef);
+                
                 if (snap.exists()) {
                     const data = snap.data();
+                    // Kunin ang coins mula sa server (coins o playerTotalCurrency)
                     const serverCoins = data.coins || data.playerTotalCurrency || 0;
-                    const localCoins = parseInt(localStorage.getItem('pinoyPoolCurrency') || '0');
 
-                    console.log(`Sync Check: Local(${localCoins}) vs Server(${serverCoins})`);
-
-                    if (localCoins > serverCoins) {
-                        console.log("🔼 Syncing: Uploading Local to Server...");
-                        playerTotalCurrency = localCoins;
-                        updateDoc(playerDocRef, { coins: localCoins });
-                    } else {
-                        console.log("🔽 Syncing: Downloading Server to Local...");
-                        playerTotalCurrency = serverCoins;
-                        localStorage.setItem('pinoyPoolCurrency', serverCoins);
-                    }
+                    // SERVER TO LOCAL: Laging database ang masusunod.
+                    // Hindi natin hahayaan ang client na mag-upload ng local coins.
+                    playerTotalCurrency = serverCoins;
+                    localStorage.setItem('pinoyPoolCurrency', serverCoins);
+                    
+                    console.log(`Sync Complete: Server Balance is ${serverCoins}`);
                 } else {
-                    console.log("New user detected, creating profile...");
+                    console.log("New user detected, initializing profile...");
+                    // Gawa ng bagong profile sa DB para sa bagong player
+                    await setDoc(playerDocRef, {
+                        uid: localPlayerUid,
+                        username: tgUser?.username || "Guest",
+                        coins: 500, // Welcome Bonus
+                        createdAt: serverTimestamp()
+                    });
+                    playerTotalCurrency = 500;
+                    localStorage.setItem('pinoyPoolCurrency', 500);
                 }
                 
+                // I-refresh ang display ng pera sa screen
                 if (typeof updateCurrencyDisplay === 'function') updateCurrencyDisplay();
-            }).catch((err) => {
-                console.error("Sync Error:", err);
-            });
+
+            } catch (err) {
+                console.error("Sync/DB Error:", err);
+            }
             // ============================================================
 
-            createPlayerDocument(); 
+            // 4. Tawagin ang mga dating listeners
             startInviteListener(); 
             setupOnlineStatus(); 
+
         } else { 
+            // Kung hindi pa logged in, i-sign in nang anonymous
             signInAnonymously(auth).catch((error) => { 
                 console.error("Sign-in failed:", error); 
                 isAuthReady = false; 
@@ -11290,13 +11306,6 @@ function signInPlayer() {
         } 
     }); 
 }
-// Dito ise-save ang "unsubscribe" function para sa invite listener
-let unsubscribeFromInvites = null;
-
-/**
- * Nagsisimulang makinig sa 'game_invites' collection para sa mga
- * imbitasyon na para sa kasalukuyang player (localPlayerUid).
- */
 function startInviteListener() {
     // Tiyakin na may UID at database
     if (!localPlayerUid || !db) return;
@@ -14841,34 +14850,31 @@ tonConnectUI.onStatusChange(async (wallet) => {
     }
 });
 
-function saveWalletToDb(address) {
-    // ▼▼▼ BINAGO: Logic para sa Pending Save ▼▼▼
-    // Kung wala pang User ID, i-save muna sa variable na ginawa natin
-    if (!localPlayerUid || !db) {
-        console.log("⚠️ Wala pang User ID. I-save muna sa pending list...");
-        pendingWalletAddress = address; // <--- DITO NAPUPUNTA YUNG ADDRESS HABANG NAGLOLOAAD
+async function saveWalletToDb(address) {
+    // 1. Check kung may logged in user na
+    if (!localPlayerUid) {
+        console.log("Walang User ID pa. I-save muna sa pending...");
+        pendingWalletAddress = address;
         return;
     }
-    // ▲▲▲ ▲▲▲
-    
-    // Kung may User ID na (o tinawag mula sa signInPlayer), ituloy ang saving...
-    showMessage("Saving Wallet... ⏳", 2000);
-    
-    const playerRef = doc(db, "players", localPlayerUid);
-    
-    setDoc(playerRef, {
-        walletAddress: address,
-        lastWalletUpdate: serverTimestamp()
-    }, { merge: true })
-    .then(() => {
-        showMessage("✅ Wallet Linked to DB!", 3000);
-        console.log("Wallet address saved successfully.");
-        pendingWalletAddress = null; // Clear na natin dahil nai-save na
-    })
-    .catch((err) => {
-        console.error("Wallet Save Error:", err);
-        showMessage("❌ Save Failed: Check Rules", 3000);
-    });
+
+    try {
+        const playerRef = doc(db, "players", localPlayerUid);
+        
+        // 2. I-save ang address sa document ng player
+        // Ginagamit ang { merge: true } para hindi mabura ang coins nila
+        await setDoc(playerRef, {
+            walletAddress: address,
+            lastWalletUpdate: serverTimestamp()
+        }, { merge: true });
+
+        console.log("✅ Wallet Address linked to account!");
+        if (typeof showMessage === 'function') {
+            showMessage("Wallet Linked Successfully!");
+        }
+    } catch (error) {
+        console.error("Error saving wallet:", error);
+    }
 }
 </script>
 
