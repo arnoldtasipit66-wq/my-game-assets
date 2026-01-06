@@ -6008,12 +6008,25 @@ const tableSurfaceImage = new Image();
         // === END PLAYER NAME UPDATE ===
 
         function init() {
-    // 1. Sabihin sa Telegram na ready na ang app
+    // --- 1. TELEGRAM INITIALIZATION (CLEAN BLOCK) ---
     if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand(); // Para mag-fullscreen sa Telegram
+        const tg = window.Telegram.WebApp;
+
+        tg.ready();      // Sabihin sa Telegram na loaded na ang resources
+        tg.expand();     // I-maximize ang screen height sa mobile
+        
+        // Opsyonal: I-set ang kulay ng header ng Telegram para bumagay sa laro
+        tg.setHeaderColor('#141423'); 
+
+        // Closing Confirmation: Magtatanong muna kung "Are you sure?" bago mag-close
+        tg.enableClosingConfirmation();
+
+        // Telegram Back Button Logic
+        tg.BackButton.onClick(() => {
+            // Gagana ito kasabay ng popstate logic na ginawa natin kanina
+            window.history.back();
+        });
     }
-    
     
             resizeCanvas();
 
