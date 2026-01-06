@@ -6507,6 +6507,7 @@ window.isInGame = false;
 
 window.onpopstate = (event) => {
     const state = event.state || { modal: 'lobby' };
+    const tg = window.Telegram?.WebApp; // <--- DAGDAG: Kunin ang Telegram object
 
     if (window.isClosingModal) {
         window.isClosingModal = false;
@@ -6623,9 +6624,10 @@ window.onpopstate = (event) => {
     
     Object.values(allModals).forEach(modal => { if (modal) modal.classList.remove('show') });
     
+    
     hideLobbyUI();
     const gameControls = ['power-control', 'pektus-control', 'left-arrow', 'right-arrow', 'exit-button', 'player-info', 'opponent-info', 'card-hand-container', 'cue-stick-element', 'chat-toggle-button'];
-     gameControls.forEach(id => {
+    gameControls.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
@@ -6633,10 +6635,16 @@ window.onpopstate = (event) => {
     dragGuideText.style.display = 'none';
 
     if (state.modal === 'lobby') {
+        // --- TELEGRAM LOGIC ---
+        if (tg && tg.BackButton) tg.BackButton.hide(); // Itago ang button sa Lobby
+        
         showLobbyUI();
         gameState = 'lobby';
         draw();
     } else if (allModals[state.modal]) {
+        // --- TELEGRAM LOGIC ---
+        if (tg && tg.BackButton) tg.BackButton.show(); // Ipakita ang button kapag may modal
+        
         allModals[state.modal].classList.add('show');
          
          if (['shopModal', 'leaderboardModal', 'dailyRewardModal', 'aiMenu', 'onlineGameSelect', 'onlineMenu', 'friendsModal'].includes(state.modal)) {
@@ -6652,6 +6660,9 @@ window.onpopstate = (event) => {
          gameState = 'modal_open';
          draw();
     } else {
+        // --- TELEGRAM LOGIC ---
+        if (tg && tg.BackButton) tg.BackButton.hide(); // Fallback: Itago ang button
+        
         showLobbyUI();
         gameState = 'lobby';
         draw();
