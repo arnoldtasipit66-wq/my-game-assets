@@ -12025,8 +12025,12 @@ function findBestBankShot(cueChip, legalTargets) {
             });
         }
         if (!apexBall) apexBall = { x: canvas.width * 0.7, y: canvas.height / 2 };
-        const breakAngle = Math.atan2(apexBall.y - cueChip.y, apexBall.x - cueChip.x);
-        animateAiAiming(breakAngle, 1.0, { DURATION_ALIGN: 1000, DURATION_FEATHER: 1000 }, { x: 0, y: -0.5 });
+        // Magdagdag ng kaunting "Random Error" sa angle (-0.05 hanggang +0.05 radians)
+// Para hindi laging saktong gitna ang tama ng sargo
+const randomError = (Math.random() - 0.5) * 0.1; 
+const breakAngle = Math.atan2(apexBall.y - cueChip.y, apexBall.x - cueChip.x) + randomError;
+
+animateAiAiming(breakAngle, 1.0, { DURATION_ALIGN: 1000, DURATION_FEATHER: 1000 }, { x: 0, y: -0.5 });
         return;
     }
 
@@ -12317,13 +12321,16 @@ function placeCueChipForAI() {
     let targetX, targetY;
 
     // 1. BREAK SHOT (Head String - Keep as is)
-    if (isBreakShot) {
-        const breakLineX = canvas.width * 0.25; 
-        const offsetFromCenter = canvas.height * 0.1; 
-        const headsOrTails = Math.random(); 
-        targetX = breakLineX; 
-        targetY = (headsOrTails < 0.5) ? (canvas.height / 2) + offsetFromCenter : (canvas.height / 2) - offsetFromCenter; 
-    } 
+   if (isBreakShot) {
+    // Mananatili ang X sa headstring (1/4 ng mesa)
+    targetX = canvas.width * 0.25;
+
+    // RANDOM Y: Kukuha tayo ng random spot sa pagitan ng 20% hanggang 80% ng taas ng mesa.
+    // Sa paraang ito, hindi na lang dalawang pwesto ang pagpipilian niya.
+    const minY = canvas.height * 0.2;
+    const maxY = canvas.height * 0.8;
+    targetY = Math.random() * (maxY - minY) + minY;
+}
     
     // 2. BALL IN HAND (Anywhere)
     else {
