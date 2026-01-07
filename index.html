@@ -6123,6 +6123,7 @@ function init() {
 
             setupEventListeners(isReturningPlayer); // <-- NAGBAGO ITO!
             initializeFirebase();
+            initTonConnect();
             history.replaceState({ modal: 'start' }, 'Start', '#start');
             requestAnimationFrame(update); // Ito na ang magsisimula ng game loop
         }
