@@ -14695,7 +14695,7 @@ if (spinBtn) spinBtn.addEventListener('click', startSpin);
         }
     }
 
-    // --- 💎 TON CONNECT UPDATED LOGIC 💎 ---
+    // --- 💎 TON CONNECT UPDATED LOGIC (FINAL) 💎 ---
 
 // Global variable para sa naghihintay na wallet
 window.pendingWalletAddress = null;
@@ -14707,8 +14707,8 @@ function initTonConnect() {
     }
 
     tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-        // Siguraduhin na tama ang link na ito sa file na ginawa mo sa STEP 1
-        manifestUrl: 'https://arnoldtasipit66-wq.github.io/my-game-assets/tonconnect-manifest.json', 
+        // Siguraduhin na tama ang link na ito
+        manifestUrl: 'https://arnoldtasipit66-wq.github.io/my-game-assets/tonconnect-manifest.json',
         buttonRootId: 'ton-connect'
     });
 
@@ -14717,37 +14717,58 @@ function initTonConnect() {
         if (wallet) {
             const rawAddress = wallet.account.address;
             console.log("💎 Wallet Detected:", rawAddress);
-            
+           
             // CHECK: Kung ready na ang Firebase User (localPlayerUid)
-            if (localPlayerUid) {
-                // Kung may user na, save agad!
+            if (localPlayerUid) { 
+                // Kung may user na, save agad
                 saveWalletToFirebase(rawAddress);
-            } else {
+            } else { 
                 // Kung wala pa (naglo-load pa), I-PARK MUNA sa variable
                 console.log("⏳ Waiting for Firebase Login to save wallet...");
                 window.pendingWalletAddress = rawAddress;
             }
-            
+           
             showMessage("Wallet Connected! 💎", 3000);
-        } else {
+        } else { 
             console.log("Wallet Disconnected");
         }
     });
 }
 
-// Hanapin din ang `signInPlayer` function at siguraduhin na nandito ang logic na ito:
-// (Ito ang magche-check ng nakapark na wallet pagka-login)
+// 👇👇👇 ITO ANG MISSING FUNCTION NA KAILANGAN MO 👇👇👇
 
-/*
-SA LOOB NG signInPlayer function, sa ilalim ng "createPlayerDocument();", idagdag ito:
+async function saveWalletToFirebase(walletAddress) {
+    // 1. Check kung may User ID na
+    if (!localPlayerUid || !db) {
+        console.error("❌ Cannot save wallet: No User ID yet.");
+        // I-save muna sa pending para subukan ulit mamaya pag-login
+        window.pendingWalletAddress = walletAddress; 
+        return;
+    }
 
-if (window.pendingWalletAddress) {
-    console.log("🚀 Found pending wallet, saving now...");
-    saveWalletToFirebase(window.pendingWalletAddress);
-    window.pendingWalletAddress = null; // Clear na natin
+    console.log("💾 Saving Wallet to Firestore...", walletAddress);
+
+    try {
+        const playerRef = doc(db, "players", localPlayerUid);
+        
+        // 2. GAMITIN ANG setDoc SA HALIP NA updateDoc
+        // Ang { merge: true } ay siguradong gagana kahit wala pang player profile
+        await setDoc(playerRef, {
+            walletAddress: walletAddress,
+            walletConnectedAt: serverTimestamp() 
+        }, { merge: true });
+
+        console.log("✅ SUCCESS: Wallet saved!");
+        showMessage("Wallet Linked Successfully! 💎", 3000);
+        
+        // Clear na ang pending
+        window.pendingWalletAddress = null;
+        
+    } catch (error) {
+        console.error("❌ Error saving wallet:", error);
+        showMessage("Save Failed: Check Console", 3000);
+    }
 }
-*/
-
 </script>
 
 </body>
