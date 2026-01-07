@@ -11171,17 +11171,15 @@ function showColorAssignmentPopup(message, color) {
         popup.remove();
     }, 4000); // Mananatili ng 2.5 segundo
 }
-// ▲▲▲ HANGGANG DITO ANG BAGONG FUNCTION ▲▲▲
-        function signInPlayer() { 
+function signInPlayer() { 
     onAuthStateChanged(auth, (user) => { 
         if (user) { 
+            console.log("🔥 Firebase Logged In:", user.uid); // Added log para makita mo sa console
             localPlayerUid = user.uid; 
             isAuthReady = true; 
             onlineButton.disabled = false; 
             
-            // onlineButton.textContent = "Online Multiplayer"; // <--- BINURA KO NA ITO! (Ang salarin)
-            
-            // Sa halip na palitan ang lahat, yung SUBTITLE lang ang i-update natin (Optional)
+            // Sa halip na palitan ang lahat, yung SUBTITLE lang ang i-update natin
             const sub = document.querySelector('#online-button .card-subtitle');
             if(sub) {
                 sub.textContent = "Ranked Match • Online";
@@ -11191,12 +11189,20 @@ function showColorAssignmentPopup(message, color) {
             createPlayerDocument(); 
             startInviteListener(); 
             setupOnlineStatus(); 
+
+            // --- 👇 ITO ANG BAGONG DAGDAG (Wala sa code mo kanina) 👇 ---
+            // Tinitignan nito kung may "nakabinbin" na wallet galing sa initTonConnect
+            if (window.pendingWalletAddress) {
+                console.log("🚀 Found pending wallet, saving now...", window.pendingWalletAddress);
+                saveWalletToFirebase(window.pendingWalletAddress);
+                window.pendingWalletAddress = null; // Linisin na para hindi maulit
+            }
+            // --- 👆 END NG DAGDAG 👆 ---
+
         } else { 
             signInAnonymously(auth).catch((error) => { 
                 console.error("Sign-in failed:", error); 
                 isAuthReady = false; 
-                
-                // onlineButton.textContent = "Auth Failed"; // <--- BINURA KO RIN ITO
                 onlineButton.disabled = true; 
             }); 
         } 
