@@ -5136,58 +5136,7 @@ div#opponent-info.hud-active {
         display: flex; justify-content: center; align-items: center;
     }
 
-        /* --- ULTIMATE UI OVERRIDE: LEFT COLUMN ALIGNMENT --- */
-
-/* 1. I-align lahat sa KALIWA (Exit, Settings, Shop) */
-#exit-button, 
-#main-settings-btn, 
-#utility-controls-container, 
-#pektus-control {
-    left: 15% !important; /* Dito sila lalapit sa gilid ng mesa */
-    right: auto !important;
-    position: absolute !important;
-    z-index: 9999 !important; /* Siguradong lilitaw sa taas */
-}
-
-/* 2. Posisyon bawat isa (Vertical Helera) */
-#exit-button {
-    top: 15px !important;
-    transform: none !important;
-}
-
-#main-settings-btn {
-    top: 70px !important; /* Sa ilalim ng Exit */
-}
-
-#utility-controls-container {
-    top: 130px !important; /* Sa ilalim ng Settings */
-    transform: none !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 15px !important;
-}
-
-#pektus-control {
-    bottom: 20px !important; /* Sa ibaba pero pantay sa kaliwa */
-    top: auto !important;
-}
-
-/* 3. Power Bar (Ilapit din pakanan para balanse) */
-#power-control {
-    right: 15% !important; /* Mula 5px, ginawang 15% para dikit sa mesa */
-    left: auto !important;
-}
-
-/* 4. Fix para sa Mobile Landscape (Para hindi mag-jump ang pwesto) */
-@media (max-height: 500px) {
-    #exit-button, #main-settings-btn, #utility-controls-container, #pektus-control {
-        left: 15% !important;
-    }
-    #power-control {
-        right: 15% !important;
-    }
-}        
-</style>
+        ULTIMATE</style>
 </head>
 <body>
 
