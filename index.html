@@ -5136,77 +5136,63 @@ div#opponent-info.hud-active {
         display: flex; justify-content: center; align-items: center;
     }
 
-        /* --- LANDSCAPE SOLID SIDEBAR OVERRIDE --- */
+        /* --- COMPACT LEFT SIDEBAR WITH GAPS --- */
 
-/* 1. Universal Settings para sa lahat ng Left Buttons */
+/* 1. I-align lahat sa iisang linya sa KALIWA at i-sentro sa gitna */
 #exit-button, 
 #main-settings-btn, 
 #utility-controls-container, 
 #pektus-control {
-    left: 14% !important; /* Dikit sa gilid ng mesa pag 0.75 zoom */
+    left: 14% !important; /* Dikit sa gilid ng mesa */
     right: auto !important;
     position: absolute !important;
-    width: 46px !important; /* Pare-pareho ang lapad para pantay ang "bar" */
-    margin: 0 !important;
-    padding: 0 !important;
-    border-radius: 0 !important; /* Flat lahat para magdikit */
     transform: none !important;
     z-index: 99999 !important;
-    border-bottom: 1px solid rgba(255,255,255,0.2) !important; /* Divider line */
+    margin: 0 !important;
 }
 
-/* 2. Positioning gamit ang CALC para sigurado ang dikit (Vertical Center) */
+/* 2. Posisyon bawat isa para magmukhang isang grupo sa gitna */
 
 #exit-button {
-    top: calc(50% - 130px) !important;
-    height: 35px !important;
-    border-radius: 10px 10px 0 0 !important; /* Kanto sa pinakataas lang */
-    background-color: rgba(220, 53, 69, 0.9) !important;
+    top: calc(50% - 135px) !important; /* Pinakataas */
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 #main-settings-btn {
-    top: calc(50% - 95px) !important;
-    height: 45px !important;
-    background-color: #6200ea !important;
+    top: calc(50% - 95px) !important; /* 8px na awang mula sa Exit */
+    width: 42px !important;
+    height: 42px !important;
     display: flex !important;
-    align-items: center;
-    justify-content: center;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 #utility-controls-container {
-    top: calc(50% - 50px) !important;
+    top: calc(50% - 45px) !important; /* 8px na awang mula sa Settings */
     display: flex !important;
     flex-direction: column !important;
-    gap: 0 !important; /* ZERO gap para dikit na dikit */
-    border-bottom: none !important;
-}
-
-#utility-controls-container .ui-button {
-    width: 46px !important;
-    height: 45px !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    border-bottom: 1px solid rgba(255,255,255,0.2) !important;
+    gap: 8px !important; /* Awang sa pagitan ng Shop/Mute/FS */
 }
 
 #pektus-control {
-    top: calc(50% + 85px) !important; /* Dikit sa baba ng utility stack */
-    height: 20px !important;
-    border-radius: 0 0 10px 10px !important; /* Kanto sa pinakababa lang */
-    background: linear-gradient(to bottom, #FFD700, #B8860B) !important;
-    border-bottom: none !important;
+    top: calc(50% + 100px) !important; /* 8px na awang mula sa dulo ng Utility */
+    bottom: auto !important;
+    width: 42px !important;
+    height: 14px !important;
 }
 
-/* 3. Power Bar - I-sentro sa KANANG bahagi ng mesa */
+/* 3. Power Bar - I-sentro rin sa KANAN para balanse */
 #power-control {
     right: 14% !important;
     left: auto !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
-    border-radius: 15px !important;
 }
 
-/* Fix para sa orientation at screen height */
+/* Fix para sa Mobile Landscape View */
 @media (max-height: 550px) {
     #exit-button, #main-settings-btn, #utility-controls-container, #pektus-control {
         left: 14% !important;
@@ -5214,8 +5200,7 @@ div#opponent-info.hud-active {
     #power-control {
         right: 14% !important;
     }
-}
-</style>
+}</style>
 </head>
 <body>
 
