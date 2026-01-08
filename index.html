@@ -5136,45 +5136,57 @@ div#opponent-info.hud-active {
         display: flex; justify-content: center; align-items: center;
     }
 
-        /* --- UI OVERRIDE: Isang hilera sa kaliwa --- */
+        /* --- ULTIMATE UI OVERRIDE: LEFT COLUMN ALIGNMENT --- */
 
-/* 1. Exit Button - Pinakataas sa kaliwa */
-#exit-button {
-    left: 12% !important;
+/* 1. I-align lahat sa KALIWA (Exit, Settings, Shop) */
+#exit-button, 
+#main-settings-btn, 
+#utility-controls-container, 
+#pektus-control {
+    left: 15% !important; /* Dito sila lalapit sa gilid ng mesa */
     right: auto !important;
+    position: absolute !important;
+    z-index: 9999 !important; /* Siguradong lilitaw sa taas */
+}
+
+/* 2. Posisyon bawat isa (Vertical Helera) */
+#exit-button {
     top: 15px !important;
+    transform: none !important;
 }
 
-/* 2. Settings Button - Kasunod ng Exit Button */
 #main-settings-btn {
-    left: 12% !important;
-    top: 70px !important; /* Binabaan para hindi magpatong sa exit */
+    top: 70px !important; /* Sa ilalim ng Exit */
 }
 
-/* 3. Shop at Utility Buttons - Kasunod ng Settings */
 #utility-controls-container {
-    left: 12% !important;
-    top: 135px !important; /* Binabaan para sumunod sa settings */
-    transform: none !important; /* Inalis ang centering para sumunod sa top alignment */
+    top: 130px !important; /* Sa ilalim ng Settings */
+    transform: none !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 15px !important;
 }
 
-/* 4. Pektus Control - Itatapat din sa kaliwang hilera */
 #pektus-control {
-    left: 12% !important;
-    bottom: 20px !important; /* Nilagay sa baba pero pantay sa kaliwa */
+    bottom: 20px !important; /* Sa ibaba pero pantay sa kaliwa */
     top: auto !important;
 }
 
-/* Siguraduhin na sa landscape mode ay hindi sila magkakagulo */
+/* 3. Power Bar (Ilapit din pakanan para balanse) */
+#power-control {
+    right: 15% !important; /* Mula 5px, ginawang 15% para dikit sa mesa */
+    left: auto !important;
+}
+
+/* 4. Fix para sa Mobile Landscape (Para hindi mag-jump ang pwesto) */
 @media (max-height: 500px) {
     #exit-button, #main-settings-btn, #utility-controls-container, #pektus-control {
-        left: 12% !important;
+        left: 15% !important;
     }
-}
-        
+    #power-control {
+        right: 15% !important;
+    }
+}        
 </style>
 </head>
 <body>
