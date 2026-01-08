@@ -5136,6 +5136,59 @@ div#opponent-info.hud-active {
         display: flex; justify-content: center; align-items: center;
     }
 
+        /* --- STEP 2: UI OVERRIDE CODE --- */
+
+/* 1. Ipunin lahat ng buttons sa KALIWA sa isang helera */
+#exit-button, 
+#main-settings-btn, 
+#utility-controls-container, 
+#pektus-control {
+    left: 14% !important; /* Dito mo control kung gaano kadikit sa mesa (10% - 15%) */
+    right: auto !important;
+    position: absolute !important;
+    transform: none !important;
+    z-index: 9999 !important;
+}
+
+/* 2. Ayusin ang pagkakasunod-sunod (Vertical Spacing) */
+#exit-button {
+    top: 15px !important;
+}
+
+#main-settings-btn {
+    top: 75px !important; /* Nakababa sa Exit */
+}
+
+#utility-controls-container {
+    top: 135px !important; /* Nakababa sa Settings */
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+}
+
+#pektus-control {
+    bottom: 25px !important; /* Sa pinakababa ng kaliwang helera */
+    top: auto !important;
+}
+
+/* 3. Power Bar - Idikit sa KANANG bahagi ng mesa */
+#power-control {
+    right: 14% !important; /* Pantay sa 'left' settings para balanse */
+    left: auto !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+}
+
+/* Fix para hindi magulo ang pwesto sa CP (Landscape) */
+@media (max-height: 500px) {
+    #exit-button, #main-settings-btn, #utility-controls-container, #pektus-control {
+        left: 14% !important;
+    }
+    #power-control {
+        right: 14% !important;
+    }
+}
+
         ULTIMATE</style>
 </head>
 <body>
