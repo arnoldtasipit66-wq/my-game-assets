@@ -5136,14 +5136,16 @@ div#opponent-info.hud-active {
         display: flex; justify-content: center; align-items: center;
     }
 
-        /* --- COMPACT LEFT SIDEBAR WITH GAPS --- */
+        /* --- COMPACT FLOATING SIDEBAR (WITH TABLE GAP) --- */
 
-/* 1. I-align lahat sa iisang linya sa KALIWA at i-sentro sa gitna */
+/* 1. I-align ang buong helera sa KALIWA (May distansya sa mesa) */
 #exit-button, 
 #main-settings-btn, 
 #utility-controls-container, 
 #pektus-control {
-    left: 14% !important; /* Dikit sa gilid ng mesa */
+    /* Dahil 0.80 ang mesa, ang gilid nito ay nasa 10%. 
+       Gagamitin natin ang 6% para lumayo sa mesa at lumapit sa gilid ng screen. */
+    left: 6% !important; 
     right: auto !important;
     position: absolute !important;
     transform: none !important;
@@ -5151,10 +5153,10 @@ div#opponent-info.hud-active {
     margin: 0 !important;
 }
 
-/* 2. Posisyon bawat isa para magmukhang isang grupo sa gitna */
+/* 2. Posisyon bawat isa (Vertical Center na may 8px gaps) */
 
 #exit-button {
-    top: calc(50% - 135px) !important; /* Pinakataas */
+    top: calc(50% - 135px) !important;
     height: 32px !important;
     display: flex !important;
     align-items: center !important;
@@ -5162,7 +5164,7 @@ div#opponent-info.hud-active {
 }
 
 #main-settings-btn {
-    top: calc(50% - 95px) !important; /* 8px na awang mula sa Exit */
+    top: calc(50% - 95px) !important; /* May puwang mula sa Exit */
     width: 42px !important;
     height: 42px !important;
     display: flex !important;
@@ -5171,35 +5173,36 @@ div#opponent-info.hud-active {
 }
 
 #utility-controls-container {
-    top: calc(50% - 45px) !important; /* 8px na awang mula sa Settings */
+    top: calc(50% - 45px) !important; /* May puwang mula sa Settings */
     display: flex !important;
     flex-direction: column !important;
-    gap: 8px !important; /* Awang sa pagitan ng Shop/Mute/FS */
+    gap: 8px !important; /* Puwang sa pagitan ng Shop/Mute/Fullscreen */
 }
 
 #pektus-control {
-    top: calc(50% + 100px) !important; /* 8px na awang mula sa dulo ng Utility */
+    top: calc(50% + 100px) !important; /* May puwang mula sa Utility stack */
     bottom: auto !important;
     width: 42px !important;
     height: 14px !important;
 }
 
-/* 3. Power Bar - I-sentro rin sa KANAN para balanse */
+/* 3. Power Bar - I-sentro sa KANAN (May distansya rin sa mesa) */
 #power-control {
-    right: 14% !important;
+    right: 6% !important; /* Pantay sa 6% ng kaliwa para balanse */
     left: auto !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
 }
 
-/* Fix para sa Mobile Landscape View */
+/* Landscape Mobile Fix para sa Telegram */
 @media (max-height: 550px) {
     #exit-button, #main-settings-btn, #utility-controls-container, #pektus-control {
-        left: 14% !important;
+        left: 6% !important;
     }
     #power-control {
-        right: 14% !important;
+        right: 6% !important;
     }
+}
 </style>
 </head>
 <body>
