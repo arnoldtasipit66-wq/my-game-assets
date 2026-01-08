@@ -5135,6 +5135,45 @@ div#opponent-info.hud-active {
         background: #0b0c15; z-index: 99999;
         display: flex; justify-content: center; align-items: center;
     }
+
+        /* --- UI OVERRIDE: Isang hilera sa kaliwa --- */
+
+/* 1. Exit Button - Pinakataas sa kaliwa */
+#exit-button {
+    left: 12% !important;
+    right: auto !important;
+    top: 15px !important;
+}
+
+/* 2. Settings Button - Kasunod ng Exit Button */
+#main-settings-btn {
+    left: 12% !important;
+    top: 70px !important; /* Binabaan para hindi magpatong sa exit */
+}
+
+/* 3. Shop at Utility Buttons - Kasunod ng Settings */
+#utility-controls-container {
+    left: 12% !important;
+    top: 135px !important; /* Binabaan para sumunod sa settings */
+    transform: none !important; /* Inalis ang centering para sumunod sa top alignment */
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+}
+
+/* 4. Pektus Control - Itatapat din sa kaliwang hilera */
+#pektus-control {
+    left: 12% !important;
+    bottom: 20px !important; /* Nilagay sa baba pero pantay sa kaliwa */
+    top: auto !important;
+}
+
+/* Siguraduhin na sa landscape mode ay hindi sila magkakagulo */
+@media (max-height: 500px) {
+    #exit-button, #main-settings-btn, #utility-controls-container, #pektus-control {
+        left: 12% !important;
+    }
+}
         
 </style>
 </head>
