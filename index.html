@@ -5136,60 +5136,61 @@ div#opponent-info.hud-active {
         display: flex; justify-content: center; align-items: center;
     }
 
-        /* --- STEP 2: UI OVERRIDE CODE --- */
+        /* --- FINAL UI ALIGNMENT: LEFT COLUMN --- */
 
-/* 1. Ipunin lahat ng buttons sa KALIWA sa isang helera */
+/* 1. Ipunin lahat sa isang helera sa KALIWA (Dikit sa Mesa) */
 #exit-button, 
 #main-settings-btn, 
 #utility-controls-container, 
 #pektus-control {
-    left: 14% !important; /* Dito mo control kung gaano kadikit sa mesa (10% - 15%) */
+    left: 13.5% !important; /* Adjust mo 'to (13-15%) para sa dikit na gusto mo */
     right: auto !important;
     position: absolute !important;
     transform: none !important;
-    z-index: 9999 !important;
+    z-index: 99999 !important;
+    margin: 0 !important;
 }
 
-/* 2. Ayusin ang pagkakasunod-sunod (Vertical Spacing) */
+/* 2. Posisyon pababa (Vertical Spacing) */
 #exit-button {
     top: 15px !important;
 }
 
 #main-settings-btn {
-    top: 75px !important; /* Nakababa sa Exit */
+    top: 75px !important; /* Sa ilalim ng Exit */
 }
 
 #utility-controls-container {
-    top: 135px !important; /* Nakababa sa Settings */
+    top: 135px !important; /* Sa ilalim ng Settings */
     display: flex !important;
     flex-direction: column !important;
-    gap: 15px !important;
+    gap: 12px !important;
 }
 
 #pektus-control {
-    bottom: 25px !important; /* Sa pinakababa ng kaliwang helera */
+    bottom: 20px !important; /* Sa ilalim ng kaliwang helera */
     top: auto !important;
 }
 
 /* 3. Power Bar - Idikit sa KANANG bahagi ng mesa */
 #power-control {
-    right: 14% !important; /* Pantay sa 'left' settings para balanse */
+    right: 13.5% !important; /* Pantay sa 'left' ng kabilang side */
     left: auto !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
 }
 
-/* Fix para hindi magulo ang pwesto sa CP (Landscape) */
-@media (max-height: 500px) {
+/* 4. Fix para sa Mobile Landscape */
+@media (max-height: 550px) {
     #exit-button, #main-settings-btn, #utility-controls-container, #pektus-control {
-        left: 14% !important;
+        left: 13.5% !important;
     }
     #power-control {
-        right: 14% !important;
+        right: 13.5% !important;
     }
 }
 
-        ULTIMATE</style>
+</style>
 </head>
 <body>
 
