@@ -5136,110 +5136,82 @@ div#opponent-info.hud-active {
         display: flex; justify-content: center; align-items: center;
     }
 
-      /* --- ELITE VERTICAL SIDEBAR (REORDERED) --- */
+      /* --- CLEAN ELITE SIDEBAR (4-BUTTON SETUP) --- */
 
-/* 1. Universal Style para sa Sidebar */
+/* 1. Main Anchor (5% distansya sa gilid ng screen) */
 #exit-button, 
 #main-settings-btn, 
 #utility-controls-container, 
 #pektus-control {
-    left: 5% !important; /* Distansya mula sa gilid ng screen */
+    left: 5% !important; 
     right: auto !important;
     position: absolute !important;
-    width: 48px !important;
+    width: 50px !important; /* Standard width para sa lahat */
     margin: 0 !important;
     transform: none !important;
     z-index: 99999 !important;
-    transition: all 0.2s ease-in-out !important;
-    box-shadow: 0 0 15px rgba(0,0,0,0.5) !important;
-    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important;
 }
 
-/* 2. Posisyon base sa bagong Order: Settings -> Shop -> Pektus -> Exit */
+/* 2. Perfect Vertical Spacing (Settings -> Shop -> Pektus -> Exit) */
 
-/* SETTINGS (Top of the group) */
+/* SETTINGS */
 #main-settings-btn {
-    top: calc(50% - 145px) !important;
-    height: 48px !important;
-    background: linear-gradient(135deg, #6200ea, #311b92) !important; /* Deep Royal Purple */
-    border-radius: 12px !important;
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    color: #fff !important;
-    border-color: #D500F9 !important; /* Neon Purple Border */
+    top: calc(50% - 105px) !important;
+    height: 50px !important;
+    background: linear-gradient(135deg, #6200ea, #311b92) !important;
+    border: 2px solid #D500F9 !important;
+    border-radius: 14px !important;
+    display: flex !important; align-items: center; justify-content: center;
 }
 
-/* SHOP & UTILITY (Middle) */
+/* SHOP */
 #utility-controls-container {
-    top: calc(50% - 85px) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 8px !important;
-    border: none !important;
-    box-shadow: none !important;
-    background: none !important;
+    top: calc(50% - 45px) !important;
+    border: none !important; box-shadow: none !important; background: none !important;
 }
-
-#utility-controls-container .ui-button, #ingame-shop-button {
-    width: 48px !important;
-    height: 48px !important;
-    border-radius: 12px !important;
-    background: linear-gradient(135deg, #FFD700, #B8860B) !important; /* Premium Gold */
+#ingame-shop-button {
+    width: 50px !important; height: 50px !important;
+    background: linear-gradient(135deg, #FFD700, #B8860B) !important;
     border: 2px solid #FFF !important;
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    padding: 0 !important;
-    margin: 0 !important;
+    border-radius: 14px !important;
+    display: flex !important; align-items: center; justify-content: center;
 }
 
-/* PEKTUS (Below Shop) */
+/* PEKTUS */
 #pektus-control {
-    top: calc(50% + 40px) !important;
-    height: 22px !important;
+    top: calc(50% + 15px) !important;
+    height: 24px !important;
+    background: #1a1a1a !important;
+    border: 2px solid #FFD700 !important;
     border-radius: 6px !important;
-    background: #222 !important;
-    border-color: #FFD700 !important;
 }
 
-/* EXIT (Bottom of the group) */
+/* EXIT */
 #exit-button {
-    top: calc(50% + 80px) !important;
-    height: 38px !important;
-    background: linear-gradient(135deg, #d32f2f, #b71c1c) !important; /* Premium Red */
-    color: white !important;
-    font-weight: 800 !important;
-    text-transform: uppercase !important;
-    font-size: 0.75em !important;
-    border-radius: 12px !important;
-    border-color: #ff5252 !important;
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
+    top: calc(50% + 50px) !important;
+    height: 40px !important;
+    background: linear-gradient(135deg, #e53935, #b71c1c) !important;
+    border: 2px solid #ff5252 !important;
+    border-radius: 14px !important;
+    color: white !important; font-weight: 900 !important; font-size: 11px !important;
+    display: flex !important; align-items: center; justify-content: center;
 }
 
-/* Hover effects */
-#main-settings-btn:hover, #ingame-shop-button:hover, #exit-button:hover {
-    filter: brightness(1.2) !important;
-    transform: scale(1.05) !important;
+/* Icons Styling */
+.sidebar-icon {
+    width: 28px; height: 28px; fill: white;
 }
 
-/* Power Bar - Right Side balance */
+/* Power Bar Alignment (Right Balance) */
 #power-control {
     right: 5% !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
-    border-radius: 20px !important;
-    border: 2px solid rgba(255,215,0,0.3) !important;
-}
-
-/* --- ICON STYLES (Para hindi baduy) --- */
-.sidebar-icon {
-    width: 26px;
-    height: 26px;
-    fill: white;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    border: 2px solid rgba(255, 215, 0, 0.4) !important;
+    border-radius: 25px !important;
+    background: rgba(0, 0, 0, 0.5) !important;
 }
 </style>
 </head>
