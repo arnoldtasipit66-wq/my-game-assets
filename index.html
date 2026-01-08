@@ -5136,57 +5136,63 @@ div#opponent-info.hud-active {
         display: flex; justify-content: center; align-items: center;
     }
 
-        /* --- FINAL UI ALIGNMENT: LEFT COLUMN --- */
+        /* --- CENTERED COMPACT CONTROL PANEL (LEFT SIDE) --- */
 
-/* 1. Ipunin lahat sa isang helera sa KALIWA (Dikit sa Mesa) */
+/* 1. I-align lahat sa 13% Left at i-sentro sa gitna (top 50%) */
 #exit-button, 
 #main-settings-btn, 
 #utility-controls-container, 
 #pektus-control {
-    left: 13.5% !important; /* Adjust mo 'to (13-15%) para sa dikit na gusto mo */
+    left: 13% !important; /* Dikit sa gilid ng mesa */
     right: auto !important;
     position: absolute !important;
-    transform: none !important;
+    top: 50% !important; /* I-sentro sa gitna ng screen vertically */
     z-index: 99999 !important;
-    margin: 0 !important;
+    transform: none !important; /* Alisin ang lumang transform */
+    margin-left: 0 !important;
 }
 
-/* 2. Posisyon pababa (Vertical Spacing) */
+/* 2. Ayusin ang "Vertical Stacking" (Margin-top ang gagamitin para magkadikit) */
+
 #exit-button {
-    top: 15px !important;
+    margin-top: -140px !important; /* Pinakataas sa grupo */
+    padding: 6px 15px !important;
+    height: 30px !important;
+    line-height: 15px !important;
 }
 
 #main-settings-btn {
-    top: 75px !important; /* Sa ilalim ng Exit */
+    margin-top: -100px !important; /* Kasunod ng Exit */
+    width: 38px !important;
+    height: 38px !important;
 }
 
 #utility-controls-container {
-    top: 135px !important; /* Sa ilalim ng Settings */
+    margin-top: -55px !important; /* Shop at Mute buttons */
     display: flex !important;
     flex-direction: column !important;
-    gap: 12px !important;
+    gap: 6px !important; /* Sobrang liit na awang */
 }
 
 #pektus-control {
-    bottom: 20px !important; /* Sa ilalim ng kaliwang helera */
-    top: auto !important;
+    margin-top: 85px !important; /* Pinakababa ng grupo */
+    bottom: auto !important;
+    width: 38px !important;
+    height: 12px !important;
 }
 
-/* 3. Power Bar - Idikit sa KANANG bahagi ng mesa */
+/* 3. Power Bar - I-sentro rin sa Kanan para balanse */
 #power-control {
-    right: 13.5% !important; /* Pantay sa 'left' ng kabilang side */
+    right: 13% !important;
     left: auto !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
 }
 
-/* 4. Fix para sa Mobile Landscape */
+/* Landscape Mobile Fix */
 @media (max-height: 550px) {
     #exit-button, #main-settings-btn, #utility-controls-container, #pektus-control {
-        left: 13.5% !important;
-    }
-    #power-control {
-        right: 13.5% !important;
+        left: 13% !important;
     }
 }
 
