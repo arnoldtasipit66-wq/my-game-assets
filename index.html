@@ -5136,72 +5136,110 @@ div#opponent-info.hud-active {
         display: flex; justify-content: center; align-items: center;
     }
 
-        /* --- COMPACT FLOATING SIDEBAR (WITH TABLE GAP) --- */
+      /* --- ELITE VERTICAL SIDEBAR (REORDERED) --- */
 
-/* 1. I-align ang buong helera sa KALIWA (May distansya sa mesa) */
+/* 1. Universal Style para sa Sidebar */
 #exit-button, 
 #main-settings-btn, 
 #utility-controls-container, 
 #pektus-control {
-    /* Dahil 0.80 ang mesa, ang gilid nito ay nasa 10%. 
-       Gagamitin natin ang 6% para lumayo sa mesa at lumapit sa gilid ng screen. */
-    left: 6% !important; 
+    left: 5% !important; /* Distansya mula sa gilid ng screen */
     right: auto !important;
     position: absolute !important;
+    width: 48px !important;
+    margin: 0 !important;
     transform: none !important;
     z-index: 99999 !important;
+    transition: all 0.2s ease-in-out !important;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5) !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 2. Posisyon base sa bagong Order: Settings -> Shop -> Pektus -> Exit */
+
+/* SETTINGS (Top of the group) */
+#main-settings-btn {
+    top: calc(50% - 145px) !important;
+    height: 48px !important;
+    background: linear-gradient(135deg, #6200ea, #311b92) !important; /* Deep Royal Purple */
+    border-radius: 12px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    color: #fff !important;
+    border-color: #D500F9 !important; /* Neon Purple Border */
+}
+
+/* SHOP & UTILITY (Middle) */
+#utility-controls-container {
+    top: calc(50% - 85px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: none !important;
+}
+
+#utility-controls-container .ui-button, #ingame-shop-button {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #FFD700, #B8860B) !important; /* Premium Gold */
+    border: 2px solid #FFF !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
     margin: 0 !important;
 }
 
-/* 2. Posisyon bawat isa (Vertical Center na may 8px gaps) */
-
-#exit-button {
-    top: calc(50% - 135px) !important;
-    height: 32px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-#main-settings-btn {
-    top: calc(50% - 95px) !important; /* May puwang mula sa Exit */
-    width: 42px !important;
-    height: 42px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-#utility-controls-container {
-    top: calc(50% - 45px) !important; /* May puwang mula sa Settings */
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 8px !important; /* Puwang sa pagitan ng Shop/Mute/Fullscreen */
-}
-
+/* PEKTUS (Below Shop) */
 #pektus-control {
-    top: calc(50% + 100px) !important; /* May puwang mula sa Utility stack */
-    bottom: auto !important;
-    width: 42px !important;
-    height: 14px !important;
+    top: calc(50% + 40px) !important;
+    height: 22px !important;
+    border-radius: 6px !important;
+    background: #222 !important;
+    border-color: #FFD700 !important;
 }
 
-/* 3. Power Bar - I-sentro sa KANAN (May distansya rin sa mesa) */
+/* EXIT (Bottom of the group) */
+#exit-button {
+    top: calc(50% + 80px) !important;
+    height: 38px !important;
+    background: linear-gradient(135deg, #d32f2f, #b71c1c) !important; /* Premium Red */
+    color: white !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    font-size: 0.75em !important;
+    border-radius: 12px !important;
+    border-color: #ff5252 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Hover effects */
+#main-settings-btn:hover, #ingame-shop-button:hover, #exit-button:hover {
+    filter: brightness(1.2) !important;
+    transform: scale(1.05) !important;
+}
+
+/* Power Bar - Right Side balance */
 #power-control {
-    right: 6% !important; /* Pantay sa 6% ng kaliwa para balanse */
-    left: auto !important;
+    right: 5% !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
+    border-radius: 20px !important;
+    border: 2px solid rgba(255,215,0,0.3) !important;
 }
 
-/* Landscape Mobile Fix para sa Telegram */
-@media (max-height: 550px) {
-    #exit-button, #main-settings-btn, #utility-controls-container, #pektus-control {
-        left: 6% !important;
-    }
-    #power-control {
-        right: 6% !important;
-    }
+/* --- ICON STYLES (Para hindi baduy) --- */
+.sidebar-icon {
+    width: 26px;
+    height: 26px;
+    fill: white;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 </style>
 </head>
@@ -5277,15 +5315,11 @@ div#opponent-info.hud-active {
         </button>
 
     
-        <button id="ingame-shop-button" class="ui-button icon-button" title="Open Shop" style="background-color: #8E2DE2;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" style="color: white;">
-                <path d="M11.354 6.354a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
-                <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
-            </svg>
-        </button>
-      
-
-        
+        <button id="ingame-shop-button" class="ui-button icon-button">
+    <svg class="sidebar-icon" viewBox="0 0 24 24" style="fill: #000;">
+        <path d="M12,13A5,5 0 0,1 7,8H9A3,3 0 0,0 12,11A3,3 0 0,0 15,8H17A5,5 0 0,1 12,13M12,3A3,3 0 0,1 15,6H9A3,3 0 0,1 12,3M19,6H17V6A5,5 0 0,0 12,1A5,5 0 0,0 7,6V6H5C3.89,6 3,6.89 3,8V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V8C21,6.89 20.11,6 19,6Z" />
+    </svg>
+</button>
         
         
         <button id="fullscreen-button" class="ui-button icon-button" title="Toggle Fullscreen">
@@ -5786,10 +5820,11 @@ div#opponent-info.hud-active {
     <audio id="lose-sfx" src="https://arnoldtasipit66-wq.github.io/my-game-assets/lose.mp3" crossorigin="anonymous"></audio>
 
 
-<button id="main-settings-btn" class="ui-button icon-button" style="background-color: #6200ea;">
-    ⚙️
+<button id="main-settings-btn" class="ui-button icon-button">
+    <svg class="sidebar-icon" viewBox="0 0 24 24">
+        <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.35 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.65 15.47,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.53,5.32 7.96,5.65 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.35 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.04 4.95,18.95L7.44,17.95C7.96,18.35 8.53,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.47,18.68 16.04,18.35 16.56,17.95L19.05,18.95C19.27,19.04 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+    </svg>
 </button>
-
     <div id="full-image-modal" class="modal-overlay" style="background-color: rgba(0,0,0,0.95) !important; z-index: 20000;">
     <span class="modal-close-btn" id="full-image-close-btn" style="top: 20px; right: 20px; font-size: 3em;">&times;</span>
     
