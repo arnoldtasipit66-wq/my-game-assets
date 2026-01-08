@@ -2,13 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <title>Pinoy Pool</title>
     <!-- Tone.js for audio synthesis -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
-    <script src="https://app.adgram.io/js/adgram.js"></script>
+
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,28 +27,28 @@
     body, html {
     margin: 0;
     padding: 0;
-    width: 100%;
-    height: 100%;
-    /* Gamitin ang Telegram height variable para saktong-sakto */
-    height: var(--tg-viewport-height, 100vh); 
-    overflow: hidden;
-    background-color: #2c2c2c;
-    background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');    
+    width: 100vw;
+    height: 100vh;
+    
+    
+    background-color: #2c2c2c; 
+    
+    
+background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');    
     background-repeat: repeat; 
+    
     background-size: 500px;  
     background-attachment: fixed; 
-    position: fixed; /* Pinipigilan ang bounce sa mobile */
-    touch-action: none; /* Mahalaga para sa laro */
-    font-family: 'Nunito', sans-serif;
-}
 
-/* NOTCH PROTECTION: Dito natin ilalagay ang safe areas para hindi 'sumobra' ang body */
-#non-interactive-overlay, .modal-overlay .content, #lobby-screen {
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    box-sizing: border-box;
+    /* Standard settings */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    font-family: 'Nunito', sans-serif;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
         /* 1. Ang Background (Black Overlay) */
@@ -1801,12 +1800,11 @@
     .dock-label { font-size: 0.6em !important; }
 }
 
+/* 1. BASE STYLE: Dito natin ilalagay ang transition para smooth ang paglaki */
 #player-info, #opponent-info {
     position: absolute;
     top: 0px !important;
-    
     height: 28px !important; 
-    
     width: auto !important;
     min-width: auto !important;
     max-width: 200px !important;
@@ -1822,11 +1820,14 @@
     
     color: white !important;
     font-family: 'Nunito', sans-serif !important;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.4) !important; /* Pinaliit shadow */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4) !important;
     z-index: 20 !important;
     
     pointer-events: auto !important;
     cursor: pointer !important;
+
+    /* IDAGDAG ITO: Transition para hindi biglaang pitik ang paglaki */
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s ease !important;
 }
 
 
@@ -4259,14 +4260,14 @@ input:checked + .slider:before {
     }
 }
 
-/* 2. I-APPLY SA ACTIVE PLAYER (Gamit ang ID+Class para pinaka-malakas) */
+/* 2. ACTIVE PLAYER: Steady na malaki (Wala nang breathing animation) */
 div#player-info.hud-active, 
 div#opponent-info.hud-active {
-    /* Pilitin nating ipakita (Override any hidden opacity) */
+    /* Pilitin nating ipakita */
     opacity: 1 !important;
     z-index: 999 !important;
     
-    /* Pilitin ang GOLD Border (Tatalunin nito ang lumang white border) */
+    /* Pilitin ang GOLD Border */
     border: 2px solid #FFD700 !important; 
     
     /* Gawing Solid ang Background para litaw */
@@ -4275,12 +4276,11 @@ div#opponent-info.hud-active {
     /* Pilitin ang Initial Glow */
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
     
-    /* --- DITO ANG PAGBABAGO PARA IWAS LAG --- */
-    
-    /* Tanggalin ang breathing animation */
+    /* --- STOP LAG FIX --- */
+    /* 1. Tanggalin ang animation */
     animation: none !important; 
 
-    /* Palitan ng Fixed na Paglaki (Steady lang na malaki) */
+    /* 2. Steady na paglaki (Scale Up) */
     transform: scale(1.15) !important;
 }
 
@@ -4383,45 +4383,22 @@ div#opponent-info.hud-active {
         padding: 20px 40px !important;
     }
 
-    /* 5. IN-GAME HUD (Position & Size) */
-#player-info, #opponent-info {
-    /* Pinalaki natin nang konti (Base Size) */
-    transform: scale(1.2) !important; 
-    top: 20px !important;
+    /* 5. IN-GAME HUD (Player Names sa taas) */
+    #player-info, #opponent-info {
+        transform: scale(1.5) !important; /* 50% Bigger */
+        top: 20px !important;
+    }
     
-    /* IDAGDAG ITO: Transition para smooth ang paglaki at iwas lag */
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-}
-
-#player-info { 
-    /* REPAIR: Ginawa kong 20px (imbes na 180px) para hindi mag-overlap sa gitna */
-    left: 20px !important; 
-    transform-origin: top left !important; 
-}
-
-#opponent-info { 
-    /* REPAIR: Ginawa kong 20px (imbes na 180px) para hindi mag-overlap sa gitna */
-    right: 20px !important; 
-    transform-origin: top right !important; 
-}
-
-/* 6. ACTIVE PLAYER (NO LAG VERSION) */
-div#player-info.hud-active, 
-div#opponent-info.hud-active {
-    /* Pilitin nating ipakita */
-    opacity: 1 !important;
-    z-index: 999 !important;
+    #player-info { 
+        left: 180px !important; /* Usog pa-kanan para di dikit sa gilid */
+        transform-origin: top left !important; 
+    }
     
-    /* Pilitin ang GOLD Border */
-    border: 2px solid #FFD700 !important; 
-    background: rgba(0, 0, 0, 0.8) !important; 
-    
-    /* --- DITO ANG PAGBABAGO (Wala nang breathing) --- */
-    animation: none !important; 
+    #opponent-info { 
+        right: 180px !important; /* Usog pa-kaliwa */
+        transform-origin: top right !important; 
+    }
 
-    /* Steady na mas malaki nang konti sa normal (1.2 -> 1.35) */
-    transform: scale(1.3) !important;
-}
     /* 6. COINS DISPLAY (In-Game) */
     #currency-display {
         transform: scale(1.5) !important;
@@ -4486,9 +4463,7 @@ div#opponent-info.hud-active {
     top: 50%;      
     
     pointer-events: none; 
-    /* 👇👇👇 BURAHIN O I-COMMENT OUT MO ANG LINYANG ITO 👇👇👇 */
-        transition: top 0.1s ease-out; 
-        /* 👆👆👆 ITO ANG DAHILAN NG DELAY */
+    transition: top 0.1s ease-out; /* May konting smooth effect pagbalik */
     z-index: 5;
     filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));
 }
@@ -5085,17 +5060,93 @@ div#opponent-info.hud-active {
     }
 }
 
+ /* --- LANDSCAPE ENFORCER (Ang Harang) --- */
+    #rotate-warning {
+        display: none; 
+    }
+
+    @media only screen and (orientation: portrait) {
+        #game-container, #ui-layer, .bottom-nav, canvas, #game-wrapper, #lobby-screen {
+            display: none !important;
+        }
+
+        #rotate-warning {
+            display: flex;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: #0b0c15;
+            z-index: 999999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+        }
+
+        .phone-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: rotate-anim 2s infinite ease-in-out;
+        }
+
+        .rotate-content h1 {
+            font-family: 'Luckiest Guy', cursive;
+            font-size: 30px;
+            color: #00ff88;
+            margin: 0;
+        }
+        
+        @keyframes rotate-anim {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(-90deg); }
+            50% { transform: rotate(-90deg); }
+            100% { transform: rotate(0deg); }
+        }
+    }
+
+    /* BUTTON STYLES (Neon) */
+    button, .menu-button {
+        background: linear-gradient(135deg, #00ff88 0%, #00bd65 100%) !important;
+        border: none !important;
+        border-radius: 12px !important;
+        color: #000 !important;
+        font-weight: bold;
+        text-transform: uppercase;
+        box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+    }
+    
+    button:active { transform: scale(0.95); }
+
+    /* MODAL STYLES (Glass) */
+    .modal-overlay .content {
+        background: rgba(20, 20, 35, 0.95) !important;
+        border: 1px solid var(--neon-blue) !important;
+        box-shadow: 0 0 30px rgba(0, 243, 255, 0.2) !important;
+        border-radius: 20px !important;
+        color: white !important;
+    }
+
+    h2 { color: var(--neon-blue) !important; text-shadow: 0 0 10px var(--neon-blue) !important; }
+    
     /* LOADING SCREEN */
     #preloader-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: #0b0c15; z-index: 99999;
         display: flex; justify-content: center; align-items: center;
     }
+        
 </style>
 </head>
 <body>
 
-
+<div id="rotate-warning">
+        <div class="rotate-content">
+            <div class="phone-icon">📱 ➡️ 🔄</div>
+            <h1>PAKI-LANDSCAPE PO</h1>
+            <p>Mas masarap tumira kapag pahalang, Boss.</p>
+        </div>
+    </div>
      
     <div id="game-container"> ...
 
@@ -5120,7 +5171,6 @@ div#opponent-info.hud-active {
 
     </div>
 </div>
-
     <div id="start-overlay" class="modal-overlay">
     <h2>Pinoy Pool</h2>
     <p id="start-prompt-text" style="font-size: 1.5em; margin-top: -10px; color: rgba(255,255,255,0.8); cursor: pointer; display: none;">
@@ -5287,8 +5337,6 @@ div#opponent-info.hud-active {
                 <div id="lobby-level-badge" class="level-badge">Lv. 1</div>
             </div>
         </div>
-        
-        <div id="ton-connect" style="margin-right: 10px;"></div> 
         
         <div class="currency-section">
             <div class="coin-pill">
@@ -6050,47 +6098,13 @@ const tableSurfaceImage = new Image();
         let vsScreenShownThisGame = false;
         // === END PLAYER NAME UPDATE ===
 
-        // --- ADGRAM AD LOGIC ---
-const ADGRAM_BLOCK_ID = "YOUR_BLOCK_ID"; // Palitan ito ng totoong ID mamaya
-
-async function showAdgramAd() {
-    if (window.Adgram) {
-        try {
-            const result = await window.Adgram.showAd(ADGRAM_BLOCK_ID);
-            console.log("Adgram Result:", result);
-        } catch (error) {
-            console.error("Adgram Error:", error);
-        }
-    }
-}
-
-function init() { 
-    // --- 1. TELEGRAM INITIALIZATION (CLEAN BLOCK) ---
+        function init() {
+    // 1. Sabihin sa Telegram na ready na ang app
     if (window.Telegram && window.Telegram.WebApp) {
-        const tg = window.Telegram.WebApp;
-
-        tg.ready();      // Sabihin sa Telegram na loaded na ang resources
-        tg.expand();     // I-maximize ang screen height sa mobile
-        
-        // --- DITO MO ILALAGAY ANG LOCK ORIENTATION ---
-        if (tg.lockOrientation) {
-            tg.lockOrientation('landscape'); // I-lock ang screen sa landscape mode
-        }
-        // ---------------------------------------------
-        
-        // Opsyonal: I-set ang kulay ng header ng Telegram para bumagay sa laro
-        tg.setHeaderColor('#141423'); 
-
-        // Closing Confirmation: Magtatanong muna kung "Are you sure?" bago mag-close
-        tg.enableClosingConfirmation();
-
-        // Telegram Back Button Logic
-        tg.BackButton.onClick(() => {
-            window.history.back();
-        });
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand(); // Para mag-fullscreen sa Telegram
     }
     
- 
     
             resizeCanvas();
 
@@ -6104,7 +6118,6 @@ function init() {
 
             setupEventListeners(isReturningPlayer); // <-- NAGBAGO ITO!
             initializeFirebase();
-            initTonConnect();
             history.replaceState({ modal: 'start' }, 'Start', '#start');
             requestAnimationFrame(update); // Ito na ang magsisimula ng game loop
         }
@@ -6501,7 +6514,6 @@ async function endGame(winnerTextMessage, finalGameData = null) {
     } else {
         opponentHandReveal.innerHTML = ''; opponentHandReveal.style.display = 'none';
     }
-    showAdgramAd();
     setTimeout(() => { winnerModal.classList.add('show'); history.pushState({ modal: 'winner' }, 'Winner', '#winner'); }, 1000);
 }
 async function resetToMenu() {
@@ -6573,7 +6585,6 @@ window.isInGame = false;
 
 window.onpopstate = (event) => {
     const state = event.state || { modal: 'lobby' };
-    const tg = window.Telegram?.WebApp; // <--- DAGDAG: Kunin ang Telegram object
 
     if (window.isClosingModal) {
         window.isClosingModal = false;
@@ -6690,10 +6701,9 @@ window.onpopstate = (event) => {
     
     Object.values(allModals).forEach(modal => { if (modal) modal.classList.remove('show') });
     
-    
     hideLobbyUI();
     const gameControls = ['power-control', 'pektus-control', 'left-arrow', 'right-arrow', 'exit-button', 'player-info', 'opponent-info', 'card-hand-container', 'cue-stick-element', 'chat-toggle-button'];
-    gameControls.forEach(id => {
+     gameControls.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
@@ -6701,16 +6711,10 @@ window.onpopstate = (event) => {
     dragGuideText.style.display = 'none';
 
     if (state.modal === 'lobby') {
-        // --- TELEGRAM LOGIC ---
-        if (tg && tg.BackButton) tg.BackButton.hide(); // Itago ang button sa Lobby
-        
         showLobbyUI();
         gameState = 'lobby';
         draw();
     } else if (allModals[state.modal]) {
-        // --- TELEGRAM LOGIC ---
-        if (tg && tg.BackButton) tg.BackButton.show(); // Ipakita ang button kapag may modal
-        
         allModals[state.modal].classList.add('show');
          
          if (['shopModal', 'leaderboardModal', 'dailyRewardModal', 'aiMenu', 'onlineGameSelect', 'onlineMenu', 'friendsModal'].includes(state.modal)) {
@@ -6726,9 +6730,6 @@ window.onpopstate = (event) => {
          gameState = 'modal_open';
          draw();
     } else {
-        // --- TELEGRAM LOGIC ---
-        if (tg && tg.BackButton) tg.BackButton.hide(); // Fallback: Itago ang button
-        
         showLobbyUI();
         gameState = 'lobby';
         draw();
@@ -7382,44 +7383,63 @@ updateAndDrawFireworks();
 function toggleMusic() { const isMuted = backgroundPlaylist[0].muted; backgroundPlaylist.forEach(player => { player.muted = !isMuted; }); muteButton.textContent = isMuted ? "🎵" : "🔇"; }
         // ▼▼▼ PALITAN MO ITONG BUONG FUNCTION ▼▼▼
         function resizeCanvas() {
-    const containerWidth = window.innerWidth;
-    const containerHeight = window.innerHeight;
-    
-    // 1. PADDING: Gawin nating 0.85 (85%) para may 15% na 'hinga' sa paligid.
-    // Ito ang pipigil sa 'pagsobra' ng mesa sa screen.
-    const paddingPercentage = 0.85; 
+    const oldCanvasWidth = canvas.width;
+    const oldCanvasHeight = canvas.height;
+    let chipRatios;
 
-    const screenAspectRatio = containerWidth / containerHeight;
-    const tableFrame = document.getElementById('table-frame');
-    let frameWidth, frameHeight;
+    if (!isBreakShot && chips.length > 0 && oldCanvasWidth > 0 && oldCanvasHeight > 0) {
+        
+        chipRatios = chips.map(c => ({ x: c.x / VIRTUAL_WIDTH, y: c.y / VIRTUAL_HEIGHT }));
+    }
 
-    // 2. Kalkulahin ang sukat ng mesa para laging sakto sa gitna
-    if (screenAspectRatio > TABLE_ASPECT_RATIO) {
-        frameHeight = containerHeight * paddingPercentage;
-        frameWidth = frameHeight * TABLE_ASPECT_RATIO;
-    } else {
-        frameWidth = containerWidth * paddingPercentage;
-        frameHeight = frameWidth / TABLE_ASPECT_RATIO;
-    }
+    const containerWidth = window.innerWidth;
+    const containerHeight = window.innerHeight;
+    const screenAspectRatio = containerWidth / containerHeight;
+    const tableFrame = document.getElementById('table-frame');
+    let frameWidth, frameHeight;
 
-    // I-apply ang sukat sa 'Kahoy' o Frame ng mesa
-    tableFrame.style.width = `${frameWidth}px`;
-    tableFrame.style.height = `${frameHeight}px`;
+    const paddingPercentage = 0.90; 
 
-    // 3. VIRTUAL WORLD: Wag galawin ang canvas.width/height 
-    // para hindi magbago ang physics ng laro.
-    canvas.width = VIRTUAL_WIDTH;
-    canvas.height = VIRTUAL_HEIGHT;
-    backgroundCanvas.width = VIRTUAL_WIDTH;
-    backgroundCanvas.height = VIRTUAL_HEIGHT;
+    if (screenAspectRatio > TABLE_ASPECT_RATIO) {
+        frameHeight = containerHeight * paddingPercentage; // <-- NILAGYAN NG PADDING
+        frameWidth = frameHeight * TABLE_ASPECT_RATIO;
+    } else {
+        frameWidth = containerWidth * paddingPercentage; // <-- NILAGYAN NG PADDING
+        frameHeight = frameWidth / TABLE_ASPECT_RATIO;
+    }
+    
+    tableFrame.style.width = `${frameWidth}px`;
+    tableFrame.style.height = `${frameHeight}px`;
 
-    // I-setup ang mga butas at background
-    setupHoles();
-    drawBackgroundLayer();
-    
-    // I-redraw ang laro
-    draw();
-}        function setupHoles() { const hr = HOLE_RADIUS * scale; holes = [ { x: 0, y: 0, radius: hr }, { x: canvas.width, y: 0, radius: hr }, { x: 0, y: canvas.height, radius: hr }, { x: canvas.width, y: canvas.height, radius: hr } ]; }
+    canvas.width = VIRTUAL_WIDTH;
+    canvas.height = VIRTUAL_HEIGHT;
+
+    
+    backgroundCanvas.width = VIRTUAL_WIDTH;
+    backgroundCanvas.height = VIRTUAL_HEIGHT;
+
+    table.width = VIRTUAL_WIDTH;
+    table.height = VIRTUAL_HEIGHT;
+   
+    setupHoles();     if (isBreakShot || !chipRatios) {
+        setupChips(); // Gagamit na rin ng scale=1
+    } else if (chipRatios) {
+        chips.forEach((chip, i) => {
+            const radiusConstant = chip.id === 0 ? CUE_BALL_RADIUS : BALL_RADIUS;
+            if (chipRatios[i]) {
+                // I-multiply sa VIRTUAL_WIDTH/HEIGHT
+                chip.x = chipRatios[i].x * VIRTUAL_WIDTH;
+                chip.y = chipRatios[i].y * VIRTUAL_HEIGHT;
+            }
+            
+            chip.radius = radiusConstant; 
+        });
+    }
+
+    
+    drawBackgroundLayer();
+}
+        function setupHoles() { const hr = HOLE_RADIUS * scale; holes = [ { x: 0, y: 0, radius: hr }, { x: canvas.width, y: 0, radius: hr }, { x: 0, y: canvas.height, radius: hr }, { x: canvas.width, y: canvas.height, radius: hr } ]; }
         function setupChips() { chips = []; const newCueChip = { id: 0, value: 0, x: canvas.width * 0.25, y: canvas.height / 2, vx: 0, vy: 0, radius: CUE_BALL_RADIUS * scale, inPlay: true, color: '#1a1a1a', type: 'cue', isPocketing: false, pocketingProgress: 0, pocketingHole: null, rotation: 0, rotationSpeed: 0, currentSideSpin: 0 }; chips.push(newCueChip); const objectChipRadius = BALL_RADIUS * scale; if (gameMode.includes('straight-ball') || gameMode.includes('poker')) { const redChipsSource = []; const blueChipsSource = []; for (let i = 1; i <= 12; i++) { if (i <= 6) { redChipsSource.push({ id: i, color: '#C8102E', type: 'red', value: i }); } else { blueChipsSource.push({ id: i, color: '#0033A0', type: 'blue', value: i }); } } const startX = canvas.width * 0.7; const startY = canvas.height / 2; const colSpacing = objectChipRadius * 2.1; const rowSpacing = objectChipRadius * 1.8; const positions = []; const rows = 4; const cols = 3; const totalHeight = (rows - 1) * rowSpacing; const initialY = startY - totalHeight / 2; for (let row = 0; row < rows; row++) { for (let col = 0; col < cols; col++) { positions.push({ x: startX + col * colSpacing, y: initialY + row * rowSpacing }); } } const chipDataOrder = [ ...redChipsSource, ...blueChipsSource ]; for (let i = 0; i < positions.length; i++) { let chipData = chipDataOrder[i]; if (chipData) { const newObjectChip = { id: chipData.id, value: chipData.value, x: positions[i].x, y: positions[i].y, vx: 0, vy: 0, radius: objectChipRadius, inPlay: true, color: chipData.color, type: chipData.type, isPocketing: false, pocketingProgress: 0, pocketingHole: null, rotation: 0, rotationSpeed: 0 }; chips.push(newObjectChip); } } } else if (gameMode.includes('61-ball')) { const chipColors = [ null, '#FFD700', '#0000FF', '#FF0000', '#800080', '#FFA500', '#008000', '#964B00', '#212121', '#FFC107', '#03A9F4', '#F44336', '#9C27B0', '#FF9800', '#4CAF50', '#795548' ]; let chipIds = Array.from({length: 15}, (_, i) => i + 1); const startX = canvas.width * 0.7; const startY = canvas.height / 2; const rowSpacing = objectChipRadius * 1.8; const rackPositions = []; for (let row = 0; row < 5; row++) { for (let col = 0; col <= row; col++) { rackPositions.push({ x: startX + row * rowSpacing, y: startY + (col * objectChipRadius * 2.1) - (row * objectChipRadius * 1.05) }); } } for (let i = 0; i < 15; i++) { const chipId = chipIds[i]; const newObjectChip = { id: chipId, value: chipId, x: rackPositions[i].x, y: rackPositions[i].y, vx: 0, vy: 0, radius: objectChipRadius, inPlay: true, color: chipColors[chipId], type: 'numbered', isPocketing: false, pocketingProgress: 0, pocketingHole: null, rotation: 0, rotationSpeed: 0 }; chips.push(newObjectChip); } } }
         
 
@@ -11158,15 +11178,17 @@ function showColorAssignmentPopup(message, color) {
         popup.remove();
     }, 4000); // Mananatili ng 2.5 segundo
 }
-function signInPlayer() { 
+// ▲▲▲ HANGGANG DITO ANG BAGONG FUNCTION ▲▲▲
+        function signInPlayer() { 
     onAuthStateChanged(auth, (user) => { 
         if (user) { 
-            console.log("🔥 Firebase Logged In:", user.uid); // Added log para makita mo sa console
             localPlayerUid = user.uid; 
             isAuthReady = true; 
             onlineButton.disabled = false; 
             
-            // Sa halip na palitan ang lahat, yung SUBTITLE lang ang i-update natin
+            // onlineButton.textContent = "Online Multiplayer"; // <--- BINURA KO NA ITO! (Ang salarin)
+            
+            // Sa halip na palitan ang lahat, yung SUBTITLE lang ang i-update natin (Optional)
             const sub = document.querySelector('#online-button .card-subtitle');
             if(sub) {
                 sub.textContent = "Ranked Match • Online";
@@ -11176,20 +11198,12 @@ function signInPlayer() {
             createPlayerDocument(); 
             startInviteListener(); 
             setupOnlineStatus(); 
-
-            // --- 👇 ITO ANG BAGONG DAGDAG (Wala sa code mo kanina) 👇 ---
-            // Tinitignan nito kung may "nakabinbin" na wallet galing sa initTonConnect
-            if (window.pendingWalletAddress) {
-                console.log("🚀 Found pending wallet, saving now...", window.pendingWalletAddress);
-                saveWalletToFirebase(window.pendingWalletAddress);
-                window.pendingWalletAddress = null; // Linisin na para hindi maulit
-            }
-            // --- 👆 END NG DAGDAG 👆 ---
-
         } else { 
             signInAnonymously(auth).catch((error) => { 
                 console.error("Sign-in failed:", error); 
                 isAuthReady = false; 
+                
+                // onlineButton.textContent = "Auth Failed"; // <--- BINURA KO RIN ITO
                 onlineButton.disabled = true; 
             }); 
         } 
@@ -12050,9 +12064,7 @@ function findBestBankShot(cueChip, legalTargets) {
             });
         }
         if (!apexBall) apexBall = { x: canvas.width * 0.7, y: canvas.height / 2 };
-        // Magdagdag ng kaunting "Random Error" sa angle (-0.05 hanggang +0.05 radians)
-// Para hindi laging saktong gitna ang tama ng sargo
-const randomError = (Math.random() - 0.5) * 0.1; 
+        const randomError = (Math.random() - 0.5) * 0.1; 
 const breakAngle = Math.atan2(apexBall.y - cueChip.y, apexBall.x - cueChip.x) + randomError;
 
 animateAiAiming(breakAngle, 1.0, { DURATION_ALIGN: 1000, DURATION_FEATHER: 1000 }, { x: 0, y: -0.5 });
@@ -12345,8 +12357,7 @@ function placeCueChipForAI() {
 
     let targetX, targetY;
 
-    // 1. BREAK SHOT (Head String - Keep as is)
-   if (isBreakShot) {
+    if (isBreakShot) {
     // Mananatili ang X sa headstring (1/4 ng mesa)
     targetX = canvas.width * 0.25;
 
@@ -12355,7 +12366,7 @@ function placeCueChipForAI() {
     const minY = canvas.height * 0.2;
     const maxY = canvas.height * 0.8;
     targetY = Math.random() * (maxY - minY) + minY;
-}
+} 
     
     // 2. BALL IN HAND (Anywhere)
     else {
@@ -14682,80 +14693,6 @@ if (spinBtn) spinBtn.addEventListener('click', startSpin);
         }
     }
 
-    // --- 💎 TON CONNECT UPDATED LOGIC (FINAL) 💎 ---
-
-// Global variable para sa naghihintay na wallet
-window.pendingWalletAddress = null;
-
-function initTonConnect() {
-    if (typeof TON_CONNECT_UI === 'undefined') {
-        console.error("TON Connect SDK not loaded.");
-        return;
-    }
-
-    tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-        // Siguraduhin na tama ang link na ito
-        manifestUrl: 'https://arnoldtasipit66-wq.github.io/my-game-assets/tonconnect-manifest.json',
-        buttonRootId: 'ton-connect'
-    });
-
-    // Listen sa status change
-    tonConnectUI.onStatusChange(wallet => {
-        if (wallet) {
-            const rawAddress = wallet.account.address;
-            console.log("💎 Wallet Detected:", rawAddress);
-           
-            // CHECK: Kung ready na ang Firebase User (localPlayerUid)
-            if (localPlayerUid) { 
-                // Kung may user na, save agad
-                saveWalletToFirebase(rawAddress);
-            } else { 
-                // Kung wala pa (naglo-load pa), I-PARK MUNA sa variable
-                console.log("⏳ Waiting for Firebase Login to save wallet...");
-                window.pendingWalletAddress = rawAddress;
-            }
-           
-            showMessage("Wallet Connected! 💎", 3000);
-        } else { 
-            console.log("Wallet Disconnected");
-        }
-    });
-}
-
-// 👇👇👇 ITO ANG MISSING FUNCTION NA KAILANGAN MO 👇👇👇
-
-async function saveWalletToFirebase(walletAddress) {
-    // 1. Check kung may User ID na
-    if (!localPlayerUid || !db) {
-        console.error("❌ Cannot save wallet: No User ID yet.");
-        // I-save muna sa pending para subukan ulit mamaya pag-login
-        window.pendingWalletAddress = walletAddress; 
-        return;
-    }
-
-    console.log("💾 Saving Wallet to Firestore...", walletAddress);
-
-    try {
-        const playerRef = doc(db, "players", localPlayerUid);
-        
-        // 2. GAMITIN ANG setDoc SA HALIP NA updateDoc
-        // Ang { merge: true } ay siguradong gagana kahit wala pang player profile
-        await setDoc(playerRef, {
-            walletAddress: walletAddress,
-            walletConnectedAt: serverTimestamp() 
-        }, { merge: true });
-
-        console.log("✅ SUCCESS: Wallet saved!");
-        showMessage("Wallet Linked Successfully! 💎", 3000);
-        
-        // Clear na ang pending
-        window.pendingWalletAddress = null;
-        
-    } catch (error) {
-        console.error("❌ Error saving wallet:", error);
-        showMessage("Save Failed: Check Console", 3000);
-    }
-}
 </script>
 
 </body>
