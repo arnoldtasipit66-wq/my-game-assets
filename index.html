@@ -6040,12 +6040,12 @@ ghostHand = document.getElementById('ghost-hand'),
               HOLE_RADIUS = 35,    // <-- Pinalitan galing 35
               
               
-              CUE_CHIP_MASS = 6.0,     // Bigat ng Cue Chip (mas mabigat)
-              OBJECT_CHIP_MASS = 3.5,  // Bigat ng Object Chip (mas magaan)
+              CUE_CHIP_MASS = 6.5,     // Bigat ng Cue Chip (mas mabigat)
+              OBJECT_CHIP_MASS = 2.5,  // Bigat ng Object Chip (mas magaan)
               
-              COLLISION_FRICTION = 0.8, // 0 = Walang preno sa banggaan, 1 = Sobrang preno
+              COLLISION_FRICTION = 1, // 0 = Walang preno sa banggaan, 1 = Sobrang preno
        
-              FRICTION_PER_SECOND = 0.3, // <-- ITO ANG PALIT SA 'FRICTION'
+              FRICTION_PER_SECOND = 0.2, // <-- ITO ANG PALIT SA 'FRICTION'
               MIN_VELOCITY = 5.0, // <-- ITO ANG PALIT SA 'MIN_VELOCITY'
               MIN_ROTATION_SPEED = 0.01, 
               ROTATION_SPEED = 0.001,
@@ -7389,7 +7389,7 @@ function toggleMusic() { const isMuted = backgroundPlaylist[0].muted; background
     const tableFrame = document.getElementById('table-frame');
     let frameWidth, frameHeight;
 
-    const paddingPercentage = 0.80; 
+    const paddingPercentage = 0.85; 
 
     if (screenAspectRatio > TABLE_ASPECT_RATIO) {
         frameHeight = containerHeight * paddingPercentage; // <-- NILAGYAN NG PADDING
