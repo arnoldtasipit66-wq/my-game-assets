@@ -5916,15 +5916,15 @@ const SHOP_ITEMS = {
     ],
 
     felts: [
-        { 
-            id: 'default', 
-            name: 'Honey Gold (Default)', 
-            price: 0, 
-            imageSrc: 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my-game-assets/refs/heads/main/Gemini_Generated_Image_jsh1arjsh1arjsh1.png', 
-            tint: 'rgba(200, 150, 70, 0.85)', 
-            type: 'felt', 
-            minLevel: 1 
-        },
+    { 
+        id: 'default', 
+        name: 'Custom Felt', 
+        price: 0, 
+        imageSrc: 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my-game-assets/refs/heads/main/Gemini_Generated_Image_jsh1arjsh1arjsh1.png', 
+        tint: null, // Ginawang null para hindi mag-iba ang kulay
+        type: 'felt', 
+        minLevel: 1 
+    },
         { 
             id: 'felt_royal_blue', 
             name: 'Khaki wood', 
@@ -6075,9 +6075,8 @@ let fireworks = [];
         cueStickImage.src = 'https://i.imgur.com/FYXWKhr.png';
 const feltTextureImage = new Image();
 const tableSurfaceImage = new Image();
-    tableSurfaceImage.crossOrigin = "Anonymous";
-    tableSurfaceImage.src = 'https://i.imgur.com/T9ft7vz.jpeg'; // Siguraduhing ito ang link
-
+tableSurfaceImage.crossOrigin = "Anonymous";
+tableSurfaceImage.src = 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my-game-assets/refs/heads/main/Gemini_Generated_Image_jsh1arjsh1arjsh1.png';
         let unsubscribeFromChat, isInitialChatLoad = true;
         let legalTargetChipIds = new Set(); // <-- BAGONG DAGDAG para sa ring light
 
@@ -7356,6 +7355,19 @@ function draw() {
     // 1. I-drawing ang "master copy" (litrato) ng mesa. Sobrang bilis nito.
     // (Pinalitan nito ang dating ctx.clearRect at drawTable)
     ctx.drawImage(backgroundCanvas, 0, 0);
+
+        // --- VIGNETTE EFFECT START ---
+    const vignette = ctx.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, canvas.width * 0.3, 
+        canvas.width / 2, canvas.height / 2, canvas.width * 0.9 
+    );
+    vignette.addColorStop(0, "rgba(255, 255, 255, 0.05)"); // Highlight sa gitna
+    vignette.addColorStop(0.6, "rgba(0, 0, 0, 0)");       // Transition
+    vignette.addColorStop(1, "rgba(0, 0, 0, 0.6)");        // Shadow sa gilid
+
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // --- VIGNETTE EFFECT END ---
 
     // 2. I-drawing ang mga bagay na gumagalaw (Walang babaguhin dito)
     drawChips(); 
@@ -13794,7 +13806,7 @@ function openPrivateChat(friendUid, friendName) {
     
     // I-save kung sino ang ka-chat
     currentChatFriendUid = friendUid;
-clearChatNotification(friendUid);
+    clearChatNotification(friendUid);
     
     // Ipakita ang Modal
     const modal = document.getElementById('private-chat-modal');
@@ -13803,12 +13815,23 @@ clearChatNotification(friendUid);
     
     title.textContent = friendName;
     modal.classList.add('show');
+
+    // ▼▼▼ DAGDAG: HISTORY FIX PARA HINDI MAG-EXIT ANG GAME ▼▼▼
+    history.pushState({ modal: 'privateChatModal' }, 'Chat', '#chat'); 
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
     historyDiv.innerHTML = '<div style="text-align: center; opacity: 0.5; margin-top: 20px;">Loading conversation...</div>';
     
     // Simulan ang pakikinig sa messages
     listenToPrivateChat(friendUid);
-}
 
+    // ▼▼▼ DAGDAG: SAFE CLOSE BUTTON (Para mag-sync sa Back Button) ▼▼▼
+    // Siguraduhing may function ka na `attachSafeCloseListener` sa baba ng code mo
+    if (typeof attachSafeCloseListener === 'function') {
+        attachSafeCloseListener('private-chat-close', 'private-chat-modal');
+    }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+}
 // 3. Listener: Makinig sa mga bagong messages
 function listenToPrivateChat(friendUid) {
     if (currentChatUnsubscribe) currentChatUnsubscribe(); // Stop previous listener
@@ -14138,11 +14161,10 @@ const assetsToLoad = [
 
     // 2. Static Images
     'https://i.imgur.com/Wg3y3Zn.jpeg', // Background Floor
-    'https://i.imgur.com/T9ft7vz.jpeg', // Wood Texture
-    'https://i.imgur.com/yCvO16j.png',  // Ghost Hand
-    'https://i.imgur.com/FYXWKhr.png',  // Default Cue Stick
+    'https://raw.githubusercontent.com/arnoldtasipit66-wq/my-game-assets/refs/heads/main/Gemini_Generated_Image_jsh1arjsh1arjsh1.png', // Wood Texture (UPDATED)
+    'https://i.imgur.com/yCvO16j.png', // Ghost Hand
+    'https://i.imgur.com/FYXWKhr.png', // Default Cue Stick
 ];
-
 // 3. Dynamic Images (Galing sa Shop Items)
 // Kinukuha natin lahat ng imageSrc mula sa SHOP_ITEMS object mo
 if (typeof SHOP_ITEMS !== 'undefined') {
@@ -14652,9 +14674,28 @@ if (spinBtn) spinBtn.addEventListener('click', startSpin);
             };
         }
 
-        // Activate Safe Listeners for Profile & Settings
-        attachSafeCloseListener('profile-close-btn', 'profile-modal');
-        attachSafeCloseListener('settings-close-btn', 'settings-modal');
+        // --- IDAGDAG MO ITO DITO ---
+        
+        // Listahan ng mga buttons na aayusin natin
+        const modalsToFix = [
+            { btnId: 'ai-menu-close-btn', modalId: 'ai-menu' },
+            { btnId: 'online-select-close-btn', modalId: 'online-game-select' },
+            { btnId: 'online-menu-close-btn', modalId: 'online-menu' },
+            { btnId: 'shop-close-btn', modalId: 'shop-modal' },
+            { btnId: 'daily-reward-close-btn', modalId: 'daily-reward-modal' },
+            { btnId: 'full-image-close-btn', modalId: 'full-image-modal' },
+            { btnId: 'leaderboard-close-btn', modalId: 'leaderboard-modal' },
+            { btnId: 'private-chat-close', modalId: 'private-chat-modal' } // Sinama ko na rin chat dito
+        ];
+
+        // I-activate ang safe close sa kanilang lahat
+        modalsToFix.forEach(item => {
+            if (document.getElementById(item.btnId)) {
+                attachSafeCloseListener(item.btnId, item.modalId);
+            }
+        });
+        
+        // --- TAPOS NA ANG DAGDAG ---
     });
 
     // --- 3. SAFE CLOSE LISTENER (Back Button Fix) ---
