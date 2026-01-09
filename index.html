@@ -7356,19 +7356,25 @@ function draw() {
     // (Pinalitan nito ang dating ctx.clearRect at drawTable)
     ctx.drawImage(backgroundCanvas, 0, 0);
 
-        // --- VIGNETTE EFFECT START ---
+        // --- VIGNETTE EFFECT (FIXED) ---
+    // Kunin ang tamang sukat ng screen (Logical Size) para di sumabog ang graphics
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
     const vignette = ctx.createRadialGradient(
-        canvas.width / 2, canvas.height / 2, canvas.width * 0.3, 
-        canvas.width / 2, canvas.height / 2, canvas.width * 0.9 
+        vw / 2, vh / 2, vw * 0.2, // Start: Mas maliit na highlight sa gitna (20%)
+        vw / 2, vh / 2, vw * 0.8  // End: Shadow start (80% ng screen width)
     );
-    vignette.addColorStop(0, "rgba(255, 255, 255, 0.05)"); // Highlight sa gitna
-    vignette.addColorStop(0.6, "rgba(0, 0, 0, 0)");       // Transition
-    vignette.addColorStop(1, "rgba(0, 0, 0, 0.6)");        // Shadow sa gilid
 
+    // Color Steps
+    vignette.addColorStop(0, "rgba(255, 255, 255, 0.08)"); // Gitna: Light shine
+    vignette.addColorStop(0.5, "rgba(0, 0, 0, 0)");       // Transition: Clear
+    vignette.addColorStop(1, "rgba(0, 0, 0, 0.7)");        // Gilid: Dark Shadow (0.7 opacity)
+
+    // Drawing
     ctx.fillStyle = vignette;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // --- VIGNETTE EFFECT END ---
-
+    ctx.fillRect(0, 0, vw, vh); // Gamitin ang vw/vh, hindi canvas.width
+    // --- END VIGNETTE ---
     // 2. I-drawing ang mga bagay na gumagalaw (Walang babaguhin dito)
     drawChips(); 
     
