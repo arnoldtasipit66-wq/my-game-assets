@@ -6124,9 +6124,9 @@ ghostHand = document.getElementById('ghost-hand'),
               
               
               CUE_CHIP_MASS = 3.5,     // Bigat ng Cue Chip (mas mabigat)
-              OBJECT_CHIP_MASS = 1.5,  // Bigat ng Object Chip (mas magaan)
+              OBJECT_CHIP_MASS = 2.5,  // Bigat ng Object Chip (mas magaan)
               
-              COLLISION_FRICTION = 0.5, // 0 = Walang preno sa banggaan, 1 = Sobrang preno
+              COLLISION_FRICTION = 1, // 0 = Walang preno sa banggaan, 1 = Sobrang preno
        
               FRICTION_PER_SECOND = 0.3, // <-- ITO ANG PALIT SA 'FRICTION'
               MIN_VELOCITY = 5.0, // <-- ITO ANG PALIT SA 'MIN_VELOCITY'
@@ -6170,8 +6170,7 @@ const tableSurfaceImage = new Image();
         let opponentPlayerName = "Opponent";
         let opponentRankIndex = 0;
         let vsScreenShownThisGame = false;
-        // === END PLAYER NAME UPDATE ===
-
+        let telegramUserId = null;
         function init() {
     // 1. Sabihin sa Telegram na ready na ang app
     if (window.Telegram && window.Telegram.WebApp) {
@@ -8927,47 +8926,35 @@ async function handleRematchRequest() {
 }
 
 async function updatePlayerData(uid, didWin = false) {
-    // Tinanggal natin ang check na "!didWin" para ma-save din kapag natalo (bawas trophies)
-    if (!uid) return; 
-    
+    if (!uid || !db) return;
     const playerDocRef = doc(db, "players", uid);
     
     try {
-        const playerDoc = await getDoc(playerDocRef);
         const displayName = localStorage.getItem('pinoyPoolPlayerName') || "Anonymous";
         
-        // Ito ang mga data na ise-save natin sa server
+        // Isama lahat ng mahahalagang stats para naka-sync sa cloud
         const dataToSave = {
             displayName: displayName,
             searchableName: displayName.toLowerCase(),
-            trophies: playerTrophies, // <-- IMPORTANTE: Save Trophies
-            level: playerLevel,       // Save Level
-            xp: playerXP,             // Save XP
+            trophies: playerTrophies,
+            level: playerLevel,
+            xp: playerXP,
+            coins: playerTotalCurrency, // <--- DAGDAG ITO: Para ma-save ang pera
+            equippedCueId: equippedItems.cue || 'default', // <--- DAGDAG ITO: Para naka-sync ang tako
             lastPlayed: serverTimestamp()
         };
 
-        // Kung nanalo lang tsaka magdadagdag ng "Wins" count
         if (didWin) {
             dataToSave.wins = increment(1);
         }
-        
-        // Kung bago pa lang o nagpalit ng pangalan
-        if (!playerDoc.exists() || playerDoc.data().displayName !== displayName) {
-            await setDoc(playerDocRef, dataToSave, { merge: true });
-        } else {
-            // Kung existing player, update lang ang stats
-            delete dataToSave.displayName; // 'Wag na galawin ang pangalan
-            delete dataToSave.searchableName;
-            await updateDoc(playerDocRef, dataToSave);
-        }
-        
-        console.log("Player stats updated successfully on server.");
-        
+
+        // I-save gamit ang merge: true para hindi mabura ang ibang fields
+        await setDoc(playerDocRef, dataToSave, { merge: true });
+        console.log("Stats successfully synced to Firestore for UID:", uid);
     } catch (error) {
         console.error("Error updating player data:", error);
     }
 }
-
 // ▲▲▲ DULO NG STEP 5 ▲▲▲
         async function cleanupMatchmakingEntry() { if (unsubscribeFromQueue) { unsubscribeFromQueue(); unsubscribeFromQueue = null; } const queueCollection = collection(db, "matchmakingQueue"); const q = query(queueCollection, where("uid", "==", localPlayerUid)); const snapshot = await getDocs(q); if (!snapshot.empty) { const myDocRef = snapshot.docs[0].ref; await deleteDoc(myDocRef); } }
         
@@ -11252,33 +11239,33 @@ function showColorAssignmentPopup(message, color) {
         popup.remove();
     }, 4000); // Mananatili ng 2.5 segundo
 }
-// ▲▲▲ HANGGANG DITO ANG BAGONG FUNCTION ▲▲▲
-        function signInPlayer() { 
+function signInPlayer() { 
     onAuthStateChanged(auth, (user) => { 
         if (user) { 
-            localPlayerUid = user.uid; 
+            // Mas priority ang Telegram ID para hindi mawala ang progress
+            localPlayerUid = telegramUserId || user.uid; 
+            
             isAuthReady = true; 
-            onlineButton.disabled = false; 
+            if(onlineButton) onlineButton.disabled = false; 
             
-            // onlineButton.textContent = "Online Multiplayer"; // <--- BINURA KO NA ITO! (Ang salarin)
-            
-            // Sa halip na palitan ang lahat, yung SUBTITLE lang ang i-update natin (Optional)
+            // I-update ang UI ng Online Button
             const sub = document.querySelector('#online-button .card-subtitle');
             if(sub) {
                 sub.textContent = "Ranked Match • Online";
-                sub.style.color = "#00FF00"; // Gawing Green para alam mong connected
+                sub.style.color = "#00FF00"; 
             }
 
+            // Simulan ang cloud sync
             createPlayerDocument(); 
             startInviteListener(); 
             setupOnlineStatus(); 
+            
+            console.log("Logged in as:", localPlayerUid);
         } else { 
             signInAnonymously(auth).catch((error) => { 
                 console.error("Sign-in failed:", error); 
                 isAuthReady = false; 
-                
-                // onlineButton.textContent = "Auth Failed"; // <--- BINURA KO RIN ITO
-                onlineButton.disabled = true; 
+                if(onlineButton) onlineButton.disabled = true; 
             }); 
         } 
     }); 
@@ -11390,49 +11377,41 @@ function showInvitePopup(fromName, gameType, inviteId, inviteData) { // Note: Ad
     modal.classList.add('show');
 }
 
-/**
- * Tinitingnan kung may player document na, kung wala, gagawa ng bago.
- * Ito ang titiyak na lahat ng player ay may 'searchableName' agad.
- */
 async function createPlayerDocument() {
-    // Siguraduhin na may UID, database, AT pangalan na bago sumubok magsulat
-    if (!localPlayerUid || !db || !localPlayerName || localPlayerName === "Guest") {
-        // Kung wala pa ang isa sa mga 'to, huwag munang ituloy.
-        // Tatawagin ulit 'to mamaya kapag kumpleto na.
-        console.log("Waiting for UID and Name before creating player document...");
-        return; 
-    }
-
+    if (!localPlayerUid || !db) return;
     const playerDocRef = doc(db, "players", localPlayerUid);
-
+    
     try {
-        const playerDoc = await getDoc(playerDocRef);
+        const docSnap = await getDoc(playerDocRef);
+        const displayName = localStorage.getItem('pinoyPoolPlayerName') || "Player_" + localPlayerUid.slice(0, 5);
 
-        if (!playerDoc.exists()) {
-            // --- BAGO PA LANG ANG PLAYER ---
-            // Gagawa tayo ng bagong document para sa kanila
-            console.log("Creating new player document for:", localPlayerName);
+        if (!docSnap.exists()) {
+            // BAGONG PLAYER: Gawan ng initial record
             await setDoc(playerDocRef, {
-                displayName: localPlayerName,
-                searchableName: localPlayerName.toLowerCase(), // ETO NA YUN!
+                displayName: displayName,
+                searchableName: displayName.toLowerCase(),
+                coins: 500, 
+                trophies: 0,
+                level: 1,
+                xp: 0,
                 wins: 0,
-                level: 1, // Kunin natin sa global variable
-                xp: 0,    // Kunin natin sa global variable
-                equippedCueId: 'default',
                 lastPlayed: serverTimestamp()
             });
+            console.log("Initial player record created in cloud.");
         } else {
-            // --- BUMALIK NA PLAYER ---
-            // I-update lang natin ang pangalan at searchableName
-            // para kung nag-iba man, updated pa rin.
-            console.log("Player document exists. Updating name...");
-            await updateDoc(playerDocRef, {
-                displayName: localPlayerName,
-                searchableName: localPlayerName.toLowerCase() // ETO NA YUN!
-            });
+            // LUMANG PLAYER: Kunin ang coins at stats mula sa cloud
+            const data = docSnap.data();
+            playerTotalCurrency = data.coins || 0;
+            playerTrophies = data.trophies || 0;
+            playerLevel = data.level || 1;
+            playerXP = data.xp || 0;
+            
+            // I-update ang UI sa lobby para makita agad ang pera
+            if (typeof updateLobbyUI === 'function') updateLobbyUI(); 
+            console.log("Player stats synced from cloud.");
         }
-    } catch (error) {
-        console.error("Error creating or updating player document:", error);
+    } catch (e) {
+        console.error("Error in cloud sync:", e);
     }
 }
 
