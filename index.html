@@ -7366,7 +7366,7 @@ function draw() {
     // Ang "Outer Shadow" naman ay ibabase sa Width (mas mahaba) para umabot sa kanto.
     
     // Radius ng Liwanag (Center)
-    const rInner = canvas.height * 0.3; 
+    const rInner = canvas.height * 0.0; 
     
     // Radius ng Shadow (Edges) - Gumamit ng Math.max para safe sa portrait/landscape
     const rOuter = Math.max(canvas.width, canvas.height) * 0.8;
@@ -7376,7 +7376,7 @@ function draw() {
     // Color Steps
     vignette.addColorStop(0, "rgba(255, 255, 255, 0.1)");  // Kintab sa gitna (Dagdagan mo kung gusto mo mas shiny)
     vignette.addColorStop(0.5, "rgba(0, 0, 0, 0)");       // Transition (Clear part)
-    vignette.addColorStop(1, "rgba(0, 0, 0, 0.7)");        // Shadow sa gilid
+    vignette.addColorStop(1, "rgba(0, 0, 0, 0.9)");        // Shadow sa gilid
 
     // Drawing
     ctx.fillStyle = vignette;
