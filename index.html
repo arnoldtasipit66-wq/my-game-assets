@@ -714,7 +714,7 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
     }
 
     #power-control {
-        right: 12px; top: 50%; transform: translateY(-50%);
+        right: 5px; top: 50%; transform: translateY(-50%);
         width: 40px; height: 230px;
         background-color: rgba(0, 0, 0, 0.4);
         border: 1px solid rgba(255, 255, 255, 0.3);
@@ -728,7 +728,7 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
 
         #pektus-control {
         bottom: 70px; 
-        left: 12px; 
+        left: 5px; 
         top: auto; 
         right: auto; 
         transform: none;
@@ -999,7 +999,7 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
     #game-mode-select { display: none !important; }
 
     #utility-controls-container {
-        position: absolute; top: 50%; left: 12px;
+        position: absolute; top: 50%; left: 10px;
         transform: translateY(-50%); z-index: 000;
         display: flex; flex-direction: column; gap: 8px; pointer-events: all;
     }
@@ -1136,9 +1136,8 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
 #exit-button {
     position: absolute !important;
     top: 15px !important;          
-    left: 12% !important; /* Mula right, ginawang left: 12% para malapit sa mesa */
-    right: auto !important; /* Siguraduhing i-reset ang right */
-   
+    right: 15px !important;        
+    
     bottom: auto !important;       
     left: auto !important;        
     transform: none !important;    
@@ -1166,10 +1165,11 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
     }
     #exit-button {
         top: 10px !important;
-        left: 12% !important;  /* Mula right: 10px, gawing left: 12% */
-        right: auto !important;
+        right: 10px !important;
+        padding: 5px 12px !important;
     }
 }
+
 
 #xp-container {
     position: absolute !important;
@@ -1800,11 +1800,12 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
     .dock-label { font-size: 0.6em !important; }
 }
 
-/* 1. BASE STYLE: Dito natin ilalagay ang transition para smooth ang paglaki */
 #player-info, #opponent-info {
     position: absolute;
     top: 0px !important;
+    
     height: 28px !important; 
+    
     width: auto !important;
     min-width: auto !important;
     max-width: 200px !important;
@@ -1820,14 +1821,12 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
     
     color: white !important;
     font-family: 'Nunito', sans-serif !important;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.4) !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4) !important; /* Pinaliit shadow */
     z-index: 20 !important;
     
     pointer-events: auto !important;
     cursor: pointer !important;
-
-    /* IDAGDAG ITO: Transition para hindi biglaang pitik ang paglaki */
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s ease !important;
+    transition: transform 0.3s ease-out;
 }
 
 
@@ -4082,8 +4081,8 @@ input:checked + .slider:before {
 /* 4. Settings Gear Button (Main Screen) */
 #main-settings-btn {
     position: absolute !important;
-    top: 65px !important;
-    left: 12px !important;
+    top: 15px !important;
+    left: 15px !important;
     z-index: 100 !important;
     font-size: 1.5em !important;
     border: 2px solid #D500F9 !important;
@@ -4260,14 +4259,15 @@ input:checked + .slider:before {
     }
 }
 
-/* 2. ACTIVE PLAYER: Steady na malaki (Wala nang breathing animation) */
+/* 2. I-APPLY SA ACTIVE PLAYER (Gamit ang ID+Class para pinaka-malakas) */
+/* 2. I-APPLY SA ACTIVE PLAYER (Gamit ang ID+Class para pinaka-malakas) */
 div#player-info.hud-active, 
 div#opponent-info.hud-active {
-    /* Pilitin nating ipakita */
+    /* Pilitin nating ipakita (Override any hidden opacity) */
     opacity: 1 !important;
     z-index: 999 !important;
     
-    /* Pilitin ang GOLD Border */
+    /* Pilitin ang GOLD Border (Tatalunin nito ang lumang white border) */
     border: 2px solid #FFD700 !important; 
     
     /* Gawing Solid ang Background para litaw */
@@ -4276,14 +4276,14 @@ div#opponent-info.hud-active {
     /* Pilitin ang Initial Glow */
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
     
-    /* --- STOP LAG FIX --- */
-    /* 1. Tanggalin ang animation */
+    /* --- DITO ANG PAGBABAGO PARA IWAS LAG --- */
+    
+    /* Tanggalin ang breathing animation */
     animation: none !important; 
 
-    /* 2. Steady na paglaki (Scale Up) */
+    /* Palitan ng Fixed na Paglaki (Steady lang na malaki) */
     transform: scale(1.15) !important;
 }
-
 /* === PRELOADER STYLES === */
 #preloader-overlay {
     position: fixed;
@@ -5060,83 +5060,7 @@ div#opponent-info.hud-active {
     }
 }
 
- /* --- LANDSCAPE ENFORCER (Ang Harang) --- */
-    #rotate-warning {
-        display: none; 
-    }
-
-    @media only screen and (orientation: portrait) {
-        #game-container, #ui-layer, .bottom-nav, canvas, #game-wrapper, #lobby-screen {
-            display: none !important;
-        }
-
-        #rotate-warning {
-            display: flex;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            background-color: #0b0c15;
-            z-index: 999999;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            color: white;
-        }
-
-        .phone-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-            animation: rotate-anim 2s infinite ease-in-out;
-        }
-
-        .rotate-content h1 {
-            font-family: 'Luckiest Guy', cursive;
-            font-size: 30px;
-            color: #00ff88;
-            margin: 0;
-        }
-        
-        @keyframes rotate-anim {
-            0% { transform: rotate(0deg); }
-            25% { transform: rotate(-90deg); }
-            50% { transform: rotate(-90deg); }
-            100% { transform: rotate(0deg); }
-        }
-    }
-
-    /* BUTTON STYLES (Neon) */
-    button, .menu-button {
-        background: linear-gradient(135deg, #00ff88 0%, #00bd65 100%) !important;
-        border: none !important;
-        border-radius: 12px !important;
-        color: #000 !important;
-        font-weight: bold;
-        text-transform: uppercase;
-        box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
-    }
-    
-    button:active { transform: scale(0.95); }
-
-    /* MODAL STYLES (Glass) */
-    .modal-overlay .content {
-        background: rgba(20, 20, 35, 0.95) !important;
-        border: 1px solid var(--neon-blue) !important;
-        box-shadow: 0 0 30px rgba(0, 243, 255, 0.2) !important;
-        border-radius: 20px !important;
-        color: white !important;
-    }
-
-    h2 { color: var(--neon-blue) !important; text-shadow: 0 0 10px var(--neon-blue) !important; }
-    
-    /* LOADING SCREEN */
-    #preloader-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: #0b0c15; z-index: 99999;
-        display: flex; justify-content: center; align-items: center;
-    }
-
-      /* --- CLEAN ELITE SIDEBAR (4-BUTTON SETUP) --- */
+/* --- CLEAN ELITE SIDEBAR (4-BUTTON SETUP) --- */
 
 /* 1. Main Anchor (5% distansya sa gilid ng screen) */
 #exit-button, 
@@ -5213,19 +5137,10 @@ div#opponent-info.hud-active {
     border-radius: 25px !important;
     background: rgba(0, 0, 0, 0.5) !important;
 }
+        
 </style>
 </head>
 <body>
-
-<div id="rotate-warning">
-        <div class="rotate-content">
-            <div class="phone-icon">📱 ➡️ 🔄</div>
-            <h1>PAKI-LANDSCAPE PO</h1>
-            <p>Mas masarap tumira kapag pahalang, Boss.</p>
-        </div>
-    </div>
-     
-    <div id="game-container"> ...
 
 <div id="private-chat-modal" class="modal-overlay">
     <div class="content" style="width: 90%; max-width: 450px; height: 80vh; padding: 0;">
@@ -5248,6 +5163,7 @@ div#opponent-info.hud-active {
 
     </div>
 </div>
+
     <div id="start-overlay" class="modal-overlay">
     <h2>Pinoy Pool</h2>
     <p id="start-prompt-text" style="font-size: 1.5em; margin-top: -10px; color: rgba(255,255,255,0.8); cursor: pointer; display: none;">
@@ -5797,6 +5713,7 @@ div#opponent-info.hud-active {
         <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.35 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.65 15.47,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.53,5.32 7.96,5.65 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.35 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.04 4.95,18.95L7.44,17.95C7.96,18.35 8.53,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.47,18.68 16.04,18.35 16.56,17.95L19.05,18.95C19.27,19.04 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
     </svg>
 </button>
+
     <div id="full-image-modal" class="modal-overlay" style="background-color: rgba(0,0,0,0.95) !important; z-index: 20000;">
     <span class="modal-close-btn" id="full-image-close-btn" style="top: 20px; right: 20px; font-size: 3em;">&times;</span>
     
@@ -6126,7 +6043,7 @@ ghostHand = document.getElementById('ghost-hand'),
               CUE_CHIP_MASS = 3.5,     // Bigat ng Cue Chip (mas mabigat)
               OBJECT_CHIP_MASS = 2.5,  // Bigat ng Object Chip (mas magaan)
               
-              COLLISION_FRICTION = 1, // 0 = Walang preno sa banggaan, 1 = Sobrang preno
+              COLLISION_FRICTION = 0.8, // 0 = Walang preno sa banggaan, 1 = Sobrang preno
        
               FRICTION_PER_SECOND = 0.3, // <-- ITO ANG PALIT SA 'FRICTION'
               MIN_VELOCITY = 5.0, // <-- ITO ANG PALIT SA 'MIN_VELOCITY'
@@ -6170,7 +6087,8 @@ const tableSurfaceImage = new Image();
         let opponentPlayerName = "Opponent";
         let opponentRankIndex = 0;
         let vsScreenShownThisGame = false;
-        let telegramUserId = null;
+        // === END PLAYER NAME UPDATE ===
+
         function init() {
     // 1. Sabihin sa Telegram na ready na ang app
     if (window.Telegram && window.Telegram.WebApp) {
@@ -7471,7 +7389,7 @@ function toggleMusic() { const isMuted = backgroundPlaylist[0].muted; background
     const tableFrame = document.getElementById('table-frame');
     let frameWidth, frameHeight;
 
-    const paddingPercentage = 0.85; 
+    const paddingPercentage = 0.80; 
 
     if (screenAspectRatio > TABLE_ASPECT_RATIO) {
         frameHeight = containerHeight * paddingPercentage; // <-- NILAGYAN NG PADDING
@@ -8926,35 +8844,47 @@ async function handleRematchRequest() {
 }
 
 async function updatePlayerData(uid, didWin = false) {
-    if (!uid || !db) return;
+    // Tinanggal natin ang check na "!didWin" para ma-save din kapag natalo (bawas trophies)
+    if (!uid) return; 
+    
     const playerDocRef = doc(db, "players", uid);
     
     try {
+        const playerDoc = await getDoc(playerDocRef);
         const displayName = localStorage.getItem('pinoyPoolPlayerName') || "Anonymous";
         
-        // Isama lahat ng mahahalagang stats para naka-sync sa cloud
+        // Ito ang mga data na ise-save natin sa server
         const dataToSave = {
             displayName: displayName,
             searchableName: displayName.toLowerCase(),
-            trophies: playerTrophies,
-            level: playerLevel,
-            xp: playerXP,
-            coins: playerTotalCurrency, // <--- DAGDAG ITO: Para ma-save ang pera
-            equippedCueId: equippedItems.cue || 'default', // <--- DAGDAG ITO: Para naka-sync ang tako
+            trophies: playerTrophies, // <-- IMPORTANTE: Save Trophies
+            level: playerLevel,       // Save Level
+            xp: playerXP,             // Save XP
             lastPlayed: serverTimestamp()
         };
 
+        // Kung nanalo lang tsaka magdadagdag ng "Wins" count
         if (didWin) {
             dataToSave.wins = increment(1);
         }
-
-        // I-save gamit ang merge: true para hindi mabura ang ibang fields
-        await setDoc(playerDocRef, dataToSave, { merge: true });
-        console.log("Stats successfully synced to Firestore for UID:", uid);
+        
+        // Kung bago pa lang o nagpalit ng pangalan
+        if (!playerDoc.exists() || playerDoc.data().displayName !== displayName) {
+            await setDoc(playerDocRef, dataToSave, { merge: true });
+        } else {
+            // Kung existing player, update lang ang stats
+            delete dataToSave.displayName; // 'Wag na galawin ang pangalan
+            delete dataToSave.searchableName;
+            await updateDoc(playerDocRef, dataToSave);
+        }
+        
+        console.log("Player stats updated successfully on server.");
+        
     } catch (error) {
         console.error("Error updating player data:", error);
     }
 }
+
 // ▲▲▲ DULO NG STEP 5 ▲▲▲
         async function cleanupMatchmakingEntry() { if (unsubscribeFromQueue) { unsubscribeFromQueue(); unsubscribeFromQueue = null; } const queueCollection = collection(db, "matchmakingQueue"); const q = query(queueCollection, where("uid", "==", localPlayerUid)); const snapshot = await getDocs(q); if (!snapshot.empty) { const myDocRef = snapshot.docs[0].ref; await deleteDoc(myDocRef); } }
         
@@ -11239,33 +11169,33 @@ function showColorAssignmentPopup(message, color) {
         popup.remove();
     }, 4000); // Mananatili ng 2.5 segundo
 }
-function signInPlayer() { 
+// ▲▲▲ HANGGANG DITO ANG BAGONG FUNCTION ▲▲▲
+        function signInPlayer() { 
     onAuthStateChanged(auth, (user) => { 
         if (user) { 
-            // Mas priority ang Telegram ID para hindi mawala ang progress
-            localPlayerUid = telegramUserId || user.uid; 
-            
+            localPlayerUid = user.uid; 
             isAuthReady = true; 
-            if(onlineButton) onlineButton.disabled = false; 
+            onlineButton.disabled = false; 
             
-            // I-update ang UI ng Online Button
+            // onlineButton.textContent = "Online Multiplayer"; // <--- BINURA KO NA ITO! (Ang salarin)
+            
+            // Sa halip na palitan ang lahat, yung SUBTITLE lang ang i-update natin (Optional)
             const sub = document.querySelector('#online-button .card-subtitle');
             if(sub) {
                 sub.textContent = "Ranked Match • Online";
-                sub.style.color = "#00FF00"; 
+                sub.style.color = "#00FF00"; // Gawing Green para alam mong connected
             }
 
-            // Simulan ang cloud sync
             createPlayerDocument(); 
             startInviteListener(); 
             setupOnlineStatus(); 
-            
-            console.log("Logged in as:", localPlayerUid);
         } else { 
             signInAnonymously(auth).catch((error) => { 
                 console.error("Sign-in failed:", error); 
                 isAuthReady = false; 
-                if(onlineButton) onlineButton.disabled = true; 
+                
+                // onlineButton.textContent = "Auth Failed"; // <--- BINURA KO RIN ITO
+                onlineButton.disabled = true; 
             }); 
         } 
     }); 
@@ -11377,41 +11307,49 @@ function showInvitePopup(fromName, gameType, inviteId, inviteData) { // Note: Ad
     modal.classList.add('show');
 }
 
+/**
+ * Tinitingnan kung may player document na, kung wala, gagawa ng bago.
+ * Ito ang titiyak na lahat ng player ay may 'searchableName' agad.
+ */
 async function createPlayerDocument() {
-    if (!localPlayerUid || !db) return;
-    const playerDocRef = doc(db, "players", localPlayerUid);
-    
-    try {
-        const docSnap = await getDoc(playerDocRef);
-        const displayName = localStorage.getItem('pinoyPoolPlayerName') || "Player_" + localPlayerUid.slice(0, 5);
+    // Siguraduhin na may UID, database, AT pangalan na bago sumubok magsulat
+    if (!localPlayerUid || !db || !localPlayerName || localPlayerName === "Guest") {
+        // Kung wala pa ang isa sa mga 'to, huwag munang ituloy.
+        // Tatawagin ulit 'to mamaya kapag kumpleto na.
+        console.log("Waiting for UID and Name before creating player document...");
+        return; 
+    }
 
-        if (!docSnap.exists()) {
-            // BAGONG PLAYER: Gawan ng initial record
+    const playerDocRef = doc(db, "players", localPlayerUid);
+
+    try {
+        const playerDoc = await getDoc(playerDocRef);
+
+        if (!playerDoc.exists()) {
+            // --- BAGO PA LANG ANG PLAYER ---
+            // Gagawa tayo ng bagong document para sa kanila
+            console.log("Creating new player document for:", localPlayerName);
             await setDoc(playerDocRef, {
-                displayName: displayName,
-                searchableName: displayName.toLowerCase(),
-                coins: 500, 
-                trophies: 0,
-                level: 1,
-                xp: 0,
+                displayName: localPlayerName,
+                searchableName: localPlayerName.toLowerCase(), // ETO NA YUN!
                 wins: 0,
+                level: 1, // Kunin natin sa global variable
+                xp: 0,    // Kunin natin sa global variable
+                equippedCueId: 'default',
                 lastPlayed: serverTimestamp()
             });
-            console.log("Initial player record created in cloud.");
         } else {
-            // LUMANG PLAYER: Kunin ang coins at stats mula sa cloud
-            const data = docSnap.data();
-            playerTotalCurrency = data.coins || 0;
-            playerTrophies = data.trophies || 0;
-            playerLevel = data.level || 1;
-            playerXP = data.xp || 0;
-            
-            // I-update ang UI sa lobby para makita agad ang pera
-            if (typeof updateLobbyUI === 'function') updateLobbyUI(); 
-            console.log("Player stats synced from cloud.");
+            // --- BUMALIK NA PLAYER ---
+            // I-update lang natin ang pangalan at searchableName
+            // para kung nag-iba man, updated pa rin.
+            console.log("Player document exists. Updating name...");
+            await updateDoc(playerDocRef, {
+                displayName: localPlayerName,
+                searchableName: localPlayerName.toLowerCase() // ETO NA YUN!
+            });
         }
-    } catch (e) {
-        console.error("Error in cloud sync:", e);
+    } catch (error) {
+        console.error("Error creating or updating player document:", error);
     }
 }
 
@@ -12117,10 +12055,8 @@ function findBestBankShot(cueChip, legalTargets) {
             });
         }
         if (!apexBall) apexBall = { x: canvas.width * 0.7, y: canvas.height / 2 };
-        const randomError = (Math.random() - 0.5) * 0.1; 
-const breakAngle = Math.atan2(apexBall.y - cueChip.y, apexBall.x - cueChip.x) + randomError;
-
-animateAiAiming(breakAngle, 1.0, { DURATION_ALIGN: 1000, DURATION_FEATHER: 1000 }, { x: 0, y: -0.5 });
+        const breakAngle = Math.atan2(apexBall.y - cueChip.y, apexBall.x - cueChip.x);
+        animateAiAiming(breakAngle, 1.0, { DURATION_ALIGN: 1000, DURATION_FEATHER: 1000 }, { x: 0, y: -0.5 });
         return;
     }
 
@@ -12410,16 +12346,14 @@ function placeCueChipForAI() {
 
     let targetX, targetY;
 
+    // 1. BREAK SHOT (Head String - Keep as is)
     if (isBreakShot) {
-    // Mananatili ang X sa headstring (1/4 ng mesa)
-    targetX = canvas.width * 0.25;
-
-    // RANDOM Y: Kukuha tayo ng random spot sa pagitan ng 20% hanggang 80% ng taas ng mesa.
-    // Sa paraang ito, hindi na lang dalawang pwesto ang pagpipilian niya.
-    const minY = canvas.height * 0.2;
-    const maxY = canvas.height * 0.8;
-    targetY = Math.random() * (maxY - minY) + minY;
-} 
+        const breakLineX = canvas.width * 0.25; 
+        const offsetFromCenter = canvas.height * 0.1; 
+        const headsOrTails = Math.random(); 
+        targetX = breakLineX; 
+        targetY = (headsOrTails < 0.5) ? (canvas.height / 2) + offsetFromCenter : (canvas.height / 2) - offsetFromCenter; 
+    } 
     
     // 2. BALL IN HAND (Anywhere)
     else {
