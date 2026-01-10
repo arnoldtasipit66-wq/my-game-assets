@@ -5229,9 +5229,7 @@ div#opponent-info.hud-active {
         <div id="non-interactive-overlay">
     
     <div id="currency-display" class="info-box">
-    💰 <span class="coin-balance-display">0</span>
-</div>
-
+    <span style="color: #FFD700; font-weight: bold;">$PPM:</span> <span class="coin-balance-display">0</span>
 <div id="xp-container" style="position: absolute; bottom: 5px; left: 5px; background-color: var(--dark-bg); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; 
     
     padding: 3px 5px; /* <--- GINAWA KONG 3px (taas/baba) at 5px (kaliwa/kanan) */
@@ -6372,7 +6370,7 @@ async function endGame(winnerTextMessage, finalGameData = null) {
         }
         if(bonus > 0) {
             playerTotalCurrency += bonus;
-            localStorage.setItem('pinoyPoolCurrency', playerTotalCurrency.toString()); 
+            saveCurrency();
             updateCurrencyDisplay();
         }
     } else { // ONLINE GAME
@@ -6386,14 +6384,14 @@ async function endGame(winnerTextMessage, finalGameData = null) {
                 const houseCut = Math.floor(totalPot * 0.10); 
                 const netWin = totalPot - houseCut;
                 playerTotalCurrency += netWin;
-                localStorage.setItem('pinoyPoolCurrency', playerTotalCurrency.toString());
+                saveCurrency();
                 updateCurrencyDisplay(); 
                 setTimeout(() => { showRewardPopup(netWin, `POT WON!<br><small>(Tong: ${houseCut})</small>`); }, 1000);
                 reason = "Pustahan King!";
             } else {
                 bonus = REWARD_WIN_BONUS;
                 playerTotalCurrency += bonus;
-                localStorage.setItem('pinoyPoolCurrency', playerTotalCurrency.toString()); 
+                saveCurrency();
                 updateCurrencyDisplay();
                 reason = "Online Win!";
                 showRewardPopup(bonus, reason);
@@ -8288,10 +8286,15 @@ async function handle61BallTurnEnd() {
                 if(typeof currentCombo !== 'undefined') { currentCombo++; showComboPopup(currentCombo); }
                 
                 const reward = pocketedObjectChips.length * REWARD_PER_BALL;
-                playerTotalCurrency += reward;
-                showRewardPopup(reward);
-                updateCurrencyDisplay();
-                gainXP(pocketedObjectChips.length * XP_PER_BALL);
+playerTotalCurrency += reward;
+
+// 👇 DITO MO ILAGAY (Para save agad sa database)
+if (window.savePPM) window.savePPM(); 
+// 👆 
+
+showRewardPopup(reward);
+updateCurrencyDisplay();
+gainXP(pocketedObjectChips.length * XP_PER_BALL);
             }
 
         } else {
@@ -9614,7 +9617,7 @@ function gainXP(amount) {
 
                 // Rewards
                 playerTotalCurrency += 250; 
-                localStorage.setItem('pinoyPoolCurrency', playerTotalCurrency.toString());
+                saveCurrency();
                 updateCurrencyDisplay(); 
                 
                 // Safe call sa popup
@@ -9818,13 +9821,27 @@ function updateInfoBox() {
     } 
 }
 // Idagdag itong 3 bagong functions
-function loadCurrency() {
-    // Kinukuha ang na-save na currency sa browser
-    const savedCurrency = localStorage.getItem('pinoyPoolCurrency');
-    playerTotalCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 0;
-    updateCurrencyDisplay();
+// ✅ BAGONG LOAD FUNCTION (Galing Firebase)
+async function loadCurrency() {
+    if (!db || !localPlayerUid) return; // Wait for connection
+    try {
+        const docRef = doc(db, "players", localPlayerUid);
+        const snap = await getDoc(docRef);
+        
+        if (snap.exists()) {
+            // Kunin ang laman ng wallet sa server
+            playerTotalCurrency = snap.data().balance || 0;
+            console.log("PPM Loaded:", playerTotalCurrency);
+        } else {
+            // New Player? Bigyan ng 100 PPM panimula
+            playerTotalCurrency = 100;
+            updatePlayerData(localPlayerUid); // Save agad
+        }
+        updateCurrencyDisplay();
+    } catch (e) {
+        console.error("Error loading PPM:", e);
+    }
 }
-
 function loadPlayerName() {
     // 1. I-check kung nasa loob tayo ng Telegram Mini App
     const tg = window.Telegram?.WebApp;
@@ -11194,20 +11211,25 @@ function showColorAssignmentPopup(message, color) {
     }, 4000); // Mananatili ng 2.5 segundo
 }
 // ▲▲▲ HANGGANG DITO ANG BAGONG FUNCTION ▲▲▲
-        function signInPlayer() { 
+     function signInPlayer() { 
     onAuthStateChanged(auth, (user) => { 
         if (user) { 
             localPlayerUid = user.uid; 
             isAuthReady = true; 
             onlineButton.disabled = false; 
             
-            // onlineButton.textContent = "Online Multiplayer"; // <--- BINURA KO NA ITO! (Ang salarin)
+            // --- 👇 DITO NATIN IDINAGDAG ITO 👇 ---
+            // Tawagin ang function para kunin ang $PPM sa database
+            if (typeof loadCurrency === 'function') {
+                loadCurrency(); 
+            }
+            // --------------------------------------
             
-            // Sa halip na palitan ang lahat, yung SUBTITLE lang ang i-update natin (Optional)
+            // Update UI (Subtitle lang)
             const sub = document.querySelector('#online-button .card-subtitle');
             if(sub) {
                 sub.textContent = "Ranked Match • Online";
-                sub.style.color = "#00FF00"; // Gawing Green para alam mong connected
+                sub.style.color = "#00FF00"; 
             }
 
             createPlayerDocument(); 
@@ -11218,7 +11240,6 @@ function showColorAssignmentPopup(message, color) {
                 console.error("Sign-in failed:", error); 
                 isAuthReady = false; 
                 
-                // onlineButton.textContent = "Auth Failed"; // <--- BINURA KO RIN ITO
                 onlineButton.disabled = true; 
             }); 
         } 
@@ -11802,7 +11823,7 @@ function listenToGameUpdates(gameId) {
                 playerTotalCurrency = currentMoney - betToDeduct;
                 currentMatchBet = betToDeduct;
                 
-                localStorage.setItem('pinoyPoolCurrency', playerTotalCurrency.toString());
+                saveCurrency();
                 updateCurrencyDisplay();
                 
                 setTimeout(() => {
@@ -13229,8 +13250,19 @@ function closeDailyRewardModal() {
 }
 
 // Function para i-save ang currency (para reusable)
-function saveCurrency() {
-     localStorage.setItem('pinoyPoolCurrency', playerTotalCurrency.toString());
+// ✅ BAGONG SAVE FUNCTION (Papuntang Firebase)
+async function saveCurrency() {
+    if (!db || !localPlayerUid) return;
+    try {
+        const docRef = doc(db, "players", localPlayerUid);
+        // I-update ang balance sa database
+        await updateDoc(docRef, {
+            balance: playerTotalCurrency
+        });
+        console.log("PPM Saved:", playerTotalCurrency);
+    } catch (e) {
+        console.error("Error saving PPM:", e);
+    }
 }
 
 // ▼▼▼ UPDATED LOBBY LOGIC (WITH RANK CARD) ▼▼▼
