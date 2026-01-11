@@ -5723,17 +5723,19 @@ div#opponent-info.hud-active {
         import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
 const tg = window.Telegram.WebApp;
-        // --- TELEGRAM BACK BUTTON CONFIG ---
 tg.BackButton.onClick(() => {
-    const activeModal = document.querySelector('.modal.show');
-    if (activeModal) {
-        activeModal.classList.remove('show'); 
-        tg.BackButton.hide(); // Itago ang back button
+        // Tinitingnan kung may modal overlay na nakabukas (base sa class na ginamit mo sa index 25)
+        const activeModal = document.querySelector('.modal-overlay.show') || document.querySelector('.modal.show');
         
-        if (window) window.isClosingModal = true;
-        history.back(); 
-    }
-});
+        if (activeModal) {
+            activeModal.classList.remove('show'); 
+            tg.BackButton.hide(); // Itago ang back button pagka-close
+            
+            if (window) window.isClosingModal = true;
+            history.back(); 
+            console.log("Modal closed via Telegram Back Button");
+        }
+    });        
                let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
 window.isInGame = false;
 
