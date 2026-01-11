@@ -8881,7 +8881,7 @@ async function handleRematchRequest() {
 }
 
 async function updatePlayerData(uid, didWin = false) {
-    if (!uid) return;
+    if (!uid || !db) return;
    
     const playerDocRef = doc(db, "players", uid);
    
@@ -8889,41 +8889,36 @@ async function updatePlayerData(uid, didWin = false) {
         const playerDoc = await getDoc(playerDocRef);
         const displayName = localStorage.getItem('pinoyPoolPlayerName') || "Anonymous";
         
-        // Kunin ang data mula sa Telegram WebApp
+        // Kunin ang data mula sa Telegram
         const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+        
+        // Kunin ang Wallet Address mula sa TON Connect UI
+        const currentWalletAddress = tonConnectUI.account?.address || null;
        
-        // Ito ang mga data na ise-save natin (Kabilang na ang TG Wallet/ID)
         const dataToSave = {
             displayName: displayName,
             searchableName: displayName.toLowerCase(),
-            trophies: playerTrophies,      // Save Trophies
-            level: playerLevel,            // Save Level
-            xp: playerXP,                  // Save XP
-            walletAddress: walletAddress,
-            balance: playerTotalCurrency,  // Isama na rin ang Coins dito para sigurado
-            tgId: tgUser ? tgUser.id : (playerDoc.exists() ? (playerDoc.data().tgId || null) : null), // Ito ang TG Wallet/ID
+            trophies: playerTrophies,
+            level: playerLevel,
+            xp: playerXP,
+            balance: playerTotalCurrency, // <--- Ngayon nase-save na rin ang Coins dito
+            tgId: tgUser ? tgUser.id.toString() : (playerDoc.exists() ? (playerDoc.data().tgId || null) : null),
+            walletAddress: currentWalletAddress || (playerDoc.exists() ? (playerDoc.data().walletAddress || null) : null),
             lastPlayed: serverTimestamp()
         };
 
-        // Kung nanalo, mag-increment ng wins
         if (didWin) {
             dataToSave.wins = increment(1);
         }
        
-        // Kung bago pa lang o nagpalit ng pangalan
-        if (!playerDoc.exists() || playerDoc.data().displayName !== displayName) {
-            await setDoc(playerDocRef, dataToSave, { merge: true });
-        } else {
-            // Kung existing player, update lang ang stats (iwas-overwrites sa pangalan)
-            delete dataToSave.displayName;
-            delete dataToSave.searchableName;
-            await updateDoc(playerDocRef, dataToSave);
-        }
+        // Gamitin ang setDoc na may { merge: true } para hindi mabura ang ibang fields
+        await setDoc(playerDocRef, dataToSave, { merge: true });
        
-        console.log("All stats (Trophies, XP, Coins, TG ID) updated successfully.");
+        console.log("✅ All stats synced to Firestore (Coins, Trophies, Wallet, etc.)");
+        updateCurrencyDisplay(); // I-refresh ang UI
        
     } catch (error) {
-        console.error("Error updating player data:", error);
+        console.error("❌ Error updating player data:", error);
     }
 }
 // ▲▲▲ DULO NG STEP 5 ▲▲▲
@@ -9824,7 +9819,7 @@ function updateInfoBox() {
     } catch (error) { 
         console.warn("Firebase failed.", error); 
         firebaseInitialized = false; 
-        
+      
         // onlineButton.textContent = "Offline"; // <--- BINURA KO RIN ITO
         
         // Update natin ang subtitle na lang kung offline (Optional)
@@ -11227,37 +11222,46 @@ function showColorAssignmentPopup(message, color) {
 // ▲▲▲ HANGGANG DITO ANG BAGONG FUNCTION ▲▲▲
      function signInPlayer() { 
     onAuthStateChanged(auth, (user) => { 
-        if (user) { 
-            localPlayerUid = user.uid; 
-            isAuthReady = true; 
-            onlineButton.disabled = false; 
-            
-            // --- 👇 DITO NATIN IDINAGDAG ITO 👇 ---
-            // Tawagin ang function para kunin ang $PPM sa database
-            if (typeof loadCurrency === 'function') {
-                loadCurrency(); 
-            }
-            // --------------------------------------
-            
-            // Update UI (Subtitle lang)
-            const sub = document.querySelector('#online-button .card-subtitle');
-            if(sub) {
-                sub.textContent = "Ranked Match • Online";
-                sub.style.color = "#00FF00"; 
-            }
+    if (user) { 
+        localPlayerUid = user.uid; 
+        isAuthReady = true; 
+        onlineButton.disabled = false; 
+        
+        // --- 1. Load Currency ---
+        if (typeof loadCurrency === 'function') {
+            loadCurrency(); 
+        }
 
-            createPlayerDocument(); 
-            startInviteListener(); 
-            setupOnlineStatus(); 
-        } else { 
-            signInAnonymously(auth).catch((error) => { 
-                console.error("Sign-in failed:", error); 
-                isAuthReady = false; 
-                
-                onlineButton.disabled = true; 
-            }); 
-        } 
-    }); 
+        // --- 2. 👇 DAGDAG: CHECK PENDING WALLET 👇 ---
+        // I-check kung may naka-store na wallet address sa localStorage
+        const pendingWallet = localStorage.getItem('pendingWalletAddress');
+        if (pendingWallet) {
+            console.log("Saving pending wallet for logged-in user...");
+            // Siguraduhin na ang saveWalletToFirestore function ay defined sa script mo
+            if (typeof saveWalletToFirestore === 'function') {
+                saveWalletToFirestore(localPlayerUid, pendingWallet);
+            }
+        }
+        // ----------------------------------------------
+        
+        // Update UI (Subtitle lang)
+        const sub = document.querySelector('#online-button .card-subtitle');
+        if(sub) {
+            sub.textContent = "Ranked Match • Online";
+            sub.style.color = "#00FF00"; 
+        }
+
+        createPlayerDocument(); 
+        startInviteListener(); 
+        setupOnlineStatus(); 
+    } else { 
+        signInAnonymously(auth).catch((error) => { 
+            console.error("Sign-in failed:", error); 
+            isAuthReady = false; 
+            onlineButton.disabled = true; 
+        }); 
+    } 
+}); 
 }
 // Dito ise-save ang "unsubscribe" function para sa invite listener
 let unsubscribeFromInvites = null;
@@ -13265,27 +13269,8 @@ function closeDailyRewardModal() {
 
 async function saveCurrency() {
     if (!db || !localPlayerUid) return;
-    try {
-        const docRef = doc(db, "players", localPlayerUid);
-        
-        // Kunin ang Telegram User ID para sa "TG Wallet" field
-        const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-        const telegramId = tgUser ? tgUser.id.toString() : null;
-
-        // I-update ang LAHAT ng fields sa database
-        await updateDoc(docRef, {
-            balance: playerTotalCurrency,
-            trophies: playerTrophies,
-            level: playerLevel,
-            xp: playerXP,
-            tgId: telegramId, // Ito ang magsisilbing TG Wallet ID mo
-            lastUpdated: serverTimestamp() // Importante para sa syncing
-        });
-        
-        console.log("All stats (Coins, Trophies, XP, TG ID) saved!");
-    } catch (e) {
-        console.error("Error saving stats:", e);
-    }
+    // Tatawagin ang updatePlayerData pero 'false' sa didWin dahil currency update lang ito
+    await updatePlayerData(localPlayerUid, false);
 }
 // ▼▼▼ UPDATED LOBBY LOGIC (WITH RANK CARD) ▼▼▼
 
@@ -14775,30 +14760,50 @@ const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
 
 // 2. Makinig sa status change ng wallet
 tonConnectUI.onStatusChange(async (wallet) => {
-    if (wallet && localPlayerUid) {
+    if (wallet) {
         const walletAddress = wallet.account.address;
         console.log("Wallet Connected:", walletAddress);
         
-        try {
-            // Import natin ang kailangang functions mula sa Firestore
-            const { doc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
-            
-            // ✅ TAMANG MODULAR SYNTAX para sa Firestore v11
-            await setDoc(doc(db, "players", localPlayerUid), {
-                walletAddress: walletAddress,
-                lastWalletUpdate: serverTimestamp()
-            }, { merge: true });
-            
-            console.log("Wallet successfully saved to Firestore!");
-            if (tg) tg.showAlert("Wallet Connected & Saved!");
-            
-        } catch (error) {
-            console.error("Error saving wallet to Firestore:", error);
+        // 1. I-save muna sa localStorage para kahit mag-reload o mabagal ang Auth, may record tayo
+        localStorage.setItem('pendingWalletAddress', walletAddress);
+
+        // 2. I-check kung may logged in user na
+        if (localPlayerUid) {
+            await saveWalletToFirestore(localPlayerUid, walletAddress);
+        } else {
+            console.log("Waiting for user to log in before saving wallet...");
         }
-    } else if (!wallet) {
+    } else {
         console.log("Wallet disconnected");
+        localStorage.removeItem('pendingWalletAddress');
     }
 });
+
+// Gawa tayo ng hiwalay na function para malinis
+async function saveWalletToFirestore(uid, address) {
+    try {
+        // Siguraduhin na available ang mga Firebase functions
+        // Kung modular ang setup mo, mas maigi kung nasa taas na ang imports
+        const { doc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+        
+        const playerDocRef = doc(db, "players", uid);
+        await setDoc(playerDocRef, {
+            walletAddress: address,
+            lastWalletUpdate: serverTimestamp()
+        }, { merge: true });
+
+        console.log("✅ Wallet successfully saved to Firestore!");
+        
+        // I-clear ang pending status
+        localStorage.removeItem('pendingWalletAddress');
+        
+        if (typeof tg !== 'undefined') {
+            tg.showAlert("Wallet Linked Successfully!");
+        }
+    } catch (error) {
+        console.error("❌ Error saving wallet to Firestore:", error);
+    }
+}
 
     // --- 3. SAFE CLOSE LISTENER (Back Button Fix) ---
     function attachSafeCloseListener(btnId, modalId) {
