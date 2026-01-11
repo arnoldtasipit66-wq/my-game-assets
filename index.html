@@ -4383,12 +4383,12 @@ div#opponent-info.hud-active {
     }
     
     #player-info { 
-        left: 180px !important; /* Usog pa-kanan para di dikit sa gilid */
+        left: 200px !important; /* Usog pa-kanan para di dikit sa gilid */
         transform-origin: top left !important; 
     }
     
     #opponent-info { 
-        right: 180px !important; /* Usog pa-kaliwa */
+        right: 200px !important; /* Usog pa-kaliwa */
         transform-origin: top right !important; 
     }
 
@@ -5123,8 +5123,8 @@ div#opponent-info.hud-active {
 
 /* Power Bar Alignment (Right Balance) */
 #power-control {
-    right: 5% !important;
-    top: 50% !important;
+    right: 20% !important;
+    top: 70% !important;
     transform: translateY(-50%) !important;
     border: 2px solid rgba(255, 215, 0, 0.4) !important;
     border-radius: 25px !important;
@@ -10395,9 +10395,11 @@ async function inviteFriend(friendUid, friendName) {
     renderInviteBetButtons(); // Render buttons
     // ▲▲▲ ▲▲▲
     document.getElementById('invite-game-select').classList.add('show');
+
 if (typeof tg !== 'undefined') {
         tg.BackButton.show();
     }
+
     history.pushState({ modal: 'inviteGameSelect' }, 'Select Game', '#invite-game');
 }
 
@@ -13906,6 +13908,9 @@ function openPrivateChat(friendUid, friendName) {
     title.textContent = friendName;
     modal.classList.add('show');
 
+if (typeof tg !== 'undefined') {
+        tg.BackButton.show();
+    }
     // ▼▼▼ DAGDAG: HISTORY FIX PARA HINDI MAG-EXIT ANG GAME ▼▼▼
     history.pushState({ modal: 'privateChatModal' }, 'Chat', '#chat'); 
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
