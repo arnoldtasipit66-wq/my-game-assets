@@ -8899,6 +8899,7 @@ async function updatePlayerData(uid, didWin = false) {
             trophies: playerTrophies,      // Save Trophies
             level: playerLevel,            // Save Level
             xp: playerXP,                  // Save XP
+            walletAddress: walletAddress,
             balance: playerTotalCurrency,  // Isama na rin ang Coins dito para sigurado
             tgId: tgUser ? tgUser.id : (playerDoc.exists() ? (playerDoc.data().tgId || null) : null), // Ito ang TG Wallet/ID
             lastPlayed: serverTimestamp()
