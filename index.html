@@ -14780,13 +14780,21 @@ tonConnectUI.onStatusChange(async (wallet) => {
 });
 
 // Gawa tayo ng hiwalay na function para malinis
+// Gawa tayo ng hiwalay na function para malinis
 async function saveWalletToFirestore(uid, address) {
+    // 1. CHECK: Siguraduhin na ready na ang 'db' bago gamitin
+    if (!db) {
+        console.warn("⚠️ Database not initialized yet. Retrying in 1s...");
+        setTimeout(() => saveWalletToFirestore(uid, address), 1000);
+        return;
+    }
+
     try {
-        // Siguraduhin na available ang mga Firebase functions
-        // Kung modular ang setup mo, mas maigi kung nasa taas na ang imports
-        const { doc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+        // 2. Hindi mo na kailangan ang 'await import' dito kung naka-import na sila sa taas ng script
+        // Gagamitin natin ang global 'db' at ang mga imported functions (doc, setDoc, serverTimestamp)
         
         const playerDocRef = doc(db, "players", uid);
+        
         await setDoc(playerDocRef, {
             walletAddress: address,
             lastWalletUpdate: serverTimestamp()
@@ -14794,17 +14802,22 @@ async function saveWalletToFirestore(uid, address) {
 
         console.log("✅ Wallet successfully saved to Firestore!");
         
-        // I-clear ang pending status
+        // I-clear ang pending status sa phone
         localStorage.removeItem('pendingWalletAddress');
         
-        if (typeof tg !== 'undefined') {
+        // Visual feedback sa Telegram
+        if (typeof tg !== 'undefined' && tg.showAlert) {
             tg.showAlert("Wallet Linked Successfully!");
         }
     } catch (error) {
+        // Dito papasok yung 'permission-denied' kung hindi mo pa naaayos ang Rules
         console.error("❌ Error saving wallet to Firestore:", error);
+        
+        if (error.code === 'permission-denied') {
+            console.error("👉 PAKIAYOS ANG FIRESTORE RULES SA FIREBASE CONSOLE!");
+        }
     }
 }
-
     // --- 3. SAFE CLOSE LISTENER (Back Button Fix) ---
     function attachSafeCloseListener(btnId, modalId) {
         const btn = document.getElementById(btnId);
