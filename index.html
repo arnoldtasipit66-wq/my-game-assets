@@ -14782,42 +14782,7 @@ if (spinBtn) spinBtn.addEventListener('click', startSpin);
         }
     }
 
-    // 1. I-initialize ang TON Connect UI
-const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/manifest.json', // Gamitin muna natin itong demo manifest
-    buttonRootId: 'ton-connect'
-});
-
-// 2. Makinig kung nag-connect o disconnect ang wallet
-tonConnectUI.onStatusChange(async (wallet) => {
-    if (wallet) {
-        const walletAddress = wallet.account.address;
-        console.log("Wallet Connected:", walletAddress);
-        
-        // I-save sa Firestore
-        saveWalletToFirestore(walletAddress);
-    } else {
-        console.log("Wallet disconnected");
-    }
-});
-
-// 3. Function para i-save ang address sa Firestore
-async function saveWalletToFirestore(address) {
-    if (!localPlayerUid) return; // Siguraduhin na may logged-in user
-
-    try {
-        await db.collection('players').doc(localPlayerUid).set({
-            walletAddress: address,
-            lastWalletUpdate: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-        
-        console.log("Wallet address saved to Firestore!");
-        // Optional: Magpakita ng alert o toast sa player
-        tg.showAlert("Wallet Connected Successfully!");
-    } catch (error) {
-        console.error("Error saving wallet:", error);
-    }
-}
+    
 
 </script>
 
