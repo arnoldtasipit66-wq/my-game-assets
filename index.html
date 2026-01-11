@@ -9419,6 +9419,9 @@ async function showLeaderboard() {
     
     document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show'));
     modal.classList.add('show');
+    if (typeof tg !== 'undefined') {
+        tg.BackButton.show();
+    }
     history.pushState({ modal: 'leaderboardModal' }, 'Leaderboard', '#leaderboard');
 
     tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; font-style: italic; color: #aaa;">Fetching Top Players...</td></tr>';
