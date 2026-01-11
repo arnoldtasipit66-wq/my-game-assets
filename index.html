@@ -708,7 +708,7 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
     }
 
     #power-control {
-        right: 5px; top: 50%; transform: translateY(-50%);
+        right: 15px; top: 70%; transform: translateY(-50%);
         width: 40px; height: 230px;
         background-color: rgba(0, 0, 0, 0.4);
         border: 1px solid rgba(255, 255, 255, 0.3);
@@ -1825,14 +1825,14 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
 
 
 #player-info {
-    left: 100px !important;
+    left: 120px !important;
     flex-direction: row !important;
     padding: 0 12px 0 3px !important; /* Adjusted padding para sa nipis */
 }
 
 
 #opponent-info {
-    right: 100px !important;
+    right: 120px !important;
     flex-direction: row-reverse !important;
     padding: 0 3px 0 12px !important; /* Adjusted padding para sa nipis */
 }
@@ -5723,19 +5723,39 @@ div#opponent-info.hud-active {
         import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
 const tg = window.Telegram.WebApp;
+// --- 1. ANG UTOS PARA SA CONFIRMATION ---
+function handleExitRequest() {
+    if (typeof tg !== 'undefined') {
+        // Ipakita ang native Telegram confirmation dialog
+        tg.showConfirm("Are you sure you want to exit Pinoy Pool Monster?", (isConfirmed) => {
+            if (isConfirmed) {
+                // Kung pinindot ng player ang 'OK' o 'Yes'
+                console.log("Exiting game...");
+                tg.close(); // Isasara ang buong Telegram Mini App
+            } else {
+                // Kung 'Cancel', mananatili lang sa laro
+                console.log("Exit cancelled.");
+            }
+        });
+    }
+}
+// --- 2. ANG TAGABANTAY NG BACK BUTTON ---
 tg.BackButton.onClick(() => {
-        // Tinitingnan kung may modal overlay na nakabukas (base sa class na ginamit mo sa index 25)
-        const activeModal = document.querySelector('.modal-overlay.show') || document.querySelector('.modal.show');
+    // Check muna kung may nakabukas na modal (Shop, Leaderboard, etc.)
+    const activeModal = document.querySelector('.modal-overlay.show') || document.querySelector('.modal.show');
+    
+    if (activeModal) {
+        // KUNG MAY MODAL: Isara lang ang modal (WALANG confirmation para hindi nakakairita)
+        activeModal.classList.remove('show'); 
+        tg.BackButton.hide(); // Itago ang back arrow
         
-        if (activeModal) {
-            activeModal.classList.remove('show'); 
-            tg.BackButton.hide(); // Itago ang back button pagka-close
-            
-            if (window) window.isClosingModal = true;
-            history.back(); 
-            console.log("Modal closed via Telegram Back Button");
-        }
-    });        
+        if (window) window.isClosingModal = true;
+        history.back(); 
+    } else {
+        // KUNG WALANG MODAL (Nasa Main Menu): Tawagin ang confirmation window
+        handleExitRequest(); 
+    }
+});      
                let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
 window.isInGame = false;
 
@@ -9405,6 +9425,9 @@ function openShop() {
     playButtonSound();
     gameModeSelect.classList.remove('show');
     document.getElementById('shop-modal').classList.add('show');
+if (typeof tg !== 'undefined') {
+        tg.BackButton.show();
+    }
     history.pushState({ modal: 'shopModal' }, 'Shop', '#shop');
     
     // Reset to Cues pag binuksan
@@ -10369,6 +10392,9 @@ async function inviteFriend(friendUid, friendName) {
     renderInviteBetButtons(); // Render buttons
     // ▲▲▲ ▲▲▲
     document.getElementById('invite-game-select').classList.add('show');
+if (typeof tg !== 'undefined') {
+        tg.BackButton.show();
+    }
     history.pushState({ modal: 'inviteGameSelect' }, 'Select Game', '#invite-game');
 }
 
