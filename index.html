@@ -14845,7 +14845,7 @@ async function saveWalletToFirestore(uid, address) {
 
                 if (modal) modal.classList.remove('show');
                 
-                // Trigger Back
+                tg.BackButton.hide();
                 history.back();
             });
         }
