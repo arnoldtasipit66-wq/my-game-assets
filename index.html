@@ -9967,6 +9967,9 @@ function openFriendsModal() {
     
     // Ipakita ang modal
     modal.classList.add('show');
+    if (typeof tg !== 'undefined') {
+        tg.BackButton.show();
+    }
     history.pushState({ modal: 'friendsModal' }, 'Friends', '#friends');
 
     // ▼▼▼ ANG BAGONG FIX (SMART LOAD) ▼▼▼
