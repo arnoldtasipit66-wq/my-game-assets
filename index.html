@@ -8881,47 +8881,50 @@ async function handleRematchRequest() {
 }
 
 async function updatePlayerData(uid, didWin = false) {
-    // Tinanggal natin ang check na "!didWin" para ma-save din kapag natalo (bawas trophies)
-    if (!uid) return; 
-    
+    if (!uid) return;
+   
     const playerDocRef = doc(db, "players", uid);
-    
+   
     try {
         const playerDoc = await getDoc(playerDocRef);
         const displayName = localStorage.getItem('pinoyPoolPlayerName') || "Anonymous";
         
-        // Ito ang mga data na ise-save natin sa server
+        // Kunin ang data mula sa Telegram WebApp
+        const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+       
+        // Ito ang mga data na ise-save natin (Kabilang na ang TG Wallet/ID)
         const dataToSave = {
             displayName: displayName,
             searchableName: displayName.toLowerCase(),
-            trophies: playerTrophies, // <-- IMPORTANTE: Save Trophies
-            level: playerLevel,       // Save Level
-            xp: playerXP,             // Save XP
+            trophies: playerTrophies,      // Save Trophies
+            level: playerLevel,            // Save Level
+            xp: playerXP,                  // Save XP
+            balance: playerTotalCurrency,  // Isama na rin ang Coins dito para sigurado
+            tgId: tgUser ? tgUser.id : (playerDoc.exists() ? (playerDoc.data().tgId || null) : null), // Ito ang TG Wallet/ID
             lastPlayed: serverTimestamp()
         };
 
-        // Kung nanalo lang tsaka magdadagdag ng "Wins" count
+        // Kung nanalo, mag-increment ng wins
         if (didWin) {
             dataToSave.wins = increment(1);
         }
-        
+       
         // Kung bago pa lang o nagpalit ng pangalan
         if (!playerDoc.exists() || playerDoc.data().displayName !== displayName) {
             await setDoc(playerDocRef, dataToSave, { merge: true });
         } else {
-            // Kung existing player, update lang ang stats
-            delete dataToSave.displayName; // 'Wag na galawin ang pangalan
+            // Kung existing player, update lang ang stats (iwas-overwrites sa pangalan)
+            delete dataToSave.displayName;
             delete dataToSave.searchableName;
             await updateDoc(playerDocRef, dataToSave);
         }
-        
-        console.log("Player stats updated successfully on server.");
-        
+       
+        console.log("All stats (Trophies, XP, Coins, TG ID) updated successfully.");
+       
     } catch (error) {
         console.error("Error updating player data:", error);
     }
 }
-
 // ▲▲▲ DULO NG STEP 5 ▲▲▲
         async function cleanupMatchmakingEntry() { if (unsubscribeFromQueue) { unsubscribeFromQueue(); unsubscribeFromQueue = null; } const queueCollection = collection(db, "matchmakingQueue"); const q = query(queueCollection, where("uid", "==", localPlayerUid)); const snapshot = await getDocs(q); if (!snapshot.empty) { const myDocRef = snapshot.docs[0].ref; await deleteDoc(myDocRef); } }
         
@@ -13259,22 +13262,30 @@ function closeDailyRewardModal() {
     }
 }
 
-// Function para i-save ang currency (para reusable)
-// ✅ BAGONG SAVE FUNCTION (Papuntang Firebase)
 async function saveCurrency() {
     if (!db || !localPlayerUid) return;
     try {
         const docRef = doc(db, "players", localPlayerUid);
-        // I-update ang balance sa database
+        
+        // Kunin ang Telegram User ID para sa "TG Wallet" field
+        const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+        const telegramId = tgUser ? tgUser.id.toString() : null;
+
+        // I-update ang LAHAT ng fields sa database
         await updateDoc(docRef, {
-            balance: playerTotalCurrency
+            balance: playerTotalCurrency,
+            trophies: playerTrophies,
+            level: playerLevel,
+            xp: playerXP,
+            tgId: telegramId, // Ito ang magsisilbing TG Wallet ID mo
+            lastUpdated: serverTimestamp() // Importante para sa syncing
         });
-        console.log("PPM Saved:", playerTotalCurrency);
+        
+        console.log("All stats (Coins, Trophies, XP, TG ID) saved!");
     } catch (e) {
-        console.error("Error saving PPM:", e);
+        console.error("Error saving stats:", e);
     }
 }
-
 // ▼▼▼ UPDATED LOBBY LOGIC (WITH RANK CARD) ▼▼▼
 
 /**
