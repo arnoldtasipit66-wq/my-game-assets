@@ -14753,6 +14753,41 @@ if (spinBtn) spinBtn.addEventListener('click', startSpin);
         // --- TAPOS NA ANG DAGDAG ---
     });
 
+    // --- TON WALLET INTEGRATION (MODULAR VERSION) ---
+
+// 1. I-initialize ang TON Connect UI
+const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+    manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/manifest.json', 
+    buttonRootId: 'ton-connect'
+});
+
+// 2. Makinig sa status change ng wallet
+tonConnectUI.onStatusChange(async (wallet) => {
+    if (wallet && localPlayerUid) {
+        const walletAddress = wallet.account.address;
+        console.log("Wallet Connected:", walletAddress);
+        
+        try {
+            // Import natin ang kailangang functions mula sa Firestore
+            const { doc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+            
+            // ✅ TAMANG MODULAR SYNTAX para sa Firestore v11
+            await setDoc(doc(db, "players", localPlayerUid), {
+                walletAddress: walletAddress,
+                lastWalletUpdate: serverTimestamp()
+            }, { merge: true });
+            
+            console.log("Wallet successfully saved to Firestore!");
+            if (tg) tg.showAlert("Wallet Connected & Saved!");
+            
+        } catch (error) {
+            console.error("Error saving wallet to Firestore:", error);
+        }
+    } else if (!wallet) {
+        console.log("Wallet disconnected");
+    }
+});
+
     // --- 3. SAFE CLOSE LISTENER (Back Button Fix) ---
     function attachSafeCloseListener(btnId, modalId) {
         const btn = document.getElementById(btnId);
