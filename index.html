@@ -6449,15 +6449,21 @@ async function endGame(winnerTextMessage, finalGameData = null) {
         winnerText.innerHTML = finalWinnerText;
     }
     
+    // --- ITO ANG PART NA DAPAT MONG I-UPDATE ---
     const onlineRematchButton = document.getElementById('rematch-button');
+    const didWin = winnerTextMessage.includes("You Win"); // Check natin kung nanalo
+
     if (isOnlineGame) {
-        updatePlayerData(localPlayerUid, winnerTextMessage.includes("You Win"));
+        // Ito yung existing code mo para sa Online
+        updatePlayerData(localPlayerUid, didWin); 
         aiRematchButton.style.display = 'none';
         backToMenuButton.style.display = 'block';
         onlineRematchButton.style.display = 'block';
-        onlineRematchButton.disabled = false;
-        onlineRematchButton.textContent = 'Request Rematch';
     } else {
+        // --- 👇 DITO MO ILALAGAY ANG FIX PARA SA AI 👇 ---
+        // ✅ Sabihan ang Firestore na i-save ang stats kahit AI ang kalaro
+        updatePlayerData(localPlayerUid, didWin); 
+
         aiRematchButton.style.display = 'block';
         backToMenuButton.style.display = 'block';
         onlineRematchButton.style.display = 'none';
