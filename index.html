@@ -8325,15 +8325,26 @@ async function handle61BallTurnEnd() {
                 if(typeof currentCombo !== 'undefined') { currentCombo++; showComboPopup(currentCombo); }
                 
                 const reward = pocketedObjectChips.length * REWARD_PER_BALL;
+// --- BAGONG SERVER CODE (61 Ball) ---
+// Visual muna (Optimistic UI)
 playerTotalCurrency += reward;
-
-// 👇 DITO MO ILAGAY (Para save agad sa database)
-if (window.savePPM) window.savePPM(); 
-// 👆 
-
 showRewardPopup(reward);
 updateCurrencyDisplay();
-gainXP(pocketedObjectChips.length * XP_PER_BALL);
+
+// Request sa Server
+if (localPlayerUid) {
+    fetch(`${SERVER_URL}/api/record-win`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            uid: localPlayerUid,
+            ballsPocketed: pocketedObjectChips.length, // Bilang ng bola
+            gameMode: '61-ball'
+        })
+    }).catch(e => console.error(e));
+}
+// ------------------------------------
+gainXP(pocketedObjectChips.length * XP_PER_BALL); // XP logic (pwede iwan dito o ilipat sa server next time)
             }
 
         } else {
