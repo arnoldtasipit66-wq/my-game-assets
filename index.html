@@ -5721,7 +5721,7 @@ div#opponent-info.hud-active {
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, serverTimestamp, increment, collection, query, orderBy, limit, getDocs, addDoc, runTransaction, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-const SERVER_URL = "https://70b11688-6910-4031-aef0-f32f14b103a4-00-2pgkc6r631kqx.sisko.replit.dev/";
+const SERVER_URL = "https://70b11688-6910-4031-aef0-f32f14b103a4-00-2pgkc6r631kqx.sisko.replit.dev";
 // --- DITO MAGSISIMULA ANG TELEGRAM SETUP ---
 const tg = window.Telegram.WebApp; // Ngayon, kilala na ng code mo si 'tg'
 tg.ready(); // Sinasabi nito sa Telegram na handa na ang game
@@ -6360,7 +6360,7 @@ setCueForCurrentTurn(); // Update history state
 async function endGame(winnerTextMessage, finalGameData = null) {
     if (gameState === 'gameover') return;
 
-    // --- 🔊 SOUND EFFECT LOGIC (Walang pagbabago) ---
+    // --- 🔊 SOUND EFFECT LOGIC ---
     const winSound = document.getElementById('win-sfx');
     const loseSound = document.getElementById('lose-sfx');
     
@@ -6373,53 +6373,68 @@ async function endGame(winnerTextMessage, finalGameData = null) {
         if (loseSound) { loseSound.volume = 0.8; loseSound.play().catch(e => console.log("Lose Sound Error:", e)); }
     }
 
-    // --- REWARDS LOGIC (UPDATED FOR SERVER PAYOUT) ---
-    if (!isOnlineGame) { // 🤖 AI GAME
-        
-        if (winnerTextMessage.includes("You Win")) {
-            // 1. COSMETICS (XP, Trophies, Fireworks) - OK lang sa Client
-            let xpBonus = XP_WIN_BONUS;
-            let trophiesChange = 5; 
-            triggerFireworks(); 
-            
-            // 2. 💰 PERA LOGIC (SERVER SIDE NA)
-            // Tinanggal natin ang manual computation dito.
-            // Tatawagin natin ang Server para siya magbigay ng panalo (Less Tong).
-            claimAiWinnings(); 
-
-        } else if (winnerTextMessage.includes("You Lose")) {
-            // Talo = Walang gagawin sa pera (kasi nabawas na sa simula pa lang)
-            // Pwede ka magpakita ng message na "Better luck next time"
-            console.log("AI Match Lost. No payout.");
-        }
-
-    } else { // 🌐 ONLINE GAME (PvP)
-        
-        // NOTE: Sa susunod natin aayusin ang PvP Payout.
-        // Sa ngayon, hayaan muna natin itong lumang code, 
-        // PERO TANDAAN: Baka mag-fail ito dahil naka-lock ang database rules.
-        
-        let bet = 0;
+    let bonus = 0;
+    let xpBonus = 0;
+    let trophiesChange = 0;
+    let reason = "";
+    
+    let bet = 0;
+    if (isOnlineGame) {
         const gameData = finalGameData || (gameId ? (await getDoc(doc(db, "games", gameId))).data() : null);
         if (gameData && gameData.betAmount) { bet = gameData.betAmount; } else { bet = currentMatchBet; }
+    }
 
+    // --- REWARDS LOGIC (UPDATED) ---
+    if (!isOnlineGame) { // AI GAME
         if (winnerTextMessage.includes("You Win")) {
-            // Old Logic (Temporary)
+            bonus = REWARD_WIN_BONUS;
+            xpBonus = XP_WIN_BONUS;
+            
+            // ✅ FIX: Gawing 5 para maka-rank up kahit sa AI
+            trophiesChange = 5; 
+            
+            reason = "Practice Win!";
+            triggerFireworks(); 
+        } else if (winnerTextMessage.includes("You Lose")) {
+            bonus = REWARD_LOSE_CONSOLATION;
+            xpBonus = XP_LOSE_CONSOLATION;
+            trophiesChange = 0; // Wala ring bawas sa AI
+            reason = "Good Game!";
+        }
+        if(bonus > 0) {
+            playerTotalCurrency += bonus;
+            saveCurrency();
+            updateCurrencyDisplay();
+        }
+    } else { // ONLINE GAME
+        if (winnerTextMessage.includes("You Win")) {
+            trophiesChange = 25; // RANKED WIN
+            xpBonus = XP_WIN_BONUS;
+            triggerFireworks(); 
+
             if (bet > 0) {
                 const totalPot = bet * 2;
                 const houseCut = Math.floor(totalPot * 0.10); 
                 const netWin = totalPot - houseCut;
-                
-                // ⚠️ WARNING: Ito ay posibleng ma-block ng Firestore Rules
-                playerTotalCurrency += netWin; 
+                playerTotalCurrency += netWin;
                 saveCurrency();
                 updateCurrencyDisplay(); 
                 setTimeout(() => { showRewardPopup(netWin, `POT WON!<br><small>(Tong: ${houseCut})</small>`); }, 1000);
+                reason = "Pustahan King!";
+            } else {
+                bonus = REWARD_WIN_BONUS;
+                playerTotalCurrency += bonus;
+                saveCurrency();
+                updateCurrencyDisplay();
+                reason = "Online Win!";
+                showRewardPopup(bonus, reason);
             }
         } else {
-             if (bet > 0) { setTimeout(() => { showRewardPopup(0, `<span style="color:red">BET LOST: -${bet}</span>`); }, 1000); }
-       
-     
+            trophiesChange = -20; // RANKED LOSS
+            if (bet > 0) { setTimeout(() => { showRewardPopup(0, `<span style="color:red">BET LOST: -${bet}</span>`); }, 1000); }
+            else { setTimeout(() => { showRewardPopup(0, "Safe Match (No Bet)"); }, 1000); }
+        }
+    }
 
     // --- APPLY STATS ---
     if (trophiesChange !== 0) {
@@ -8987,28 +9002,51 @@ async function updatePlayerData(uid, didWin = false) {
         
 // --- 🤖 STEP 2: START BOT MATCH FUNCTION (CORRECTED VERSION) 🤖 ---
 async function startBotMatch() {
+    // 1. Linisin ang Queue
     await cleanupMatchmakingEntry();
+    
+    // 2. Itago ang "Searching..." modal
     matchmakingWaitModal.classList.remove('show');
 
-    // Setup Bot
+    // 3. Gumawa ng Fake Opponent Name
     const botName = BotGenerator.generateName();
+    
+    // 4. I-set ang pangalan ng kalaban (Global Variable)
     opponentPlayerName = botName;
 
+    // 5. Ipakita ang "MATCH FOUND!" effect
     showMessage(`Match Found! Opponent: ${botName}`, 3000);
     playButtonSound(); 
 
-    // NOTE: Wala na dito ang refund code. 
-    // Tuloy-tuloy lang na bawas ang pera hangga't di nananalo.
+    // 6. REFUND LOGIC (VIA SERVER) 
+    // Ibabalik natin ang pera gamit ang Server API para tanggapin ng database.
+    if (selectedBetAmount > 0) {
+        // Visual update agad para sa player (para di nila halata na nag-refund)
+        playerTotalCurrency += selectedBetAmount;
+        updateCurrencyDisplay();
 
+        // SILENT SERVER REFUND:
+        // Hindi natin hihintayin (no 'await') para tuloy-tuloy ang laro.
+        // Bahala na ang server mag-update sa background.
+        fetch(`${SERVER_URL}/api/refund`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                uid: localPlayerUid,
+                amount: selectedBetAmount
+            })
+        }).catch(err => console.error("Background refund failed:", err));
+    }
+
+    // 7. Start Game logic (AI Mode)
     startGame(`ai-${selectedOnlineGameType}`, 'pro'); 
     
+    // 8. FORCE UPDATE: Siguraduhin na ang pangalan sa taas ay Bot Name
     setTimeout(() => {
         opponentPlayerName = botName; 
         updateInfoBox(); 
     }, 500); 
 }
-
-
 
     // ---------------------------------------------  
 async function findMatch() {
@@ -14932,7 +14970,10 @@ async function saveWalletToFirestore(uid, address) {
         }
     }
 
-    
+ 
+   
 
-</script> </body>
+</script>
+
+</body>
 </html>
