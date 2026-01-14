@@ -10696,6 +10696,19 @@ async function createPrivateGame(inviteData, inviteId) {
         };
     }
 
+    if (betCost > 0) {
+        showMessage("Processing payment...", 1000);
+        // Tawagin ang Server para magbayad
+        const paymentSuccess = await processBet(betCost); 
+        
+        if (!paymentSuccess) {
+            // Kapag walang pera o nag-error ang server, HINTO AGAD.
+            // Huwag ituloy ang paggawa ng game.
+            document.getElementById('invite-wait-modal').classList.remove('show');
+            return; 
+        }
+    }
+
     // 5. CONSTRUCT GAME DATA
     let gameData = {
         gameId: newGameId,
