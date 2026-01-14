@@ -8456,10 +8456,24 @@ function showMessage(msg, duration = 2000) {
         if (isMyTurn) {
             if(typeof currentCombo !== 'undefined') { currentCombo++; showComboPopup(currentCombo); }
             const reward = legallyPocketedOwnChips.length * REWARD_PER_BALL;
-            playerTotalCurrency += reward;
-            showRewardPopup(reward);
-            updateCurrencyDisplay();
-            gainXP(legallyPocketedOwnChips.length * XP_PER_BALL);
+            // --- BAGONG SERVER CODE (Poker) ---
+playerTotalCurrency += reward;
+showRewardPopup(reward);
+updateCurrencyDisplay();
+
+if (localPlayerUid) {
+    fetch(`${SERVER_URL}/api/record-win`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            uid: localPlayerUid,
+            ballsPocketed: legallyPocketedOwnChips.length,
+            gameMode: 'poker'
+        })
+    }).catch(e => console.error(e));
+}
+// ----------------------------------
+gainXP(legallyPocketedOwnChips.length * XP_PER_BALL);
         }
     } else {
         if(typeof currentCombo !== 'undefined') currentCombo = 0;
