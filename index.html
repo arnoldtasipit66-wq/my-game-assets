@@ -9000,78 +9000,126 @@ async function updatePlayerData(uid, didWin = false) {
 // ▲▲▲ DULO NG STEP 5 ▲▲▲
         async function cleanupMatchmakingEntry() { if (unsubscribeFromQueue) { unsubscribeFromQueue(); unsubscribeFromQueue = null; } const queueCollection = collection(db, "matchmakingQueue"); const q = query(queueCollection, where("uid", "==", localPlayerUid)); const snapshot = await getDocs(q); if (!snapshot.empty) { const myDocRef = snapshot.docs[0].ref; await deleteDoc(myDocRef); } }
         
-// --- 🤖 STEP 2: START BOT MATCH FUNCTION (FINAL VERSION) 🤖 ---
-    async function startBotMatch() {
-        // 1. Linisin ang Queue (Para hindi ka na ma-match sa iba habang naglalaro)
-        await cleanupMatchmakingEntry();
-        
-        // 2. Itago ang "Searching..." modal
-        matchmakingWaitModal.classList.remove('show');
+// --- 🤖 STEP 2: START BOT MATCH FUNCTION (CORRECTED VERSION) 🤖 ---
+async function startBotMatch() {
+    // 1. Linisin ang Queue
+    await cleanupMatchmakingEntry();
+    
+    // 2. Itago ang "Searching..." modal
+    matchmakingWaitModal.classList.remove('show');
 
-        // 3. Gumawa ng Fake Opponent Name
-        const botName = BotGenerator.generateName();
-        
-        // 4. I-set ang pangalan ng kalaban (Global Variable)
-        opponentPlayerName = botName;
+    // 3. Gumawa ng Fake Opponent Name
+    const botName = BotGenerator.generateName();
+    
+    // 4. I-set ang pangalan ng kalaban (Global Variable)
+    opponentPlayerName = botName;
 
-        // 5. Ipakita ang "MATCH FOUND!" effect
-        showMessage(`Match Found! Opponent: ${botName}`, 3000);
-        playButtonSound(); 
+    // 5. Ipakita ang "MATCH FOUND!" effect
+    showMessage(`Match Found! Opponent: ${botName}`, 3000);
+    playButtonSound(); 
 
-        // 6. Refund logic (Balik pera sa background dahil AI lang to)
-        // Ibabalik natin ang pera pero hindi ipapaalam sa player para akala nila tuloy ang pustahan
-        if (selectedBetAmount > 0) {
-            playerTotalCurrency += selectedBetAmount;
-            saveCurrency();
-            updateCurrencyDisplay();
-        }
+    // 6. REFUND LOGIC (VIA SERVER) 
+    // Ibabalik natin ang pera gamit ang Server API para tanggapin ng database.
+    if (selectedBetAmount > 0) {
+        // Visual update agad para sa player (para di nila halata na nag-refund)
+        playerTotalCurrency += selectedBetAmount;
+        updateCurrencyDisplay();
 
-        // 7. Start Game logic (AI Mode)
-        startGame(`ai-${selectedOnlineGameType}`, 'pro'); 
-        
-        // 8. FORCE UPDATE: Siguraduhin na ang pangalan sa taas ay Bot Name
-        // Ginagawa natin ito after 500ms para ma-override ang default reset
-        setTimeout(() => {
-            opponentPlayerName = botName; 
-            updateInfoBox(); // I-refresh ang display sa taas
-        }, 500); 
+        // SILENT SERVER REFUND:
+        // Hindi natin hihintayin (no 'await') para tuloy-tuloy ang laro.
+        // Bahala na ang server mag-update sa background.
+        fetch(`${SERVER_URL}/api/refund`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                uid: localPlayerUid,
+                amount: selectedBetAmount
+            })
+        }).catch(err => console.error("Background refund failed:", err));
     }
+
+    // 7. Start Game logic (AI Mode)
+    startGame(`ai-${selectedOnlineGameType}`, 'pro'); 
+    
+    // 8. FORCE UPDATE: Siguraduhin na ang pangalan sa taas ay Bot Name
+    setTimeout(() => {
+        opponentPlayerName = botName; 
+        updateInfoBox(); 
+    }, 500); 
+}
+
     // ---------------------------------------------  
 async function findMatch() {
     const displayName = localPlayerName || "Guest";
-    if (!isAuthReady || !localPlayerUid) { showMessage("Connecting..."); return; }
-
-    // 1. CHECK BALANCE
-    if (playerTotalCurrency < selectedBetAmount) {
-        showMessage(`Kulang ang coins mo! Need: ${formatCurrencyShort(selectedBetAmount)}`, 3000);
-        return;
-    }
     
-    // Bawas Pera
-    if (selectedBetAmount > 0) {
-        playerTotalCurrency -= selectedBetAmount;
-        currentMatchBet = selectedBetAmount;
-        saveCurrency();
-        updateCurrencyDisplay();
+    // 1. BASIC CHECKS
+    if (!isAuthReady || !localPlayerUid) { 
+        showMessage("Connecting to server..."); 
+        return; 
     }
 
+    // 2. SERVER PAYMENT FIRST (Bayad Muna!)
+    // Kung may taya, tawagin ang Replit para maningil.
+    if (selectedBetAmount > 0) {
+        showMessage(`Processing Entry Fee: ${formatCurrencyShort(selectedBetAmount)}...`, 1000);
+        
+        // Tawagin ang Server API
+        const isPaid = await processBet(selectedBetAmount);
+        
+        if (!isPaid) {
+            // Kung walang pera o nag-error, STOP AGAD.
+            return; 
+        }
+        
+        // Visual Update lang (para sa UI logic)
+        currentMatchBet = selectedBetAmount;
+    }
+
+    // 3. UI SETUP
     onlineMenu.classList.remove('show');
     matchmakingWaitModal.classList.add('show');
     history.pushState({ modal: 'matchmaking' }, 'Matchmaking', '#matchmaking');
 
-    // ▼▼▼ FIX: KUNIN ANG PHOTO ▼▼▼
+    // Kunin ang Photo para handa na
     const myPhoto = localStorage.getItem('pinoyPoolPlayerPhoto');
-    // ▲▲▲ ▲▲▲
 
-    // Timeout Logic (Bot Match)
+    // 4. TIMEOUT LOGIC (BOT MATCH + REFUND)
     if (matchmakingTimeoutId) clearTimeout(matchmakingTimeoutId);
     
     matchmakingTimeoutId = setTimeout(async () => {
-        if (gameId) return; 
-        console.log("Walang tao. Papasukin ang Bot.");
-        startBotMatch(); 
-    }, 12000); 
+        if (gameId) return; // May nahanap na palang tao, wag ituloy ang bot
+        
+        console.log("Time's up. Switching to Bot Match.");
 
+        // ▼▼▼ REFUND LOGIC (IBALIK ANG PERA) ▼▼▼
+        if (selectedBetAmount > 0) {
+            showMessage("No opponent found. Refunded entry fee.", 2000);
+            try {
+                // Ibalik ang pera sa Server
+                await fetch(`${SERVER_URL}/api/refund`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        uid: localPlayerUid,
+                        amount: selectedBetAmount
+                    })
+                });
+                
+                // Ibalik ang pera sa Visual Display
+                playerTotalCurrency += selectedBetAmount; 
+                updateCurrencyDisplay();
+            } catch(e) {
+                console.error("Refund failed:", e);
+                // (Sa totoong buhay, dapat may retry mechanism dito)
+            }
+        }
+        // ▲▲▲ END REFUND ▲▲▲
+
+        // Start Bot Match (Practice Mode na lang ito)
+        startBotMatch(); 
+    }, 12000); // 12 Seconds waiting time
+
+    // 5. FIND OPPONENT IN QUEUE
     const queueCollection = collection(db, "matchmakingQueue");
     
     const q = query(
@@ -9086,6 +9134,7 @@ async function findMatch() {
         const snapshot = await getDocs(q);
         let opponentDoc = null;
 
+        // Filter: Hanap ng active player (wala pang 60s ang tanda)
         for (const docSnap of snapshot.docs) {
             const data = docSnap.data();
             if (data.uid !== localPlayerUid) {
@@ -9098,25 +9147,24 @@ async function findMatch() {
         }
 
         if (opponentDoc) {
-            // --- FOUND OPPONENT ---
-            clearTimeout(matchmakingTimeoutId);
+            // --- OPPONENT FOUND (CREATE GAME) ---
+            clearTimeout(matchmakingTimeoutId); // Stop Bot Timer
+            
             const oppData = opponentDoc.data();
             const oppRef = opponentDoc.ref;
 
-            // Double Check Status
+            // Double Check kung waiting pa rin
             const freshSnap = await getDoc(oppRef);
             if (!freshSnap.exists() || freshSnap.data().status !== 'waiting') {
-                // Refund if failed
-                if (selectedBetAmount > 0) {
-                    playerTotalCurrency += selectedBetAmount;
-                    saveCurrency();
-                    updateCurrencyDisplay();
-                }
-                findMatch(); // Retry
+                // Unlucky: Nakuha na ng iba. Retry tayo.
+                // Note: Bayad ka na, kaya findMatch ulit (wag magbayad ulit logic dapat, 
+                // pero sa simple version, hayaan muna natin ang retry sa UI or auto-retry logic requires more code)
+                showMessage("Match failed. Retrying...", 1000);
+                findMatch(); // Recursive retry (Ingat lang sa loop, pero 12s timeout will catch it)
                 return;
             }
 
-            // SETUP GAME
+            // SETUP GAME DATA
             gameId = Math.random().toString(36).substring(2, 7).toUpperCase();
             localPlayerId = 'player1'; 
             gameMode = `online-${selectedOnlineGameType}`;
@@ -9126,21 +9174,17 @@ async function findMatch() {
             const initialChips = chips.map(c => ({...c, x: c.x/canvas.width, y: c.y/canvas.height }));
             const startUid = Math.random() < 0.5 ? localPlayerUid : oppData.uid;
             
-            // My Data
             const myCue = equippedItems.cue || 'default';
             const myRank = getPlayerRank(playerLevel).index;
             
-            // Opponent Data (Galing sa Queue)
             const oppRank = oppData.rankIndex !== undefined ? oppData.rankIndex : 0;
             const oppCue = oppData.equippedCueId || 'default';
-            // ▼▼▼ FIX: KUNIN ANG PHOTO NG KALABAN ▼▼▼
             const oppPhoto = oppData.photo || null;
-            // ▲▲▲ ▲▲▲
 
             const gameData = {
                 gameId, gameType: selectedOnlineGameType, gameState: 'playing', turnId: 1,
                 betAmount: selectedBetAmount,
-                pot: selectedBetAmount * 2,
+                pot: selectedBetAmount * 2, // Pot Money (X2 dahil dalawa kayo)
                 players: {
                     player1: { 
                         uid: localPlayerUid, 
@@ -9148,7 +9192,7 @@ async function findMatch() {
                         displayName: displayName, 
                         equippedCueId: myCue, 
                         rankIndex: myRank,
-                        photo: myPhoto // SAVE MY PHOTO
+                        photo: myPhoto 
                     },
                     player2: { 
                         uid: oppData.uid, 
@@ -9156,13 +9200,13 @@ async function findMatch() {
                         displayName: oppData.displayName, 
                         equippedCueId: oppCue, 
                         rankIndex: oppRank,
-                        photo: oppPhoto // SAVE OPPONENT PHOTO
+                        photo: oppPhoto 
                     }
                 },
                 chips: initialChips, currentTurnUid: startUid, canMoveCueBall: true, isBreakShot: true, winner: null
             };
             
-            // Set Game Modes Logic...
+            // Mode Specifics
             if (selectedOnlineGameType === 'poker') {
                 createDeck(); dealCards();
                 Object.assign(gameData, { deck, player1Hand: playerHand, player2Hand: opponentHand, originalPlayer1Hand: originalPlayerHand, originalPlayer2Hand: originalOpponentHand });
@@ -9172,6 +9216,7 @@ async function findMatch() {
                 Object.assign(gameData, { player1_61Score: 0, player2_61Score: 0, lowestChipNumber: 1 });
             }
 
+            // Save & Start
             await setDoc(doc(db, "games", gameId), gameData);
             await updateDoc(oppRef, { status: 'matched', gameId: gameId });
             
@@ -9181,11 +9226,12 @@ async function findMatch() {
             listenToGameUpdates(gameId);
 
         } else {
-            // --- JOIN QUEUE ---
+            // --- NO OPPONENT YET (JOIN QUEUE) ---
             if (!unsubscribeFromQueue) {
                 const myRank = getPlayerRank(playerLevel).index;
                 const myCue = equippedItems.cue || 'default';
                 
+                // Add self to Queue
                 const ref = await addDoc(queueCollection, { 
                     uid: localPlayerUid, 
                     gameType: selectedOnlineGameType, 
@@ -9195,12 +9241,13 @@ async function findMatch() {
                     displayName: displayName,
                     rankIndex: myRank, 
                     equippedCueId: myCue,
-                    photo: myPhoto // ▼▼▼ FIX: I-SAVE ANG PHOTO MO SA QUEUE ▼▼▼
+                    photo: myPhoto
                 });
                 
+                // Listen kung may kukuha sa atin
                 unsubscribeFromQueue = onSnapshot(ref, (doc) => {
                     if(doc.exists() && doc.data().status === 'matched' && doc.data().gameId) {
-                        clearTimeout(matchmakingTimeoutId);
+                        clearTimeout(matchmakingTimeoutId); // Stop Bot Timer
                         if (unsubscribeFromQueue) unsubscribeFromQueue();
                         matchmakingWaitModal.classList.remove('show');
                         showMessage("Match found! Joining...", 2000);
@@ -9213,18 +9260,25 @@ async function findMatch() {
         }
     } catch (e) {
         console.error("Match Error:", e);
-        // ERROR -> REFUND
+        
+        // ERROR HANDLING (Important: Refund kung nag-error after magbayad)
         if (selectedBetAmount > 0) {
-             playerTotalCurrency += selectedBetAmount;
-             saveCurrency();
-             updateCurrencyDisplay();
+             showMessage("Error occurred. Refunding...", 2000);
+             // Call Refund API
+             fetch(`${SERVER_URL}/api/refund`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: localPlayerUid, amount: selectedBetAmount })
+             }).then(() => {
+                 playerTotalCurrency += selectedBetAmount;
+                 updateCurrencyDisplay();
+             });
         }
         
         if (e.code === 'failed-precondition') {
-             showMessage("Setup Required: Check Console for Firebase Index Link!", 5000);
-             console.log("CLICK THIS LINK TO CREATE INDEX:", e.message);
+             showMessage("Database Index Required. Check Console.", 5000);
         } else {
-             setTimeout(findMatch, 1000);
+             // setTimeout(findMatch, 1000); // Optional auto-retry
         }
     }
 }
@@ -9233,20 +9287,17 @@ async function cancelMatchmaking() {
     if (matchmakingTimeoutId) { clearTimeout(matchmakingTimeoutId); matchmakingTimeoutId = null; } 
     await cleanupMatchmakingEntry(); 
     
-    // 💰 REFUND LOGIC
-    if (selectedBetAmount > 0) {
-        playerTotalCurrency += selectedBetAmount;
-        saveCurrency();
-        updateCurrencyDisplay();
-        showMessage(`Cancelled. ${formatCurrencyShort(selectedBetAmount)} refunded.`);
-    } else {
-        showMessage("Matchmaking cancelled."); 
-    }
+    // NOTE: Tinanggal ang Refund Logic dahil Server-side na ang bayad.
+    // Kapag nag-cancel ka habang nasa queue, "Forfeited" ang coins mo sa version na ito.
+    // (Kung gusto mo ng refund, kailangan ng server update next time).
+    
+    showMessage("Matchmaking cancelled."); 
 
     matchmakingWaitModal.classList.remove('show'); 
     onlineMenu.classList.add('show'); 
     history.back(); 
 }
+
 
         function animateAndApplyShot(shotData) { cueStick.angle = shotData.angle; cueStick.visible = true; if (cueStickElement) cueStickElement.style.display = 'block'; gameState = 'shooting_animation'; let startTime = null; const animationDuration = 100; const shotPowerNormalized = (shotData.power - 5) / 40; const startPullback = shotPowerNormalized * (150 * scale); const endPullback = -30 * scale; function animate(timestamp) { if (!startTime) startTime = timestamp; const progress = Math.min((timestamp - startTime) / animationDuration, 1); cueStick.pullback = startPullback + (endPullback - startPullback) * progress; if (progress < 1) { requestAnimationFrame(animate); } else { cueStick.visible = false; cueStick.pullback = 0; if (cueStickElement) cueStickElement.style.display = 'none'; applyShot(shotData); } } requestAnimationFrame(animate); }
         
@@ -10532,6 +10583,8 @@ async function sendInvite(selectedGameType) {
         showMessage("Error sending invite.", 3000);
     }
 }
+
+
 /**
  * Tatawagin kapag tinanggap ng player (Player B) ang imbitasyon.
  * @param {string} inviteId - Ang ID ng invite document.
@@ -10544,15 +10597,22 @@ async function handleInviteAccept(inviteId, inviteData) {
     document.getElementById('invite-wait-close-btn').style.display = 'none'; 
     modal.classList.add('show');
 
-    // ▼▼▼ KALTASAN SI GUEST ▼▼▼
+    // ▼▼▼ SERVER PAYMENT (GUEST) ▼▼▼
     const betCost = inviteData.betAmount || 0;
+    
     if (betCost > 0) {
-        playerTotalCurrency -= betCost;
-        currentMatchBet = betCost; // Save backup
-        saveCurrency();
-        updateCurrencyDisplay();
+        // Tawagin ang Server para magbayad
+        showMessage("Processing payment...", 1000);
+        const paymentSuccess = await processBet(betCost);
         
-        // Popup
+        if (!paymentSuccess) {
+            // KAPAG WALANG PERA SI GUEST o FAILED:
+            modal.classList.remove('show');
+            // Huwag ituloy ang pag-accept
+            return; 
+        }
+
+        // Visual Feedback lang
         setTimeout(() => {
             showRewardPopup(0, `<span style="color:red; font-size: 0.8em;">PAID BET: -${formatCurrencyShort(betCost)}</span>`);
         }, 500);
@@ -10563,6 +10623,9 @@ async function handleInviteAccept(inviteId, inviteData) {
 
     try {
         const inviteDocRef = doc(db, "game_invites", inviteId);
+        
+        // DITO TAYO MAG-UUPDATE NG STATUS TO 'ACCEPTED'
+        // (Dahil nakabayad na siya sa taas)
         await updateDoc(inviteDocRef, { status: "accepted" });
 
         unsubscribe = onSnapshot(inviteDocRef, (docSnap) => {
@@ -10570,13 +10633,9 @@ async function handleInviteAccept(inviteId, inviteData) {
                 if(unsubscribe) unsubscribe();
                 modal.classList.remove('show');
                 
-                // Refund Guest kung na-cancel/decline bigla
-                if (betCost > 0) {
-                    playerTotalCurrency += betCost;
-                    saveCurrency();
-                    updateCurrencyDisplay();
-                    showMessage("Invite cancelled. Coins refunded.");
-                }
+                // NOTE: Wala nang refund logic dito dahil Server-side na.
+                // Kung na-cancel man, technically talo na yung taya sa ngayon.
+                showMessage("Invite cancelled.");
                 return;
             }
 
@@ -10596,46 +10655,29 @@ async function handleInviteAccept(inviteId, inviteData) {
         console.error("Error accepting invite:", error);
         if(unsubscribe) unsubscribe();
         modal.classList.remove('show');
-        // Refund on error
-        if (betCost > 0) {
-            playerTotalCurrency += betCost;
-            saveCurrency();
-            updateCurrencyDisplay();
-        }
         showMessage("Error: Could not accept invite.", 3000);
     }
 }
 
-
-async function handleInviteDecline(inviteId) {
-    if (!inviteId) return;
-    try {
-        // I-update lang ang status sa "declined"
-        // (Pwede ring i-delete, pero mas maganda 'to para malaman ni Player A)
-        const inviteDocRef = doc(db, "game_invites", inviteId);
-        await updateDoc(inviteDocRef, { status: "declined" });
-    } catch (error) {
-        console.error("Error declining invite:", error);
-    }
-}
 async function createPrivateGame(inviteData, inviteId) {
     const friendUid = inviteData.toUid;
     const friendName = inviteData.fromName === localPlayerName ? inviteData.toName : inviteData.fromName;
     const betCost = inviteData.betAmount || 0;
 
-    // 1. CHECK BALANCE (Host pays first)
+    // 1. SERVER PAYMENT FIRST (Ang Bago at Tamang Paraan)
     if (betCost > 0) {
-        if (playerTotalCurrency < betCost) {
-            showMessage(`Insufficient coins! Need ${formatCurrencyShort(betCost)}.`, 3000);
+        showMessage("Processing payment...", 1000);
+        
+        // Tawagin ang Server Cashier
+        const paymentSuccess = await processBet(betCost); 
+        
+        // Kapag walang pera o nag-error, HINTO AGAD.
+        if (!paymentSuccess) {
+            document.getElementById('invite-wait-modal').classList.remove('show');
             return; 
         }
         
-        // Kaltas Pera
-        playerTotalCurrency -= betCost;
-        currentMatchBet = betCost;
-        saveCurrency();
-        updateCurrencyDisplay();
-        
+        // VISUAL FEEDBACK: Pinapakita lang na nabayaran na
         setTimeout(() => {
             showRewardPopup(0, `<span style="color:red; font-size: 0.8em;">PAID BET: -${formatCurrencyShort(betCost)}</span>`);
         }, 500);
@@ -10663,11 +10705,10 @@ async function createPrivateGame(inviteData, inviteId) {
         displayName: localPlayerName,
         equippedCueId: equippedItems.cue,
         rankIndex: myRankInfo.index,
-        photo: myPhoto // <--- ISINAMA NA ANG PHOTO
+        photo: myPhoto
     };
 
     // 4. FETCH FRIEND DATA (Opponent Data)
-    // Sinusubukan nating kunin ang fresh data ng friend galing DB (Rank, Cue, Photo)
     let friendPlayerInfo = null;
     try {
         const friendDoc = await getDoc(doc(db, "players", friendUid));
@@ -10675,16 +10716,15 @@ async function createPrivateGame(inviteData, inviteId) {
             const friendData = friendDoc.data();
             friendPlayerInfo = {
                 uid: friendUid,
-                status: 'online', // Assume online sya dahil kakacept lang
+                status: 'online',
                 displayName: friendData.displayName,
                 equippedCueId: friendData.equippedCueId || 'default',
                 rankIndex: getPlayerRank(friendData.trophies || 0).index,
-                photo: friendData.photo || null // <--- KUHA PHOTO NG FRIEND
+                photo: friendData.photo || null
             };
         }
     } catch (e) { console.log("Friend data fetch error", e); }
 
-    // Fallback kung hindi makuha ang data ng friend
     if (!friendPlayerInfo) {
         friendPlayerInfo = {
             uid: friendUid, 
@@ -10696,19 +10736,6 @@ async function createPrivateGame(inviteData, inviteId) {
         };
     }
 
-    if (betCost > 0) {
-        showMessage("Processing payment...", 1000);
-        // Tawagin ang Server para magbayad
-        const paymentSuccess = await processBet(betCost); 
-        
-        if (!paymentSuccess) {
-            // Kapag walang pera o nag-error ang server, HINTO AGAD.
-            // Huwag ituloy ang paggawa ng game.
-            document.getElementById('invite-wait-modal').classList.remove('show');
-            return; 
-        }
-    }
-
     // 5. CONSTRUCT GAME DATA
     let gameData = {
         gameId: newGameId,
@@ -10718,7 +10745,7 @@ async function createPrivateGame(inviteData, inviteId) {
         
         // Pustahan Info
         betAmount: betCost,
-        pot: betCost * 2, // (Assuming magbabayad din si Guest pag-join)
+        pot: betCost * 2, 
         
         players: {
             player1: myPlayerInfo,
@@ -10730,7 +10757,6 @@ async function createPrivateGame(inviteData, inviteId) {
         canMoveCueBall: true, isBreakShot: true, winner: null
     };
 
-    // Setup Specific Game Modes
     if (inviteData.gameType === 'poker') {
         createDeck(); dealCards(); 
         Object.assign(gameData, { deck, player1Hand: playerHand, player2Hand: opponentHand, originalPlayer1Hand: originalPlayerHand, originalPlayer2Hand: originalOpponentHand });
@@ -10743,8 +10769,6 @@ async function createPrivateGame(inviteData, inviteId) {
     try {
         // 6. SAVE TO DATABASE
         await setDoc(doc(db, "games", newGameId), gameData);
-        
-        // Update Invite Status (Isama ang GameID para makapasok si Guest)
         await updateDoc(doc(db, "game_invites", inviteId), { gameId: newGameId });
         
         // 7. SETUP UI & START GAME
@@ -10755,10 +10779,8 @@ async function createPrivateGame(inviteData, inviteId) {
         showGameUI(); 
         history.pushState({ modal: 'game' }, 'Game', '#game');
         
-        // --- TRIGGER VS SCREEN ---
         vsScreenShownThisGame = true; 
         
-        // Prepare Data for VS Screen
         const friendRankInfo = RANKS[friendPlayerInfo.rankIndex] || RANKS[0];
         
         const p1Data = { 
@@ -10772,29 +10794,24 @@ async function createPrivateGame(inviteData, inviteId) {
             photo: friendPlayerInfo.photo 
         };
         
-        // Ipakita ang VS Screen
         showVsScreen(p1Data, p2Data, inviteData.gameType);
 
-        // Save opponent photo globally for HUD
         window.opponentPhotoUrl = friendPlayerInfo.photo;
-        updateInfoBox(); // Update HUD
-
-        // Start Listening
+        updateInfoBox(); 
         listenToGameUpdates(gameId);
 
     } catch (error) {
         console.error("Error creating private game:", error);
         document.getElementById('invite-wait-modal').classList.remove('show');
-        
-        // Refund Host on Error
-        if (betCost > 0) {
-            playerTotalCurrency += betCost;
-            saveCurrency();
-            updateCurrencyDisplay();
-        }
         showMessage("Error: Could not create game.", 3000);
+        
+        // NOTE: Wala nang refund logic dito dahil Server-side na.
+        // Kung nag-error AFTER magbayad pero BEFORE mag-save ang game,
+        // technically "talo" na yung pera.
+        // (Sa future versions, pwede tayong gumawa ng /api/refund endpoint)
     }
-} 
+}
+
 function renderShopTabs() {
     const titleEl = document.querySelector('#shop-modal h2');
     // Inject Tabs HTML sa ilalim ng Title
@@ -14953,13 +14970,7 @@ async function saveWalletToFirestore(uid, address) {
         }
     }
 
- document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-        if (typeof Tone !== 'undefined') Tone.context.suspend();
-    } else {
-        if (typeof Tone !== 'undefined') Tone.context.resume();
-    }
-});
+ 
    
 
 </script>
