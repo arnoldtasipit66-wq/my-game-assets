@@ -5796,12 +5796,9 @@ const VIRTUAL_HEIGHT = 500;
 
 let lastTime = 0;
         let accumulator = 0;
-let lastRenderTime = 0; // I-paste mo ito sa labas ng update function
-
-        const FIXED_DELTA_TIME_MS = 1000 / 30; // Ginawang 30
-const FIXED_DELTA_TIME_SEC = 1 / 30.0; // Ginawang 30
-const VELOCITY_MULTIPLIER = 60; // Panatilihing 60 para hindi bumagal ang takbo ng bola
-
+        const FIXED_DELTA_TIME_MS = 1000 / 60; 
+        const FIXED_DELTA_TIME_SEC = 1 / 60.0; 
+        const VELOCITY_MULTIPLIER = 60; 
 let playerTotalCurrency = 0;
 let currentMatchBet = 0; 
 const CURRENCY_NAME = "Coins"; 
@@ -7348,42 +7345,48 @@ function playCoinSound() {
         async function playCushionSound(speed) { if (!audioInitialized) await initAudio(); if (!audioInitialized) return; const now = Tone.now(); if (now <= lastCushionSoundTime) return; lastCushionSoundTime = now + 0.03; const volume = -12 + Math.min(1, speed / 15) * 8; const note = speed > 10 ? 'C2' : 'D1'; cushionSynth.volume.value = volume; cushionSynth.triggerAttackRelease(note, '16n', now); }
         async function playCueHitSound(power) { if (!audioInitialized) await initAudio(); if (!audioInitialized) return; const now = Tone.now(); const volume = -6 + (power * 6); const note = 'C4'; cueHitSynth.volume.value = volume; cueHitSynth.triggerAttack(note, now); }
         async function playPocketSound() { if (!audioInitialized) await initAudio(); if (!audioInitialized) return; pocketSynth.triggerAttackRelease("0.2"); }
-        function update(timestamp) {
-    if (lastTime === 0) {
-        lastTime = timestamp;
-    }
+        function update(timestamp) { // <-- Ito na 'yung bago, na may (timestamp)
+            
+            // Kung 'di pa nagsisimula, set mo ang lastTime
+            if (lastTime === 0) {
+                lastTime = timestamp;
+            }
+            
+            // 1. Kalkulahin kung gaano katagal ang lumipas
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
 
-    const deltaTime = timestamp - lastTime;
-    lastTime = timestamp;
-    accumulator += deltaTime;
+            // 2. Idagdag ang lumipas na oras sa "accumulator"
+            accumulator += deltaTime;
 
-    // 1. Input Processing (Stick Rotation)
-    if (isRotatingLeft || isRotatingRight) {
-        if (isRotatingLeft) cueStick.angle -= ROTATION_SPEED;
-        if (isRotatingRight) cueStick.angle += ROTATION_SPEED;
-        if (!isTutorialActive) sendLiveAimData();
-        playAimingSound();
-    }
+            // 3. I-proseso ang input (ito 'yung dati mong code sa update)
+            if (isRotatingLeft || isRotatingRight) {
+                if (isRotatingLeft) cueStick.angle -= ROTATION_SPEED;
+                if (isRotatingRight) cueStick.angle += ROTATION_SPEED;
+                if (!isTutorialActive) sendLiveAimData();
+                playAimingSound();
+            }
 
-    // 2. Physics Loop (Calculations)
-    let maxLoops = 5;
-    while (accumulator >= FIXED_DELTA_TIME_MS && maxLoops > 0) {
-        if (chipsMoving) {
-            updateChipPositions(FIXED_DELTA_TIME_SEC);
+            // 4. Ito ang magic: Ang Physics Loop
+            // (Idagdag ito para maiwasan ang "spiral of death" kung mag-lag ng 1 segundo)
+            let maxLoops = 5; // Limitahan sa 5 physics update bawat frame
+
+            // Habang may sapat na oras na naipon, patakbuhin ang physics
+            while (accumulator >= FIXED_DELTA_TIME_MS && maxLoops > 0) { // <--- BINAGO
+                if (chipsMoving) {
+                    updateChipPositions(FIXED_DELTA_TIME_SEC); 
+                }
+                accumulator -= FIXED_DELTA_TIME_MS;
+                maxLoops--; // <--- DINAGDAG
+            }
+
+            // 5. I-drawing ang resulta (kahit gaano kabilis ang screen)
+            draw();
+            
+            // 6. Ulitin
+            requestAnimationFrame(update); // <-- Tatawagin ulit ang sarili niya
         }
-        accumulator -= FIXED_DELTA_TIME_MS;
-        maxLoops--;
-    }
-
-    // 3. RENDERING FIX: Limitahan ang pag-draw sa 30 FPS
-    // Mag-draw lang kung lumipas na ang 33.3ms (1000/30)
-    if (timestamp - lastRenderTime >= 33.33) {
-        draw(); 
-        lastRenderTime = timestamp;
-    }
-
-    requestAnimationFrame(update);
-}
+        // ▼▼▼ PALITAN MO ANG BUONG draw FUNCTION NITO ▼▼▼
 
 function draw() { 
     // 1. I-drawing ang "master copy" (litrato) ng mesa. Sobrang bilis nito.
@@ -14890,14 +14893,7 @@ async function saveWalletToFirestore(uid, address) {
         }
     }
 
-   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-        if (typeof Tone !== 'undefined') Tone.context.suspend();
-    } else {
-        if (typeof Tone !== 'undefined') Tone.context.resume();
-    }
-});
- 
+    
 
 </script>
 
