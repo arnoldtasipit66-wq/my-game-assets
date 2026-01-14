@@ -9011,42 +9011,25 @@ async function startBotMatch() {
     // 3. Gumawa ng Fake Opponent Name
     const botName = BotGenerator.generateName();
     
-    // 4. I-set ang pangalan ng kalaban (Global Variable)
+    // 4. I-set ang pangalan ng kalaban
     opponentPlayerName = botName;
 
     // 5. Ipakita ang "MATCH FOUND!" effect
     showMessage(`Match Found! Opponent: ${botName}`, 3000);
     playButtonSound(); 
 
-    // 6. REFUND LOGIC (VIA SERVER) 
-    // Ibabalik natin ang pera gamit ang Server API para tanggapin ng database.
-    if (selectedBetAmount > 0) {
-        // Visual update agad para sa player (para di nila halata na nag-refund)
-        playerTotalCurrency += selectedBetAmount;
-        updateCurrencyDisplay();
+    // (DITO MO BINURA YUNG REFUND CODE) - Clean na! ✨
 
-        // SILENT SERVER REFUND:
-        // Hindi natin hihintayin (no 'await') para tuloy-tuloy ang laro.
-        // Bahala na ang server mag-update sa background.
-        fetch(`${SERVER_URL}/api/refund`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                uid: localPlayerUid,
-                amount: selectedBetAmount
-            })
-        }).catch(err => console.error("Background refund failed:", err));
-    }
-
-    // 7. Start Game logic (AI Mode)
+    // 6. Start Game logic (AI Mode)
     startGame(`ai-${selectedOnlineGameType}`, 'pro'); 
     
-    // 8. FORCE UPDATE: Siguraduhin na ang pangalan sa taas ay Bot Name
+    // 7. FORCE UPDATE: Siguraduhin na ang pangalan sa taas ay Bot Name
     setTimeout(() => {
         opponentPlayerName = botName; 
         updateInfoBox(); 
     }, 500); 
 }
+
 
     // ---------------------------------------------  
 async function findMatch() {
