@@ -6360,7 +6360,7 @@ setCueForCurrentTurn(); // Update history state
 async function endGame(winnerTextMessage, finalGameData = null) {
     if (gameState === 'gameover') return;
 
-    // --- 🔊 SOUND EFFECT LOGIC ---
+    // --- 🔊 SOUND EFFECT LOGIC (Walang pagbabago) ---
     const winSound = document.getElementById('win-sfx');
     const loseSound = document.getElementById('lose-sfx');
     
@@ -6373,68 +6373,55 @@ async function endGame(winnerTextMessage, finalGameData = null) {
         if (loseSound) { loseSound.volume = 0.8; loseSound.play().catch(e => console.log("Lose Sound Error:", e)); }
     }
 
-    let bonus = 0;
-    let xpBonus = 0;
-    let trophiesChange = 0;
-    let reason = "";
-    
-    let bet = 0;
-    if (isOnlineGame) {
+    // --- REWARDS LOGIC (UPDATED FOR SERVER PAYOUT) ---
+    if (!isOnlineGame) { // 🤖 AI GAME
+        
+        if (winnerTextMessage.includes("You Win")) {
+            // 1. COSMETICS (XP, Trophies, Fireworks) - OK lang sa Client
+            let xpBonus = XP_WIN_BONUS;
+            let trophiesChange = 5; 
+            triggerFireworks(); 
+            
+            // 2. 💰 PERA LOGIC (SERVER SIDE NA)
+            // Tinanggal natin ang manual computation dito.
+            // Tatawagin natin ang Server para siya magbigay ng panalo (Less Tong).
+            claimAiWinnings(); 
+
+        } else if (winnerTextMessage.includes("You Lose")) {
+            // Talo = Walang gagawin sa pera (kasi nabawas na sa simula pa lang)
+            // Pwede ka magpakita ng message na "Better luck next time"
+            console.log("AI Match Lost. No payout.");
+        }
+
+    } else { // 🌐 ONLINE GAME (PvP)
+        
+        // NOTE: Sa susunod natin aayusin ang PvP Payout.
+        // Sa ngayon, hayaan muna natin itong lumang code, 
+        // PERO TANDAAN: Baka mag-fail ito dahil naka-lock ang database rules.
+        
+        let bet = 0;
         const gameData = finalGameData || (gameId ? (await getDoc(doc(db, "games", gameId))).data() : null);
         if (gameData && gameData.betAmount) { bet = gameData.betAmount; } else { bet = currentMatchBet; }
-    }
 
-    // --- REWARDS LOGIC (UPDATED) ---
-    if (!isOnlineGame) { // AI GAME
         if (winnerTextMessage.includes("You Win")) {
-            bonus = REWARD_WIN_BONUS;
-            xpBonus = XP_WIN_BONUS;
-            
-            // ✅ FIX: Gawing 5 para maka-rank up kahit sa AI
-            trophiesChange = 5; 
-            
-            reason = "Practice Win!";
-            triggerFireworks(); 
-        } else if (winnerTextMessage.includes("You Lose")) {
-            bonus = REWARD_LOSE_CONSOLATION;
-            xpBonus = XP_LOSE_CONSOLATION;
-            trophiesChange = 0; // Wala ring bawas sa AI
-            reason = "Good Game!";
-        }
-        if(bonus > 0) {
-            playerTotalCurrency += bonus;
-            saveCurrency();
-            updateCurrencyDisplay();
-        }
-    } else { // ONLINE GAME
-        if (winnerTextMessage.includes("You Win")) {
-            trophiesChange = 25; // RANKED WIN
-            xpBonus = XP_WIN_BONUS;
-            triggerFireworks(); 
-
+            // Old Logic (Temporary)
             if (bet > 0) {
                 const totalPot = bet * 2;
                 const houseCut = Math.floor(totalPot * 0.10); 
                 const netWin = totalPot - houseCut;
-                playerTotalCurrency += netWin;
+                
+                // ⚠️ WARNING: Ito ay posibleng ma-block ng Firestore Rules
+                playerTotalCurrency += netWin; 
                 saveCurrency();
                 updateCurrencyDisplay(); 
                 setTimeout(() => { showRewardPopup(netWin, `POT WON!<br><small>(Tong: ${houseCut})</small>`); }, 1000);
-                reason = "Pustahan King!";
-            } else {
-                bonus = REWARD_WIN_BONUS;
-                playerTotalCurrency += bonus;
-                saveCurrency();
-                updateCurrencyDisplay();
-                reason = "Online Win!";
-                showRewardPopup(bonus, reason);
             }
         } else {
-            trophiesChange = -20; // RANKED LOSS
-            if (bet > 0) { setTimeout(() => { showRewardPopup(0, `<span style="color:red">BET LOST: -${bet}</span>`); }, 1000); }
-            else { setTimeout(() => { showRewardPopup(0, "Safe Match (No Bet)"); }, 1000); }
+             if (bet > 0) { setTimeout(() => { showRewardPopup(0, `<span style="color:red">BET LOST: -${bet}</span>`); }, 1000); }
         }
     }
+}
+
 
     // --- APPLY STATS ---
     if (trophiesChange !== 0) {
