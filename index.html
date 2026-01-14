@@ -8688,7 +8688,29 @@ async function handleStraightBallTurnEnd() {
             try {
                 if (isMyTurn) { 
                     if (typeof currentCombo !== 'undefined') { currentCombo++; showComboPopup(currentCombo); }
-                    const reward = pocketedObjectChips.length * REWARD_PER_BALL; playerTotalCurrency += reward; showRewardPopup(reward); updateCurrencyDisplay(); gainXP(pocketedObjectChips.length * XP_PER_BALL);
+                    // --- REPLIT SERVER UPDATE START ---
+                    const reward = pocketedObjectChips.length * REWARD_PER_BALL; 
+                    
+                    // 1. Visual Update (Para makita agad ng player)
+                    playerTotalCurrency += reward; 
+                    showRewardPopup(reward); 
+                    updateCurrencyDisplay(); 
+
+                    // 2. I-save sa Database gamit ang Replit
+                    if (localPlayerUid) {
+                        fetch(`${SERVER_URL}/api/record-win`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                uid: localPlayerUid,
+                                ballsPocketed: pocketedObjectChips.length,
+                                gameMode: 'straight-ball' 
+                            })
+                        }).catch(e => console.error("Server Save Error:", e));
+                    }
+
+                    gainXP(pocketedObjectChips.length * XP_PER_BALL);
+                    // --- REPLIT SERVER UPDATE END ---
                 }
             } catch (err) {}
         } else {
