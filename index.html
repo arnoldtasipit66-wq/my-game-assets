@@ -14893,7 +14893,14 @@ async function saveWalletToFirestore(uid, address) {
         }
     }
 
-    
+ document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        if (typeof Tone !== 'undefined') Tone.context.suspend();
+    } else {
+        if (typeof Tone !== 'undefined') Tone.context.resume();
+    }
+});
+   
 
 </script>
 
