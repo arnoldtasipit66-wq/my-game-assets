@@ -14953,9 +14953,42 @@ async function saveWalletToFirestore(uid, address) {
         }
     }
 
- 
-   
+    // --- ILAGAY ITO SA PINAKA-BABA NG SCRIPT.JS ---
 
+function claimAiWinnings() {
+    // Check kung may taya 
+    if (selectedBetAmount <= 0) return; 
+
+    console.log("Claiming AI Winnings...");
+
+    fetch(`${SERVER_URL}/api/match-payout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            uid: localPlayerUid,
+            betAmount: selectedBetAmount
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Kunin ang final amount (bawas na ang tong)
+            const amountReceived = data.newBalance; 
+            
+            // Update sa Screen
+            playerTotalCurrency += amountReceived; 
+            updateCurrencyDisplay();
+            
+            // Ipakita ang message
+            showMessage(`YOU WON ${amountReceived} COINS!`, 3000);
+        }
+    })
+    .catch(err => console.error("Payout Failed:", err));
+}
+
+
+
+ 
 </script>
 
 </body>
