@@ -7555,6 +7555,7 @@ function drawBackgroundLayer() {
     });
 
     if (backgroundCanvas.width > 0) {
+        // 1. Ayusin ang Font Size
         const fontSize = 60 * scale; 
         backgroundCtx.font = `italic bold ${fontSize}px Georgia`;
         
@@ -7562,33 +7563,36 @@ function drawBackgroundLayer() {
         backgroundCtx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
         backgroundCtx.textBaseline = 'middle';
         
-        // Ang Spot (Headstring spot)
-        const spotX = backgroundCanvas.width * 0.7; 
+        // 2. ILIPAT ANG SPOT SA GITNA (Center)
+        // Dati: width * 0.7 (Nasa kanan)
+        // Ngayon: width / 2 (Gitnang-gitna)
+        const spotX = backgroundCanvas.width / 2; 
         const spotY = backgroundCanvas.height / 2;
         const spotRadius = BALL_RADIUS * scale;
         
-        // Drawing ng Spot (Bilog) - Ito ang magsisilbing "O"
+        // 3. I-DRAW ANG SPOT (Ito ang magsisilbing letter 'O' sa MOnster)
         backgroundCtx.lineWidth = 3.5 * scale;
         backgroundCtx.beginPath();
         backgroundCtx.arc(spotX, spotY, spotRadius, 0, Math.PI * 2);
         backgroundCtx.stroke(); 
      
-        const textPart1 = "M";      // Kaliwa ng spot
-        const textPart2 = "nster";  // Kanan ng spot
-        const spacing = 8 * scale;
+        // 4. BAGUHIN ANG TEXT
+        // Ang Goal: "Pinoy M [Spot] nster Pool"
         
-        // Drawing Part 1 (M)
+        const textPart1 = "Pinoy M";      // Kaliwa
+        const textPart2 = "nster Pool";   // Kanan
+        const spacing = 8 * scale;        // Layo ng text sa bilog
+        
+        // Drawing Part 1 (Pinoy M) - Sa Kaliwa ng Spot
         backgroundCtx.textAlign = 'right';
         backgroundCtx.fillText(textPart1, spotX - spotRadius - spacing, spotY);
         
-        // Drawing Part 2 (nster)
+        // Drawing Part 2 (nster Pool) - Sa Kanan ng Spot
         backgroundCtx.textAlign = 'left';
         backgroundCtx.fillText(textPart2, spotX + spotRadius + spacing, spotY);
         
-        // Drawing Main Title (Pinoy Pool)
-        backgroundCtx.font = `italic bold ${fontSize}px Georgia`;
-        backgroundCtx.textAlign = 'center';
-        backgroundCtx.fillText("Pinoy Pool", (backgroundCanvas.width / 2) - (60 * scale), spotY);
+        // Note: Tinanggal ko na yung hiwalay na "Pinoy Pool" sa baba 
+        // kasi buo na yung sentence sa gitna.
     }
 }
 
