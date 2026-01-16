@@ -9000,7 +9000,7 @@ async function updatePlayerData(uid, didWin = false) {
 // ▲▲▲ DULO NG STEP 5 ▲▲▲
         async function cleanupMatchmakingEntry() { if (unsubscribeFromQueue) { unsubscribeFromQueue(); unsubscribeFromQueue = null; } const queueCollection = collection(db, "matchmakingQueue"); const q = query(queueCollection, where("uid", "==", localPlayerUid)); const snapshot = await getDocs(q); if (!snapshot.empty) { const myDocRef = snapshot.docs[0].ref; await deleteDoc(myDocRef); } }
         
-// --- 🤖 STEP 2: START BOT MATCH FUNCTION (CORRECTED VERSION) 🤖 ---
+// --- 🤖 STEP 2: START BOT MATCH FUNCTION (SAFE VERSION) 🤖 ---
 async function startBotMatch() {
     // 1. Linisin ang Queue
     await cleanupMatchmakingEntry();
@@ -9018,30 +9018,12 @@ async function startBotMatch() {
     showMessage(`Match Found! Opponent: ${botName}`, 3000);
     playButtonSound(); 
 
-    // 6. REFUND LOGIC (VIA SERVER) 
-    // Ibabalik natin ang pera gamit ang Server API para tanggapin ng database.
-    if (selectedBetAmount > 0) {
-        // Visual update agad para sa player (para di nila halata na nag-refund)
-        playerTotalCurrency += selectedBetAmount;
-        updateCurrencyDisplay();
-
-        // SILENT SERVER REFUND:
-        // Hindi natin hihintayin (no 'await') para tuloy-tuloy ang laro.
-        // Bahala na ang server mag-update sa background.
-        fetch(`${SERVER_URL}/api/refund`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                uid: localPlayerUid,
-                amount: selectedBetAmount
-            })
-        }).catch(err => console.error("Background refund failed:", err));
-    }
+    // (STEP 6: REFUND - DELETED NA) ✅
 
     // 7. Start Game logic (AI Mode)
     startGame(`ai-${selectedOnlineGameType}`, 'pro'); 
     
-    // 8. FORCE UPDATE: Siguraduhin na ang pangalan sa taas ay Bot Name
+    // 8. FORCE UPDATE: (Ito yung hinahanap mo boss, nandito pa rin!)
     setTimeout(() => {
         opponentPlayerName = botName; 
         updateInfoBox(); 
