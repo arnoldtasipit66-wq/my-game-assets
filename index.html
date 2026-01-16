@@ -14969,6 +14969,31 @@ async function saveWalletToFirestore(uid, address) {
             });
         }
     }
+    // --- NEW SERVER PAYOUT FUNCTION ---
+function claimAiWinnings() {
+    if (selectedBetAmount <= 0) return; 
+
+    console.log("Claiming AI Winnings...");
+
+    fetch(`${SERVER_URL}/api/match-payout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            uid: localPlayerUid,
+            betAmount: selectedBetAmount
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const amountReceived = data.newBalance; 
+            playerTotalCurrency += amountReceived; 
+            updateCurrencyDisplay();
+            showMessage(`YOU WON ${amountReceived} COINS!`, 3000);
+        }
+    })
+    .catch(err => console.error("Payout Failed:", err));
+}
 
  
    
