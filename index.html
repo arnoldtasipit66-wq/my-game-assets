@@ -6384,53 +6384,71 @@ async function endGame(winnerTextMessage, finalGameData = null) {
         if (gameData && gameData.betAmount) { bet = gameData.betAmount; } else { bet = currentMatchBet; }
     }
 
-    // --- REWARDS LOGIC (UPDATED) ---
-    if (!isOnlineGame) { // AI GAME
+    // --- REWARDS LOGIC (UPDATED FOR SERVER PAYOUT) ---
+    if (!isOnlineGame) { // 🤖 AI GAME
         if (winnerTextMessage.includes("You Win")) {
-            bonus = REWARD_WIN_BONUS;
+            
+            // 1. COSMETICS (XP, Trophies, Fireworks) - OK lang sa Client
             xpBonus = XP_WIN_BONUS;
-            
-            // ✅ FIX: Gawing 5 para maka-rank up kahit sa AI
-            trophiesChange = 5; 
-            
+            trophiesChange = 5; // Pwede mag rank-up sa AI
             reason = "Practice Win!";
             triggerFireworks(); 
+
+            // 2. 💰 PERA LOGIC (SERVER SIDE NA)
+            // Tinanggal na natin ang manual computation (bonus).
+            // Tatawagin natin ang Server para siya magbigay ng panalo (Less Tong).
+            if (typeof claimAiWinnings === 'function') {
+                claimAiWinnings(); 
+            } else {
+                console.error("Error: claimAiWinnings function not found!");
+            }
+
         } else if (winnerTextMessage.includes("You Lose")) {
-            bonus = REWARD_LOSE_CONSOLATION;
+            // Talo = Walang gagawin sa pera (kasi nabawas na sa simula pa lang)
             xpBonus = XP_LOSE_CONSOLATION;
-            trophiesChange = 0; // Wala ring bawas sa AI
+            trophiesChange = 0; 
             reason = "Good Game!";
+            console.log("AI Match Lost. No payout.");
         }
-        if(bonus > 0) {
-            playerTotalCurrency += bonus;
-            saveCurrency();
-            updateCurrencyDisplay();
-        }
-    } else { // ONLINE GAME
+
+    } else { // 🌐 ONLINE GAME (PvP)
+        
+        // ⚠️ PAALALA: Sa ngayon, posibleng HINDI GUMANA ang payout dito 
+        // dahil naka-lock ang database. Aayusin natin ito sa NEXT STEP (Server PvP).
+        
         if (winnerTextMessage.includes("You Win")) {
-            trophiesChange = 25; // RANKED WIN
+            trophiesChange = 25; 
             xpBonus = XP_WIN_BONUS;
             triggerFireworks(); 
 
+            let bet = 0;
+            // Safe check kung may game data
+            if (finalGameData && finalGameData.betAmount) { bet = finalGameData.betAmount; }
+            else if (typeof currentMatchBet !== 'undefined') { bet = currentMatchBet; }
+
             if (bet > 0) {
+                // OLD LOGIC (Temporary for PvP display)
                 const totalPot = bet * 2;
                 const houseCut = Math.floor(totalPot * 0.10); 
                 const netWin = totalPot - houseCut;
+                
+                // Visual update lang muna (baka di ma-save sa DB)
                 playerTotalCurrency += netWin;
-                saveCurrency();
                 updateCurrencyDisplay(); 
+                
                 setTimeout(() => { showRewardPopup(netWin, `POT WON!<br><small>(Tong: ${houseCut})</small>`); }, 1000);
                 reason = "Pustahan King!";
             } else {
+                // No Bet Match
                 bonus = REWARD_WIN_BONUS;
                 playerTotalCurrency += bonus;
-                saveCurrency();
                 updateCurrencyDisplay();
                 reason = "Online Win!";
                 showRewardPopup(bonus, reason);
             }
         } else {
-            trophiesChange = -20; // RANKED LOSS
+            trophiesChange = -20; 
+            let bet = (finalGameData && finalGameData.betAmount) || currentMatchBet || 0;
             if (bet > 0) { setTimeout(() => { showRewardPopup(0, `<span style="color:red">BET LOST: -${bet}</span>`); }, 1000); }
             else { setTimeout(() => { showRewardPopup(0, "Safe Match (No Bet)"); }, 1000); }
         }
