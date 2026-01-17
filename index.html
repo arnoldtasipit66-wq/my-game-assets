@@ -14448,6 +14448,25 @@ startBtn.addEventListener('click', async () => {
 });
 
 // Simulan ang proseso
+// --- 🛡️ SAFETY TIMER (FIX SA 76% STUCK) ---
+// Kapag lumampas ng 7 seconds at naglo-load pa rin, pilitin nang tapusin.
+setTimeout(() => {
+    const loadingDiv = document.getElementById('preloader-overlay');
+    // Check kung nakaharang pa rin ang loading screen
+    if (loadingDiv && !loadingDiv.classList.contains('hidden')) {
+        console.warn("Loading too slow! Forcing start...");
+        
+        // I-update ang text para alam ng user
+        const loadText = document.getElementById('loading-text');
+        if(loadText) loadText.textContent = "Taking too long... Force Starting!";
+        
+        // Pilitin tapusin ang loading
+        loadedCount = totalAssets; 
+        onLoadingComplete();
+    }
+}, 7000); // 7000ms = 7 seconds waiting time
+
+// Simulan ang proseso (Normal Start)
 startPreloading();
 
  // --- PROFILE PICTURE UPLOAD LOGIC ---
