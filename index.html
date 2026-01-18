@@ -1851,83 +1851,38 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
 #opponent-info .hud-details { align-items: flex-end !important; text-align: right !important; }
 
 
-/* --- ⏱️ ULTIMATE TIMER FIX (EXPLICIT GRADIENT) ⏱️ --- */
-
-/* 1. Reset natin ang Avatar Container */
 .hud-avatar {
-    width: 50px !important;
-    height: 50px !important;
+   
+    width: 24px !important;  /* Dati 28px */
+    height: 24px !important; /* Dati 28px */
+    font-size: 14px !important; /* Dati 16px */
+    
     border-radius: 50%;
-    position: relative;
-    z-index: 1;
-    box-sizing: border-box;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #000; /* Itim na likod */
-    
-    /* Default Border (Pag hindi turn) */
-    border: 3px solid #333; 
-    transition: all 0.3s ease;
+    background: #333;
+    border: 1px solid rgba(255,255,255,0.4);
+    display: flex; justify-content: center; align-items: center;
+    flex-shrink: 0;
 }
 
-/* 2. Image sa Loob (Dapat may gap para makita ang timer) */
-.hud-avatar img, .hud-avatar div {
-    width: 88% !important; /* Liitan konti para lumabas ang timer sa gilid */
-    height: 88% !important;
-    border-radius: 50%;
-    object-fit: cover;
-    z-index: 5; 
-    position: relative;
-    background-color: #000;
-}
-
-/* 3. TIMER ACTIVE (Ang Magic!) */
-.hud-active .hud-avatar {
-    /* Tanggalin ang static border para di matakpan ang timer */
-    border: none !important; 
-    padding: 3px !important; /* Space para sa ring */
-    
-    /* DETALYADONG GRADIENT SYNTAX (Ito ang solusyon sa stuck yellow) */
-    /* Gold ang nauubos, Red ang lumalabas */
-    background: conic-gradient(
-        #FFD700 0deg, 
-        #FFD700 var(--timer-deg, 360deg), 
-        #FF0000 var(--timer-deg, 360deg), 
-        #FF0000 360deg
-    ) !important;
-    
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.8) !important; /* Glow */
-    transform: scale(1.15); 
-}
-
-/* 4. WARNING PULSE (Pag paubos na) */
-.hud-active .hud-avatar.timer-warning {
-    animation: panicPulse 0.5s infinite alternate;
-    /* Pag warning, Red na ang glow */
-    box-shadow: 0 0 20px #FF0000 !important; 
-}
-
-@keyframes panicPulse {
-    from { transform: scale(1.15); }
-    to { transform: scale(1.25); }
-}
-/* --- TEXT STYLES (Retain lang natin) --- */
 .hud-name {
-    font-size: 10px !important;
+ 
+    font-size: 10px !important; /* Dati 12px */
+    
     font-weight: 800 !important;
     margin: 0 !important;
     white-space: nowrap !important;
 }
 
 .hud-sub {
-    font-size: 8px !important;
+
+    font-size: 8px !important; /* Dati 9px */
+    
     font-weight: 700 !important;
     opacity: 0.9 !important;
-    margin-top: 0px !important;
+    margin-top: 0px !important; /* Wala nang space sa pagitan */
 }
 
-/* Landscape Fix */
+
 @media (max-height: 500px) and (orientation: landscape) {
     #player-info { left: 130px !important; top: 10px !important; }
     #opponent-info { right: 130px !important; top: 10px !important; }
