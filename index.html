@@ -5131,42 +5131,6 @@ div#opponent-info.hud-active {
     border-radius: 25px !important;
     background: rgba(0, 0, 0, 0.5) !important;
 }
-
-/* --- 💸 BETTING ANIMATION STYLES 💸 --- */
-.bet-coin {
-    position: absolute;
-    font-size: 30px;
-    z-index: 99999;
-    pointer-events: none;
-    transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.27); /* Bouncy effect */
-}
-
-#pot-animation-overlay {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    z-index: 100000;
-    text-align: center;
-    pointer-events: none;
-    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.27);
-}
-
-.pot-text-anim {
-    font-family: 'Luckiest Guy', cursive;
-    font-size: 4em;
-    color: #FFD700;
-    text-shadow: 4px 4px 0 #000, 0 0 30px gold;
-    white-space: nowrap;
-}
-
-.vs-text-anim {
-    font-family: 'Nunito', sans-serif;
-    font-size: 1.5em;
-    color: white;
-    font-weight: bold;
-    margin-top: -10px;
-}
         
 </style>
 </head>
@@ -5374,7 +5338,7 @@ div#opponent-info.hud-active {
 
         <div id="vs-ai-button" class="game-card secondary-card">
             <div class="card-content">
-                <div class="card-icon">🤖</div> <div class="card-title">FREEMATCH</div>
+                <div class="card-icon">🎱</div> <div class="card-title">FREEMATCH</div>
                 
                 <div class="card-subtitle">Training • No Risk</div>
             </div>
@@ -5798,17 +5762,7 @@ tg.BackButton.onClick(() => {
         // KUNG WALANG MODAL (Nasa Main Menu): Tawagin ang confirmation window
         handleExitRequest(); 
     }
-});     
-
-        // --- ⏱️ TURN TIMER SETTINGS ⏱️ ---
-const TURN_TIME_LIMIT = 30; // 30 Seconds per turn
-let currentTurnTime = TURN_TIME_LIMIT;
-let turnTimerInterval = null;
-
-// Strike Counters (3 Strikes = Talo)
-let myTimeouts = 0;
-let oppTimeouts = 0;
-const MAX_TIMEOUTS = 3;
+});      
                let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
 window.isInGame = false;
 
@@ -6156,7 +6110,7 @@ let fireworks = [];
 const feltTextureImage = new Image();
 const tableSurfaceImage = new Image();
 tableSurfaceImage.crossOrigin = "Anonymous";
-tableSurfaceImage.src = 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my-game-assets/refs/heads/main/Gemini_Generated_Image_qtberbqtberbqtbe.png';
+tableSurfaceImage.src = 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my-game-assets/refs/heads/main/Gemini_Generated_Image_qtberbqtberbqtbe.pngng';
         let unsubscribeFromChat, isInitialChatLoad = true;
         let legalTargetChipIds = new Set(); // <-- BAGONG DAGDAG para sa ring light
 
@@ -6408,8 +6362,6 @@ setCueForCurrentTurn(); // Update history state
    // --- 🏁 FINAL & FIXED ENDGAME FUNCTION 🏁 ---
 async function endGame(winnerTextMessage, finalGameData = null) {
     if (gameState === 'gameover') return;
-
-    stopTurnTimer();
 
     // 1. SOUND EFFECTS
     const winSound = document.getElementById('win-sfx');
@@ -7395,16 +7347,7 @@ function playCoinSound() {
         async function playCushionSound(speed) { if (!audioInitialized) await initAudio(); if (!audioInitialized) return; const now = Tone.now(); if (now <= lastCushionSoundTime) return; lastCushionSoundTime = now + 0.03; const volume = -12 + Math.min(1, speed / 15) * 8; const note = speed > 10 ? 'C2' : 'D1'; cushionSynth.volume.value = volume; cushionSynth.triggerAttackRelease(note, '16n', now); }
         async function playCueHitSound(power) { if (!audioInitialized) await initAudio(); if (!audioInitialized) return; const now = Tone.now(); const volume = -6 + (power * 6); const note = 'C4'; cueHitSynth.volume.value = volume; cueHitSynth.triggerAttack(note, now); }
         async function playPocketSound() { if (!audioInitialized) await initAudio(); if (!audioInitialized) return; pocketSynth.triggerAttackRelease("0.2"); }
-        function playErrorSound() {
-        if (typeof uiSynth !== 'undefined' && audioInitialized) {
-             uiSynth.triggerAttackRelease("G2", "8n");
-        } else {
-             const sfx = document.getElementById('lose-sfx');
-             if (sfx) { const clone = sfx.cloneNode(); clone.volume = 0.3; clone.play().catch(e => {}); }
-        }
-        }
         function update(timestamp) { // <-- Ito na 'yung bago, na may (timestamp)
-            
             
             // Kung 'di pa nagsisimula, set mo ang lastTime
             if (lastTime === 0) {
@@ -8812,15 +8755,21 @@ async function handleStraightBallTurnEnd() {
         function updateLocalGameState(switchTurn) {
     if (switchTurn) {
         if (!playerTurn && chipsPocketedInTurn.length > 0) { 
-            // Panatilihin lang ang "Nice Shot" ng AI
+            // Panatilihin lang ang "Nice Shot" ng AI, wag tanggalin
             setTimeout(() => { aiDisplayMessage(getAiChatMessage('playerGoodShot')); }, 700); 
         }
         playerTurn = !playerTurn;
         setCueForCurrentTurn();
         if (playerTurn) { aiConsecutivePots = 0; }
+        
+        // --- TINANGGAL NA NATIN ANG MESSAGE DITO ---
+        // showMessage(`${playerTurn ? 'Your' : 'Opponent'}'s turn`, 1500); 
     } else {
-        if (!playerTurn) {
+        if (playerTurn) { 
+            // showMessage("You shoot again!", 1500);  <-- TINANGGAL DIN
+        } else {
             aiConsecutivePots++;
+            // showMessage("AI shoots again!", 1500); <-- TINANGGAL DIN
             setTimeout(() => { aiDisplayMessage(getAiChatMessage('goodShot')); }, 700);
         }
     }
@@ -8829,7 +8778,7 @@ async function handleStraightBallTurnEnd() {
     firstChipHitInTurn = null;
     resetPektus();
     updateCardDisplay();
-    updateInfoBox(); // <-- Nag-uupdate ng Avatar Glow
+    updateInfoBox(); // <-- ITO ANG MAGPAPALIT NG ILAW (HUD GLOW)
     
     if (gameState !== 'gameover') {
         if (canMoveCueBall) {
@@ -8849,10 +8798,6 @@ async function handleStraightBallTurnEnd() {
             }
         }
     }
-
-    // 👇👇👇 DITO MO IDAGDAG ANG TIMER! (SA DULO) 👇👇👇
-    startTurnTimer(); 
-    // 👆👆👆 PARA MAG-RESET ANG 30 SECONDS
 }
         // ▼▼▼ PALITAN MO ITONG BUONG FUNCTION ▼▼▼
 
@@ -9055,62 +9000,115 @@ async function updatePlayerData(uid, didWin = false) {
         // Kahit mag-error, hindi na ito mag-ca-crash ng malala
     }
 }
-// ======================================================
-// 🛡️ ROBUST MATCHMAKING SYSTEM (ANTI-STUCK FIX) 🛡️
-// ======================================================
+// ▲▲▲ DULO NG STEP 5 ▲▲▲
+        async function cleanupMatchmakingEntry() { if (unsubscribeFromQueue) { unsubscribeFromQueue(); unsubscribeFromQueue = null; } const queueCollection = collection(db, "matchmakingQueue"); const q = query(queueCollection, where("uid", "==", localPlayerUid)); const snapshot = await getDocs(q); if (!snapshot.empty) { const myDocRef = snapshot.docs[0].ref; await deleteDoc(myDocRef); } }
+        
+// --- 🤖 STEP 2: START BOT MATCH FUNCTION (CORRECTED VERSION) 🤖 ---
+async function startBotMatch() {
+    // 1. Linisin ang Queue (Para di na maghanap ng iba)
+    await cleanupMatchmakingEntry();
+    
+    // 2. Itago ang "Searching..." modal
+    matchmakingWaitModal.classList.remove('show');
 
-// 1. Gawing Global ang Timeout ID para hindi mawala
-window.matchmakingTimeoutId = null;
+    // 3. Gumawa ng Fake Opponent Name
+    const botName = BotGenerator.generateName();
+    
+    // 4. I-set ang pangalan ng kalaban (Global Variable)
+    opponentPlayerName = botName;
 
-// --- 🔍 FIXED FIND MATCH ---
+    // 5. Ipakita ang "MATCH FOUND!" effect
+    showMessage(`Match Found! Opponent: ${botName}`, 3000);
+    playButtonSound(); 
+
+    // ❌ DITO DATI YUNG REFUND LOGIC. BINURA NA NATIN! ❌
+    // Dahil burado na, hawak na ng laro ang taya mo. 
+    // Pag natalo ka, goodbye coins. Pag nanalo ka, claimAiWinnings() ang bahala.
+
+    // 6. Start Game logic (AI Mode)
+    startGame(`ai-${selectedOnlineGameType}`, 'pro'); 
+    
+    // 7. FORCE UPDATE: Siguraduhin na ang pangalan sa taas ay Bot Name
+    setTimeout(() => {
+        opponentPlayerName = botName; 
+        updateInfoBox(); 
+    }, 500); 
+}
+
+    // ---------------------------------------------  
 async function findMatch() {
     const displayName = localPlayerName || "Guest";
     
-    // Check Auth
+    // 1. BASIC CHECKS
     if (!isAuthReady || !localPlayerUid) { 
         showMessage("Connecting to server..."); 
         return; 
     }
 
-    // Payment Logic
+    // 2. SERVER PAYMENT FIRST (Bayad Muna!)
+    // Kung may taya, tawagin ang Replit para maningil.
     if (selectedBetAmount > 0) {
         showMessage(`Processing Entry Fee: ${formatCurrencyShort(selectedBetAmount)}...`, 1000);
+        
+        // Tawagin ang Server API
         const isPaid = await processBet(selectedBetAmount);
-        if (!isPaid) return; 
+        
+        if (!isPaid) {
+            // Kung walang pera o nag-error, STOP AGAD.
+            return; 
+        }
+        
+        // Visual Update lang (para sa UI logic)
         currentMatchBet = selectedBetAmount;
     }
 
-    // UI Setup
-    if(onlineMenu) onlineMenu.classList.remove('show');
-    if(matchmakingWaitModal) matchmakingWaitModal.classList.add('show');
+    // 3. UI SETUP
+    onlineMenu.classList.remove('show');
+    matchmakingWaitModal.classList.add('show');
     history.pushState({ modal: 'matchmaking' }, 'Matchmaking', '#matchmaking');
 
+    // Kunin ang Photo para handa na
     const myPhoto = localStorage.getItem('pinoyPoolPlayerPhoto');
 
-    // 🛑 RESET TIMER (Siguraduhin walang lumang timer)
-    if (window.matchmakingTimeoutId) clearTimeout(window.matchmakingTimeoutId);
+    // 4. TIMEOUT LOGIC (BOT MATCH + REFUND)
+    if (matchmakingTimeoutId) clearTimeout(matchmakingTimeoutId);
     
-    // ✅ START TIMER (12 Seconds bago mag-AI)
-    window.matchmakingTimeoutId = setTimeout(async () => {
-        // Check kung may nahanap na habang naghihintay
-        if (gameId) return; 
+    matchmakingTimeoutId = setTimeout(async () => {
+        if (gameId) return; // May nahanap na palang tao, wag ituloy ang bot
         
-        console.log("⏰ Time's up! Switching to AI...");
-        showMessage("No player found. Switching to AI...", 1500);
+        console.log("Time's up. Switching to Bot Match.");
 
-        // 🔥 FORCE START AI 🔥
-        try {
-            await startBotMatch();
-        } catch (err) {
-            console.error("Bot Match Error:", err);
-            // Emergency Start kung mag-fail ang standard start
-            startGame(`ai-${selectedOnlineGameType}`, 'pro');
-            if(matchmakingWaitModal) matchmakingWaitModal.classList.remove('show');
+        // ▼▼▼ REFUND LOGIC (IBALIK ANG PERA) ▼▼▼
+        if (selectedBetAmount > 0) {
+            showMessage("No opponent found. Refunded entry fee.", 2000);
+            try {
+                // Ibalik ang pera sa Server
+                await fetch(`${SERVER_URL}/api/refund`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        uid: localPlayerUid,
+                        amount: selectedBetAmount
+                    })
+                });
+                
+                // Ibalik ang pera sa Visual Display
+                playerTotalCurrency += selectedBetAmount; 
+                updateCurrencyDisplay();
+            } catch(e) {
+                console.error("Refund failed:", e);
+                // (Sa totoong buhay, dapat may retry mechanism dito)
+            }
         }
-    }, 12000); // 12 Seconds
+        // ▲▲▲ END REFUND ▲▲▲
 
-    // Database Logic (Queue)
+        // Start Bot Match (Practice Mode na lang ito)
+        startBotMatch(); 
+    }, 12000); // 12 Seconds waiting time
+
+    // 5. FIND OPPONENT IN QUEUE
     const queueCollection = collection(db, "matchmakingQueue");
+    
     const q = query(
         queueCollection, 
         where("status", "==", "waiting"), 
@@ -9123,12 +9121,11 @@ async function findMatch() {
         const snapshot = await getDocs(q);
         let opponentDoc = null;
 
-        // Filter opponents
+        // Filter: Hanap ng active player (wala pang 60s ang tanda)
         for (const docSnap of snapshot.docs) {
             const data = docSnap.data();
             if (data.uid !== localPlayerUid) {
                 let time = data.timestamp?.toMillis ? data.timestamp.toMillis() : Date.now();
-                // 60 seconds validity
                 if (Date.now() - time < 60000) { 
                     opponentDoc = docSnap;
                     break;
@@ -9137,21 +9134,24 @@ async function findMatch() {
         }
 
         if (opponentDoc) {
-            // --- OPPONENT FOUND! ---
-            clearTimeout(window.matchmakingTimeoutId); 
+            // --- OPPONENT FOUND (CREATE GAME) ---
+            clearTimeout(matchmakingTimeoutId); // Stop Bot Timer
             
             const oppData = opponentDoc.data();
             const oppRef = opponentDoc.ref;
 
-            // Verify if still waiting
+            // Double Check kung waiting pa rin
             const freshSnap = await getDoc(oppRef);
             if (!freshSnap.exists() || freshSnap.data().status !== 'waiting') {
+                // Unlucky: Nakuha na ng iba. Retry tayo.
+                // Note: Bayad ka na, kaya findMatch ulit (wag magbayad ulit logic dapat, 
+                // pero sa simple version, hayaan muna natin ang retry sa UI or auto-retry logic requires more code)
                 showMessage("Match failed. Retrying...", 1000);
-                findMatch(); // Retry loop
+                findMatch(); // Recursive retry (Ingat lang sa loop, pero 12s timeout will catch it)
                 return;
             }
 
-            // Create Game
+            // SETUP GAME DATA
             gameId = Math.random().toString(36).substring(2, 7).toUpperCase();
             localPlayerId = 'player1'; 
             gameMode = `online-${selectedOnlineGameType}`;
@@ -9163,6 +9163,7 @@ async function findMatch() {
             
             const myCue = equippedItems.cue || 'default';
             const myRank = getPlayerRank(playerLevel).index;
+            
             const oppRank = oppData.rankIndex !== undefined ? oppData.rankIndex : 0;
             const oppCue = oppData.equippedCueId || 'default';
             const oppPhoto = oppData.photo || null;
@@ -9170,15 +9171,29 @@ async function findMatch() {
             const gameData = {
                 gameId, gameType: selectedOnlineGameType, gameState: 'playing', turnId: 1,
                 betAmount: selectedBetAmount,
-                pot: selectedBetAmount * 2, 
+                pot: selectedBetAmount * 2, // Pot Money (X2 dahil dalawa kayo)
                 players: {
-                    player1: { uid: localPlayerUid, status: 'online', displayName: displayName, equippedCueId: myCue, rankIndex: myRank, photo: myPhoto },
-                    player2: { uid: oppData.uid, status: 'online', displayName: oppData.displayName, equippedCueId: oppCue, rankIndex: oppRank, photo: oppPhoto }
+                    player1: { 
+                        uid: localPlayerUid, 
+                        status: 'online', 
+                        displayName: displayName, 
+                        equippedCueId: myCue, 
+                        rankIndex: myRank,
+                        photo: myPhoto 
+                    },
+                    player2: { 
+                        uid: oppData.uid, 
+                        status: 'online', 
+                        displayName: oppData.displayName, 
+                        equippedCueId: oppCue, 
+                        rankIndex: oppRank,
+                        photo: oppPhoto 
+                    }
                 },
                 chips: initialChips, currentTurnUid: startUid, canMoveCueBall: true, isBreakShot: true, winner: null
             };
             
-            // Setup Mode Specifics
+            // Mode Specifics
             if (selectedOnlineGameType === 'poker') {
                 createDeck(); dealCards();
                 Object.assign(gameData, { deck, player1Hand: playerHand, player2Hand: opponentHand, originalPlayer1Hand: originalPlayerHand, originalPlayer2Hand: originalOpponentHand });
@@ -9188,14 +9203,13 @@ async function findMatch() {
                 Object.assign(gameData, { player1_61Score: 0, player2_61Score: 0, lowestChipNumber: 1 });
             }
 
-            // Save & Sync
+            // Save & Start
             await setDoc(doc(db, "games", gameId), gameData);
             await updateDoc(oppRef, { status: 'matched', gameId: gameId });
             
             if (unsubscribeFromQueue) unsubscribeFromQueue();
-            if(matchmakingWaitModal) matchmakingWaitModal.classList.remove('show');
-            
-            if (selectedBetAmount > 0) showPotAnimation(selectedBetAmount);
+            matchmakingWaitModal.classList.remove('show');
+            showMessage(`Matched! Pot Money: ${formatCurrencyShort(gameData.pot)}`, 2000);
             listenToGameUpdates(gameId);
 
         } else {
@@ -9204,25 +9218,25 @@ async function findMatch() {
                 const myRank = getPlayerRank(playerLevel).index;
                 const myCue = equippedItems.cue || 'default';
                 
+                // Add self to Queue
                 const ref = await addDoc(queueCollection, { 
                     uid: localPlayerUid, 
                     gameType: selectedOnlineGameType, 
-                    betAmount: selectedBetAmount, 
+                    betAmount: selectedBetAmount,
                     status: 'waiting', 
                     timestamp: serverTimestamp(), 
-                    displayName: displayName, 
+                    displayName: displayName,
                     rankIndex: myRank, 
-                    equippedCueId: myCue, 
+                    equippedCueId: myCue,
                     photo: myPhoto
                 });
                 
+                // Listen kung may kukuha sa atin
                 unsubscribeFromQueue = onSnapshot(ref, (doc) => {
                     if(doc.exists() && doc.data().status === 'matched' && doc.data().gameId) {
-                        clearTimeout(window.matchmakingTimeoutId); // Stop Timer pag may nahanap na
+                        clearTimeout(matchmakingTimeoutId); // Stop Bot Timer
                         if (unsubscribeFromQueue) unsubscribeFromQueue();
-                        if(matchmakingWaitModal) matchmakingWaitModal.classList.remove('show');
-                        
-                        if (selectedBetAmount > 0) showPotAnimation(selectedBetAmount);
+                        matchmakingWaitModal.classList.remove('show');
                         showMessage("Match found! Joining...", 2000);
                         gameId = doc.data().gameId;
                         localPlayerId = 'player2';
@@ -9233,10 +9247,12 @@ async function findMatch() {
         }
     } catch (e) {
         console.error("Match Error:", e);
-        // Error Refund
+        
+        // ERROR HANDLING (Important: Refund kung nag-error after magbayad)
         if (selectedBetAmount > 0) {
-             showMessage("System Error. Refunding...", 2000);
-             fetch(`${window.SERVER_URL}/api/refund`, {
+             showMessage("Error occurred. Refunding...", 2000);
+             // Call Refund API
+             fetch(`${SERVER_URL}/api/refund`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ uid: localPlayerUid, amount: selectedBetAmount })
@@ -9245,57 +9261,31 @@ async function findMatch() {
                  updateCurrencyDisplay();
              });
         }
-        if(matchmakingWaitModal) matchmakingWaitModal.classList.remove('show');
+        
+        if (e.code === 'failed-precondition') {
+             showMessage("Database Index Required. Check Console.", 5000);
+        } else {
+             // setTimeout(findMatch, 1000); // Optional auto-retry
+        }
     }
 }
 
-// --- 🤖 FIXED START BOT MATCH ---
-async function startBotMatch() {
-    // 1. Linisin ang Queue (Try-Catch para hindi mag-freeze kung fail)
-    try {
-        await cleanupMatchmakingEntry();
-    } catch (e) {
-        console.warn("Cleanup failed, proceeding anyway:", e);
-    }
-    
-    // 2. Isara ang Modal (Siguradong mawawala)
-    if(matchmakingWaitModal) matchmakingWaitModal.classList.remove('show');
-
-    // 3. Setup Bot Info
-    const botName = BotGenerator.generateName();
-    opponentPlayerName = botName;
-
-    playButtonSound(); 
-
-    // 4. Ensure Bet is set
-    if (!selectedBetAmount) selectedBetAmount = currentMatchBet;
-
-    // 5. Play Animation
-    if (selectedBetAmount > 0) showPotAnimation(selectedBetAmount);
-
-    // 6. START GAME AGAD!
-    startGame(`ai-${selectedOnlineGameType}`, 'pro');
-    
-    setTimeout(() => {
-        opponentPlayerName = botName; 
-        updateInfoBox(); 
-    }, 500); 
-}
-
-// --- ❌ FIXED CANCEL ---
 async function cancelMatchmaking() { 
-    if (window.matchmakingTimeoutId) { 
-        clearTimeout(window.matchmakingTimeoutId); 
-        window.matchmakingTimeoutId = null; 
-    } 
-    
+    if (matchmakingTimeoutId) { clearTimeout(matchmakingTimeoutId); matchmakingTimeoutId = null; } 
     await cleanupMatchmakingEntry(); 
+    
+    // NOTE: Tinanggal ang Refund Logic dahil Server-side na ang bayad.
+    // Kapag nag-cancel ka habang nasa queue, "Forfeited" ang coins mo sa version na ito.
+    // (Kung gusto mo ng refund, kailangan ng server update next time).
+    
     showMessage("Matchmaking cancelled."); 
 
-    if(matchmakingWaitModal) matchmakingWaitModal.classList.remove('show'); 
-    if(onlineMenu) onlineMenu.classList.add('show'); 
+    matchmakingWaitModal.classList.remove('show'); 
+    onlineMenu.classList.add('show'); 
     history.back(); 
 }
+
+
         function animateAndApplyShot(shotData) { cueStick.angle = shotData.angle; cueStick.visible = true; if (cueStickElement) cueStickElement.style.display = 'block'; gameState = 'shooting_animation'; let startTime = null; const animationDuration = 100; const shotPowerNormalized = (shotData.power - 5) / 40; const startPullback = shotPowerNormalized * (150 * scale); const endPullback = -30 * scale; function animate(timestamp) { if (!startTime) startTime = timestamp; const progress = Math.min((timestamp - startTime) / animationDuration, 1); cueStick.pullback = startPullback + (endPullback - startPullback) * progress; if (progress < 1) { requestAnimationFrame(animate); } else { cueStick.visible = false; cueStick.pullback = 0; if (cueStickElement) cueStickElement.style.display = 'none'; applyShot(shotData); } } requestAnimationFrame(animate); }
         
         function syncGameState(data) {
@@ -9489,10 +9479,6 @@ async function cancelMatchmaking() {
             if (isMyTurnOnline && !canMoveCueBall && gameState !== 'aiming') {
                 resetPektus();
             }
-
-            // 👇👇👇 DITO MO ISINGIT (SA LOOB PA RIN NG IF) 👇👇👇
-            startTurnTimer();
-            // 👆👆👆 START AGAD NG 30 SECONDS! 
         }
 
         // State Management
@@ -11686,11 +11672,9 @@ async function cancelOnlineGame() {
 }
 // ▲▲▲ END PASTE ▲▲▲
 
-// --- 🚪 2. JOIN GAME (With Animation & Server Payment) 🚪 ---
 async function joinOnlineGame() {
     const displayName = localPlayerName || "Guest";
     
-    // 1. Basic Checks
     if (!isAuthReady || !localPlayerUid) { 
         showMessage("Connecting..."); 
         return; 
@@ -11716,7 +11700,6 @@ async function joinOnlineGame() {
         
         const data = docSnap.data();
         
-        // Bawal sumali kung naglalaro na o tapos na
         if (data.gameState !== 'waiting') {
             showMessage("Game is already full/started.", 3000);
             return;
@@ -11724,45 +11707,40 @@ async function joinOnlineGame() {
 
         const requiredBet = data.betAmount || 0; 
         
-        // Check Balance
         if (playerTotalCurrency < requiredBet) {
-            showMessage(`Can't join! Bet is ${formatCurrencyShort(requiredBet)}.`, 4000);
+            showMessage(`Can't join! Bet is ${formatCurrencyShort(requiredBet)}. You only have ${formatCurrencyShort(playerTotalCurrency)}.`, 4000);
             return; 
         }
 
-        // ✅ SERVER PAYMENT FIX (Bayad Muna sa Server!)
         if (requiredBet > 0) {
-            showMessage("Paying Entry Fee...", 1000);
-            // Gamitin ang processBet para safe at recorded sa database
-            const isPaid = await processBet(requiredBet);
-            
-            if (!isPaid) return; // Kung fail ang bayad, stop na.
-            
-            currentMatchBet = requiredBet;
+            playerTotalCurrency -= requiredBet;
+            saveCurrency(); 
+            updateCurrencyDisplay(); 
+            console.log(`Paid ${requiredBet} coins.`);
         }
 
-        // Prepare Player Data
         const myCue = equippedItems.cue || 'default';
         const myRank = getPlayerRank(playerLevel).index;
         const startingPlayerUid = Math.random() < 0.5 ? data.players.player1.uid : localPlayerUid;
-        const myPhoto = localStorage.getItem('pinoyPoolPlayerPhoto');
 
-        // Update Database (Sali na!)
+        // ▼▼▼ FIX: KUNIN ANG PHOTO MULA SA STORAGE ▼▼▼
+        const myPhoto = localStorage.getItem('pinoyPoolPlayerPhoto');
+        // ▲▲▲ ▲▲▲
+
         await updateDoc(gameDocRef, {
-            'players.player2': { 
-                uid: localPlayerUid, 
-                status: 'online', 
-                displayName: displayName, 
-                equippedCueId: myCue, 
+            'players.player2': {
+                uid: localPlayerUid,
+                status: 'online',
+                displayName: displayName,
+                equippedCueId: myCue,
                 rankIndex: myRank,
-                photo: myPhoto 
+                photo: myPhoto // <--- NGAYON OKAY NA ITO
             },
             'gameState': 'playing',
             'currentTurnUid': startingPlayerUid,
             'turnId': 1
         });
 
-        // Setup Local Game
         onlineMenu.classList.remove('show');
         gameId = inputId;
         localPlayerId = 'player2';
@@ -11773,9 +11751,8 @@ async function joinOnlineGame() {
         
         listenToGameUpdates(gameId);
         
-        // 🔥 DITO ANG ANIMATION! (Pagpasok mo) 🔥
         if (requiredBet > 0) {
-            showPotAnimation(requiredBet);
+            showMessage(`Joined! You paid ${formatCurrencyShort(requiredBet)}.`, 3000);
         } else {
             showMessage("Joined successfully!", 2000);
         }
@@ -11783,20 +11760,17 @@ async function joinOnlineGame() {
     } catch (error) {
         console.error("Join Error:", error);
         
-        // Error Handling (Refund kung nag-error AFTER magbayad)
-        if (typeof data !== 'undefined' && data.betAmount > 0) {
-             showMessage("Join Failed. Refunding...", 2000);
-             fetch(`${window.SERVER_URL}/api/refund`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid: localPlayerUid, amount: data.betAmount })
-             }).then(() => {
-                 playerTotalCurrency += data.betAmount;
+        if (docSnap && docSnap.exists()) { 
+             const data = docSnap.data();
+             const requiredBet = data.betAmount || 0;
+             if (requiredBet > 0) {
+                 playerTotalCurrency += requiredBet;
+                 saveCurrency();
                  updateCurrencyDisplay();
-             });
-        } else {
-             showMessage("Failed to join: " + error.message, 3000);
+             }
         }
+        
+        showMessage("Failed to join: " + error.message, 3000);
     }
 }
 
@@ -15028,50 +15002,40 @@ async function saveWalletToFirestore(uid, address) {
 // --- 💰 FINAL FIX: SERVER PAYOUT (AI WIN) 💰 ---
 // Ito ang tatawagin pag nanalo ka sa Bot para makuha ang pera
 window.claimAiWinnings = function() {
-    // Check kung may taya (Priority ang selectedBetAmount)
-    const bet = selectedBetAmount || currentMatchBet || 0;
-
-    // Kung Free Play (0), visual lang, walang server call
-    if (bet <= 0) {
+    // 1. SAFETY CHECK
+    // Kung 0 ang taya (Free Play), wag na istorbohin ang server
+    if (!selectedBetAmount || selectedBetAmount <= 0) {
         if(typeof showMessage === 'function') showMessage("You Won! (Practice Mode)", 3000);
         return; 
     }
 
-    console.log("Contacting Server for Payout...", bet);
-    if(typeof showMessage === 'function') showMessage("Saving Winnings...", 1500);
+    console.log("Contacting Server for Payout...");
+    if(typeof showMessage === 'function') showMessage("Claiming Prize...", 1500);
 
-    // TAWAG SA SERVER (Gamit ang Global Variables)
-    const uid = window.localPlayerUid || localPlayerUid;
-    const srvUrl = window.SERVER_URL;
-
-    if (!uid || !srvUrl) {
-        alert("ERROR: Missing User ID or Server URL. Refresh the game.");
-        return;
-    }
-
-    // ✅ FETCH API: Ito ang magsa-save sa database
-    fetch(`${srvUrl}/api/match-payout`, {
+    // 2. TAWAG SA SERVER (Gamit ang window.SERVER_URL)
+    // Dito nag-eerror dati kasi 'SERVER_URL' lang ang gamit
+    fetch(`${window.SERVER_URL}/api/match-payout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            uid: uid,
-            betAmount: bet
+            uid: window.localPlayerUid || localPlayerUid,
+            betAmount: selectedBetAmount
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) throw new Error("Server Response Error");
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
-            // ✅ SUCCESS! Na-save na sa database!
-            console.log("Payout Saved!", data.newBalance);
-            
-            // Update Visuals para tumugma sa server
+            // ✅ SUCCESS! Pumasok na ang pera
             playerTotalCurrency = data.newBalance; 
             if(typeof updateCurrencyDisplay === 'function') updateCurrencyDisplay();
             
-            // Compute winnings display
-            const totalPot = bet * 2;
-            const houseCut = Math.floor(totalPot * 0.10);
-            const netWin = totalPot - houseCut;
+            // Visual feedback
+            const totalPot = selectedBetAmount * 2;
+            const tong = Math.floor(totalPot * 0.10);
+            const netWin = totalPot - tong;
             
             if(typeof showMessage === 'function') showMessage(`WINNER! +${formatCurrencyShort(netWin)} Coins!`, 4000);
             if(typeof playCoinSound === 'function') playCoinSound(); 
@@ -15082,8 +15046,11 @@ window.claimAiWinnings = function() {
     })
     .catch(err => {
         console.error("Network Error:", err);
-        // Auto-Retry kapag nag-fail ang internet para di sayang ang panalo
-        setTimeout(window.claimAiWinnings, 2000); 
+        // RETRY OPTION
+        let retry = confirm("⚠️ NETWORK ERROR: Hindi pumasok ang panalo mo. Gusto mo bang i-try ulit?");
+        if (retry) {
+            setTimeout(window.claimAiWinnings, 1000);
+        }
     });
 };
 
@@ -15218,223 +15185,7 @@ window.processBet = async function(amount) {
     }
 };
 
-// --- 💸 POT ANIMATION FUNCTION 💸 ---
-function showPotAnimation(betAmount) {
-    if (betAmount <= 0) return; // Walang animation pag Free Play
-
-    const totalPot = betAmount * 2;
-    const coinCount = 10; // Dami ng barya
-    
-    // Play Sound
-    if(typeof playCoinSound === 'function') playCoinSound();
-
-    // 1. Setup Center Text (Hidden muna)
-    const overlay = document.createElement('div');
-    overlay.id = 'pot-animation-overlay';
-    overlay.innerHTML = `
-        <div class="vs-text-anim">TOTAL POT MONEY</div>
-        <div class="pot-text-anim">💰 ${formatCurrencyShort(totalPot)}</div>
-    `;
-    document.body.appendChild(overlay);
-
-    // 2. Spawn Coins Logic
-    const startPositions = [
-        { x: window.innerWidth * 0.1, y: window.innerHeight * 0.9 }, // Player (Bottom Left)
-        { x: window.innerWidth * 0.9, y: window.innerHeight * 0.1 }  // Opponent (Top Right)
-    ];
-
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-
-    let finishedCoins = 0;
-
-    for (let i = 0; i < coinCount; i++) {
-        // Player Coin
-        createFlyingBetCoin(startPositions[0], {x: centerX, y: centerY}, i * 50);
-        // Opponent Coin
-        createFlyingBetCoin(startPositions[1], {x: centerX, y: centerY}, i * 50);
-    }
-
-    function createFlyingBetCoin(start, end, delay) {
-        setTimeout(() => {
-            const coin = document.createElement('div');
-            coin.textContent = '🪙';
-            coin.className = 'bet-coin';
-            coin.style.left = start.x + 'px';
-            coin.style.top = start.y + 'px';
-            document.body.appendChild(coin);
-
-            // Fly to center
-            requestAnimationFrame(() => {
-                coin.style.left = (end.x - 15) + 'px'; // -15 para center
-                coin.style.top = (end.y - 15) + 'px';
-                coin.style.opacity = '0'; // Fade out pagdating sa gitna
-                coin.style.transform = 'scale(0.5)';
-            });
-
-            // Cleanup
-            setTimeout(() => {
-                coin.remove();
-                finishedCoins++;
-                
-                // Pag tapos na lahat ng coins, ipakita ang TOTAL
-                if (finishedCoins >= coinCount * 2) {
-                    overlay.style.transform = 'translate(-50%, -50%) scale(1)'; // BOOM!
-                    if(typeof playButtonSound === 'function') playButtonSound(); // Extra impact sound
-
-                    // Alisin ang text pagkatapos ng 2 seconds
-                    setTimeout(() => {
-                        overlay.style.transform = 'translate(-50%, -50%) scale(0)';
-                        setTimeout(() => overlay.remove(), 500);
-                    }, 2000);
-                }
-            }, 800); // Flight duration
-        }, delay);
-    }
-}
-// ======================================================
-// 🛡️ FINAL "NO-FREEZE" TIMER SYSTEM 🛡️
-// ======================================================
-
-// 1. SAFETY: Global Variables (Para hindi mawala)
-window.turnTimerInterval = null;
-window.TURN_TIME_LIMIT = 30; // 30 Seconds
-
-// 2. SAFETY: Sound Fallback (Para hindi mag-crash pag walang audio)
-window.playErrorSound = function() {
-    try {
-        if (typeof uiSynth !== 'undefined' && audioInitialized) {
-            uiSynth.triggerAttackRelease("A2", "8n");
-        } else {
-            const sfx = document.getElementById('lose-sfx');
-            if (sfx) { 
-                const clone = sfx.cloneNode(); 
-                clone.volume = 0.3; 
-                clone.play().catch(() => {}); 
-            }
-        }
-    } catch (e) { console.warn("Sound error ignored"); }
-};
-
-// 3. START TIMER (With Anti-Freeze Protection)
-window.startTurnTimer = function() {
-    // Patayin ang lumang timer para hindi magpatong
-    window.stopTurnTimer(); 
-
-    // Safety Checks: Wag mag-start kung tapos na ang laro
-    if (typeof gameState === 'undefined' || gameState === 'gameover' || 
-       (typeof isTutorialActive !== 'undefined' && isTutorialActive)) return;
-
-    currentTurnTime = window.TURN_TIME_LIMIT;
-    
-    // Update agad ang visual para makita ang Gold Ring
-    if(typeof updateTimerVisuals === 'function') updateTimerVisuals();
-
-    // Start Loop
-    window.turnTimerInterval = setInterval(() => {
-        try {
-            // PAUSE LOGIC: Wag bumawas kung gumagalaw ang bola o AI
-            if ((typeof chipsMoving !== 'undefined' && chipsMoving) || 
-                gameState === 'shooting' || 
-                gameState === 'shooting_animation' || 
-                gameState === 'ai_placing') {
-                return;
-            }
-
-            currentTurnTime--;
-            
-            // Update Visuals
-            updateTimerVisuals();
-
-            // TIME'S UP CHECK
-            if (currentTurnTime <= 0) {
-                window.stopTurnTimer(); // Stop muna bago mag-handle
-                handleTimeout();
-            }
-
-        } catch (error) {
-            // DITO ANG ANTI-FREEZE: Kung mag-error, i-log lang pero wag patayin ang laro
-            console.error("Timer Error (Game Saved):", error);
-            window.stopTurnTimer(); // Stop na lang para safe
-        }
-    }, 1000); 
-};
-
-// 4. STOP TIMER
-window.stopTurnTimer = function() {
-    if (window.turnTimerInterval) {
-        clearInterval(window.turnTimerInterval);
-        window.turnTimerInterval = null;
-    }
-};
-
-// 5. UPDATE VISUALS (Gold Ring Animation)
-window.updateTimerVisuals = function() {
-    try {
-        const isMyTurn = (typeof isOnlineGame !== 'undefined' && isOnlineGame) ? isMyTurnOnline : playerTurn;
-        
-        // Targetin ang Avatar (Siguradong CSS Selector)
-        const activeSelector = isMyTurn ? '#player-info .hud-avatar' : '#opponent-info .hud-avatar';
-        const activeAvatar = document.querySelector(activeSelector);
-        
-        // Kung wala, exit agad
-        if (!activeAvatar) return;
-
-        // Compute Angle (Percentage)
-        const percentage = Math.max(0, currentTurnTime / window.TURN_TIME_LIMIT);
-        const degrees = percentage * 360;
-
-        // I-set ang CSS Variable para sa Gradient
-        activeAvatar.style.setProperty('--timer-deg', `${degrees}deg`);
-
-        // Warning Color (Red)
-        if (currentTurnTime <= 5) {
-            activeAvatar.classList.add('timer-warning');
-        } else {
-            activeAvatar.classList.remove('timer-warning');
-        }
-    } catch (e) {
-        console.warn("Visual update error ignored");
-    }
-};
-
-// 6. TIMEOUT HANDLER (Pag naubos ang oras)
-window.handleTimeout = async function() {
-    try {
-        window.playErrorSound(); 
-
-        const isMyTurn = (typeof isOnlineGame !== 'undefined' && isOnlineGame) ? isMyTurnOnline : playerTurn;
-        
-        // Dagdag Strike
-        if (isMyTurn) {
-            if (typeof myTimeouts !== 'undefined') myTimeouts++;
-            if (typeof showMessage === 'function') showMessage(`TIMEOUT! Strike ${myTimeouts}/3`, 3000);
-        } else {
-            if (typeof oppTimeouts !== 'undefined') oppTimeouts++;
-            if (typeof showMessage === 'function') showMessage(`OPPONENT TIMEOUT!`, 3000);
-        }
-
-        // Check kung Talo na (3 Strikes)
-        if ((typeof myTimeouts !== 'undefined' && myTimeouts >= 3) || 
-            (typeof oppTimeouts !== 'undefined' && oppTimeouts >= 3)) {
-            
-            if(typeof endGame === 'function') await endGame("Timeout Limit Reached! Game Over.");
-            return;
-        } 
-
-        // Penalty: Ball in Hand
-        if(typeof canMoveCueBall !== 'undefined') canMoveCueBall = true; 
-        
-        // Force Switch Turn (Local Game Only)
-        if (typeof isOnlineGame === 'undefined' || !isOnlineGame) {
-            if(typeof updateLocalGameState === 'function') updateLocalGameState(true); 
-        }
-
-    } catch (e) {
-        console.error("Timeout Handler Error:", e);
-    }
-};
-    </script>
+</script>
 
 </body>
-    </html>
+</html>
