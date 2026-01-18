@@ -15002,40 +15002,50 @@ async function saveWalletToFirestore(uid, address) {
 // --- 💰 FINAL FIX: SERVER PAYOUT (AI WIN) 💰 ---
 // Ito ang tatawagin pag nanalo ka sa Bot para makuha ang pera
 window.claimAiWinnings = function() {
-    // 1. SAFETY CHECK
-    // Kung 0 ang taya (Free Play), wag na istorbohin ang server
-    if (!selectedBetAmount || selectedBetAmount <= 0) {
+    // Check kung may taya (Priority ang selectedBetAmount)
+    const bet = selectedBetAmount || currentMatchBet || 0;
+
+    // Kung Free Play (0), visual lang, walang server call
+    if (bet <= 0) {
         if(typeof showMessage === 'function') showMessage("You Won! (Practice Mode)", 3000);
         return; 
     }
 
-    console.log("Contacting Server for Payout...");
-    if(typeof showMessage === 'function') showMessage("Claiming Prize...", 1500);
+    console.log("Contacting Server for Payout...", bet);
+    if(typeof showMessage === 'function') showMessage("Saving Winnings...", 1500);
 
-    // 2. TAWAG SA SERVER (Gamit ang window.SERVER_URL)
-    // Dito nag-eerror dati kasi 'SERVER_URL' lang ang gamit
-    fetch(`${window.SERVER_URL}/api/match-payout`, {
+    // TAWAG SA SERVER (Gamit ang Global Variables)
+    const uid = window.localPlayerUid || localPlayerUid;
+    const srvUrl = window.SERVER_URL;
+
+    if (!uid || !srvUrl) {
+        alert("ERROR: Missing User ID or Server URL. Refresh the game.");
+        return;
+    }
+
+    // ✅ FETCH API: Ito ang magsa-save sa database
+    fetch(`${srvUrl}/api/match-payout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            uid: window.localPlayerUid || localPlayerUid,
-            betAmount: selectedBetAmount
+            uid: uid,
+            betAmount: bet
         })
     })
-    .then(response => {
-        if (!response.ok) throw new Error("Server Response Error");
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // ✅ SUCCESS! Pumasok na ang pera
+            // ✅ SUCCESS! Na-save na sa database!
+            console.log("Payout Saved!", data.newBalance);
+            
+            // Update Visuals para tumugma sa server
             playerTotalCurrency = data.newBalance; 
             if(typeof updateCurrencyDisplay === 'function') updateCurrencyDisplay();
             
-            // Visual feedback
-            const totalPot = selectedBetAmount * 2;
-            const tong = Math.floor(totalPot * 0.10);
-            const netWin = totalPot - tong;
+            // Compute winnings display
+            const totalPot = bet * 2;
+            const houseCut = Math.floor(totalPot * 0.10);
+            const netWin = totalPot - houseCut;
             
             if(typeof showMessage === 'function') showMessage(`WINNER! +${formatCurrencyShort(netWin)} Coins!`, 4000);
             if(typeof playCoinSound === 'function') playCoinSound(); 
@@ -15046,11 +15056,8 @@ window.claimAiWinnings = function() {
     })
     .catch(err => {
         console.error("Network Error:", err);
-        // RETRY OPTION
-        let retry = confirm("⚠️ NETWORK ERROR: Hindi pumasok ang panalo mo. Gusto mo bang i-try ulit?");
-        if (retry) {
-            setTimeout(window.claimAiWinnings, 1000);
-        }
+        // Auto-Retry kapag nag-fail ang internet para di sayang ang panalo
+        setTimeout(window.claimAiWinnings, 2000); 
     });
 };
 
