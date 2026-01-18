@@ -7438,7 +7438,16 @@ function playCoinSound() {
         async function playCushionSound(speed) { if (!audioInitialized) await initAudio(); if (!audioInitialized) return; const now = Tone.now(); if (now <= lastCushionSoundTime) return; lastCushionSoundTime = now + 0.03; const volume = -12 + Math.min(1, speed / 15) * 8; const note = speed > 10 ? 'C2' : 'D1'; cushionSynth.volume.value = volume; cushionSynth.triggerAttackRelease(note, '16n', now); }
         async function playCueHitSound(power) { if (!audioInitialized) await initAudio(); if (!audioInitialized) return; const now = Tone.now(); const volume = -6 + (power * 6); const note = 'C4'; cueHitSynth.volume.value = volume; cueHitSynth.triggerAttack(note, now); }
         async function playPocketSound() { if (!audioInitialized) await initAudio(); if (!audioInitialized) return; pocketSynth.triggerAttackRelease("0.2"); }
+        function playErrorSound() {
+        if (typeof uiSynth !== 'undefined' && audioInitialized) {
+             uiSynth.triggerAttackRelease("G2", "8n");
+        } else {
+             const sfx = document.getElementById('lose-sfx');
+             if (sfx) { const clone = sfx.cloneNode(); clone.volume = 0.3; clone.play().catch(e => {}); }
+        }
+        }
         function update(timestamp) { // <-- Ito na 'yung bago, na may (timestamp)
+            
             
             // Kung 'di pa nagsisimula, set mo ang lastTime
             if (lastTime === 0) {
