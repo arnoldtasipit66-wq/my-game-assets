@@ -15299,19 +15299,22 @@ function showPotAnimation(betAmount) {
     }
 }
 
-    // --- ⏱️ TIMER LOGIC SYSTEM ⏱️ ---
+ // --- ⏱️ FIXED TIMER LOGIC ⏱️ ---
 
 function startTurnTimer() {
     stopTurnTimer(); // Reset muna
 
-    // Wag mag-timer kung tapos na laro o tutorial
+    // Wag mag-timer kung tapos na laro, tutorial, o pause
     if (gameState === 'gameover' || isTutorialActive) return;
 
     currentTurnTime = TURN_TIME_LIMIT;
-    updateTimerVisuals(); // Update agad UI
+    
+    // Force Update agad para lumabas ang full ring (360deg)
+    setTimeout(updateTimerVisuals, 0); 
 
     turnTimerInterval = setInterval(() => {
         // PAUSE: Wag bumawas oras kung gumagalaw ang bola o nag-a-animation
+        // Added: 'ai_placing' para di maubusan oras AI habang nag-iisip
         if (chipsMoving || gameState === 'shooting' || gameState === 'shooting_animation' || gameState === 'ai_placing') {
             return;
         }
@@ -15323,7 +15326,7 @@ function startTurnTimer() {
         if (currentTurnTime <= 0) {
             handleTimeout();
         }
-    }, 1000); // 1 second bawat bawas
+    }, 1000); 
 }
 
 function stopTurnTimer() {
@@ -15334,23 +15337,29 @@ function stopTurnTimer() {
 }
 
 function updateTimerVisuals() {
-    // Determine Active Player Element
+    // 1. Alamin kung sino ang active
     const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
-    const activeAvatar = isMyTurn ? document.querySelector('#player-info .hud-avatar') : document.querySelector('#opponent-info .hud-avatar');
+    
+    // 2. Targetin ang AVATAR sa loob ng active box
+    const activeSelector = isMyTurn ? '#player-info .hud-avatar' : '#opponent-info .hud-avatar';
+    const activeAvatar = document.querySelector(activeSelector);
     
     if (!activeAvatar) return;
 
-    // Calculate Degrees (360 degrees = Full Time)
-    const percentage = currentTurnTime / TURN_TIME_LIMIT;
+    // 3. Compute Angle
+    const percentage = Math.max(0, currentTurnTime / TURN_TIME_LIMIT);
     const degrees = percentage * 360;
 
-    // Apply to CSS Variable (Ito yung ginawa natin sa Step 1)
+    // 4. Update CSS Variable
     activeAvatar.style.setProperty('--timer-deg', `${degrees}deg`);
 
-    // Warning Effect (Red Pulse pag < 5 seconds)
+    // 5. Warning Effect
     if (currentTurnTime <= 5) {
         activeAvatar.classList.add('timer-warning');
-        if(currentTurnTime > 0) playErrorSound(); // "Tick tock" sound (optional, gamit ang error sound muna)
+        if(currentTurnTime > 0 && typeof playErrorSound === 'function') {
+             // Optional: Tick sound (gamit ang mahinang version ng error sound o iba)
+             // playErrorSound(); 
+        }
     } else {
         activeAvatar.classList.remove('timer-warning');
     }
