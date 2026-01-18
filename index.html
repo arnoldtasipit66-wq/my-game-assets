@@ -6453,6 +6453,8 @@ setCueForCurrentTurn(); // Update history state
 async function endGame(winnerTextMessage, finalGameData = null) {
     if (gameState === 'gameover') return;
 
+    stopTurnTimer();
+
     // 1. SOUND EFFECTS
     const winSound = document.getElementById('win-sfx');
     const loseSound = document.getElementById('lose-sfx');
