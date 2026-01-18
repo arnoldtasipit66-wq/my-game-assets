@@ -15296,6 +15296,117 @@ function showPotAnimation(betAmount) {
     }
 }
 
+    // --- ⏱️ TIMER LOGIC SYSTEM ⏱️ ---
+
+function startTurnTimer() {
+    stopTurnTimer(); // Reset muna
+
+    // Wag mag-timer kung tapos na laro o tutorial
+    if (gameState === 'gameover' || isTutorialActive) return;
+
+    currentTurnTime = TURN_TIME_LIMIT;
+    updateTimerVisuals(); // Update agad UI
+
+    turnTimerInterval = setInterval(() => {
+        // PAUSE: Wag bumawas oras kung gumagalaw ang bola o nag-a-animation
+        if (chipsMoving || gameState === 'shooting' || gameState === 'shooting_animation' || gameState === 'ai_placing') {
+            return;
+        }
+
+        currentTurnTime--;
+        updateTimerVisuals();
+
+        // 🚨 TIME'S UP!
+        if (currentTurnTime <= 0) {
+            handleTimeout();
+        }
+    }, 1000); // 1 second bawat bawas
+}
+
+function stopTurnTimer() {
+    if (turnTimerInterval) {
+        clearInterval(turnTimerInterval);
+        turnTimerInterval = null;
+    }
+}
+
+function updateTimerVisuals() {
+    // Determine Active Player Element
+    const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
+    const activeAvatar = isMyTurn ? document.querySelector('#player-info .hud-avatar') : document.querySelector('#opponent-info .hud-avatar');
+    
+    if (!activeAvatar) return;
+
+    // Calculate Degrees (360 degrees = Full Time)
+    const percentage = currentTurnTime / TURN_TIME_LIMIT;
+    const degrees = percentage * 360;
+
+    // Apply to CSS Variable (Ito yung ginawa natin sa Step 1)
+    activeAvatar.style.setProperty('--timer-deg', `${degrees}deg`);
+
+    // Warning Effect (Red Pulse pag < 5 seconds)
+    if (currentTurnTime <= 5) {
+        activeAvatar.classList.add('timer-warning');
+        if(currentTurnTime > 0) playErrorSound(); // "Tick tock" sound (optional, gamit ang error sound muna)
+    } else {
+        activeAvatar.classList.remove('timer-warning');
+    }
+}
+
+async function handleTimeout() {
+    stopTurnTimer();
+    playErrorSound(); // Alarm!
+
+    const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
+    let strikerName = isMyTurn ? "You" : opponentPlayerName;
+
+    // 1. ADD STRIKE
+    if (isMyTurn) {
+        myTimeouts++;
+        showMessage(`TIMEOUT! Strike ${myTimeouts}/${MAX_TIMEOUTS}`, 3000);
+    } else {
+        oppTimeouts++;
+        showMessage(`OPPONENT TIMEOUT! Strike ${oppTimeouts}/${MAX_TIMEOUTS}`, 3000);
+    }
+
+    // 2. CHECK FOR GAME OVER (3 Strikes)
+    if (myTimeouts >= MAX_TIMEOUTS) {
+        if (isOnlineGame) await forfeitOnlineGame(); // Ikaw ang talo
+        else await endGame("You Forfeited (3 Timeouts). Opponent Wins!");
+        return;
+    } 
+    
+    if (oppTimeouts >= MAX_TIMEOUTS) {
+        // Kung online, hintayin natin ang server/kalaban mag-forfeit, pero pwede rin tayong mag-declare
+        await endGame("Opponent Forfeited (3 Timeouts). You Win!");
+        return;
+    }
+
+    // 3. FOUL PENALTY (Switch Turn + Ball in Hand)
+    // Ang rule sa pool: Delay of game = Foul
+    
+    // I-set ang foul flag
+    canMoveCueBall = true; 
+    
+    if (isOnlineGame) {
+        // Kung ikaw ang na-timeoutan, ipadala sa server na tapos na turn mo
+        if (isMyTurn) {
+            // Force Update Server (Switch Turn)
+            // Note: Kailangan nito ng manual trigger ng 'switchTurn' logic sa server side update
+            // Pero dahil client-side logic muna tayo:
+            await updateDoc(doc(db, "games", gameId), {
+                turnInProgress: false,
+                currentTurnUid: (localPlayerId === 'player1' ? (await getDoc(doc(db, "games", gameId))).data().players.player2.uid : (await getDoc(doc(db, "games", gameId))).data().players.player1.uid),
+                canMoveCueBall: true, // Ball in hand sa kabila
+                turnId: increment(1)
+            });
+        }
+    } else {
+        // Local AI Game
+        updateLocalGameState(true); // Force Switch Turn
+    }
+    }
+
 </script>
 
 </body>
