@@ -8845,21 +8845,15 @@ async function handleStraightBallTurnEnd() {
         function updateLocalGameState(switchTurn) {
     if (switchTurn) {
         if (!playerTurn && chipsPocketedInTurn.length > 0) { 
-            // Panatilihin lang ang "Nice Shot" ng AI, wag tanggalin
+            // Panatilihin lang ang "Nice Shot" ng AI
             setTimeout(() => { aiDisplayMessage(getAiChatMessage('playerGoodShot')); }, 700); 
         }
         playerTurn = !playerTurn;
         setCueForCurrentTurn();
         if (playerTurn) { aiConsecutivePots = 0; }
-        
-        // --- TINANGGAL NA NATIN ANG MESSAGE DITO ---
-        // showMessage(`${playerTurn ? 'Your' : 'Opponent'}'s turn`, 1500); 
     } else {
-        if (playerTurn) { 
-            // showMessage("You shoot again!", 1500);  <-- TINANGGAL DIN
-        } else {
+        if (!playerTurn) {
             aiConsecutivePots++;
-            // showMessage("AI shoots again!", 1500); <-- TINANGGAL DIN
             setTimeout(() => { aiDisplayMessage(getAiChatMessage('goodShot')); }, 700);
         }
     }
@@ -8868,7 +8862,7 @@ async function handleStraightBallTurnEnd() {
     firstChipHitInTurn = null;
     resetPektus();
     updateCardDisplay();
-    updateInfoBox(); // <-- ITO ANG MAGPAPALIT NG ILAW (HUD GLOW)
+    updateInfoBox(); // <-- Nag-uupdate ng Avatar Glow
     
     if (gameState !== 'gameover') {
         if (canMoveCueBall) {
@@ -8888,6 +8882,10 @@ async function handleStraightBallTurnEnd() {
             }
         }
     }
+
+    // 👇👇👇 DITO MO IDAGDAG ANG TIMER! (SA DULO) 👇👇👇
+    startTurnTimer(); 
+    // 👆👆👆 PARA MAG-RESET ANG 30 SECONDS
 }
         // ▼▼▼ PALITAN MO ITONG BUONG FUNCTION ▼▼▼
 
