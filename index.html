@@ -1851,65 +1851,67 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
 #opponent-info .hud-details { align-items: flex-end !important; text-align: right !important; }
 
 
-/* --- ⏱️ TIMER GLOW CSS (IPALIT MO ITO SA PART NA YUN) ⏱️ --- */
+/* --- ⏱️ ULTIMATE TIMER FIX (EXPLICIT GRADIENT) ⏱️ --- */
 
-/* --- ⏱️ FIXED TIMER GLOW CSS ⏱️ --- */
-
-/* 1. Base Avatar Style */
+/* 1. Reset natin ang Avatar Container */
 .hud-avatar {
-    width: 45px !important; 
-    height: 45px !important;
+    width: 50px !important;
+    height: 50px !important;
     border-radius: 50%;
-    background: #333; 
-    /* Importante: Transparent border para makita ang gradient sa likod o padding area */
-    border: 2px solid rgba(255,255,255,0.1); 
-    padding: 3px !important; /* Space para sa timer ring */
-    display: flex; justify-content: center; align-items: center;
-    flex-shrink: 0;
     position: relative;
-    transition: all 0.3s ease;
+    z-index: 1;
     box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000; /* Itim na likod */
+    
+    /* Default Border (Pag hindi turn) */
+    border: 3px solid #333; 
+    transition: all 0.3s ease;
 }
 
-/* 2. Image sa loob */
+/* 2. Image sa Loob (Dapat may gap para makita ang timer) */
 .hud-avatar img, .hud-avatar div {
-    width: 100% !important;
-    height: 100% !important;
+    width: 88% !important; /* Liitan konti para lumabas ang timer sa gilid */
+    height: 88% !important;
     border-radius: 50%;
     object-fit: cover;
-    z-index: 2; 
-    background-color: #000;
+    z-index: 5; 
     position: relative;
-    /* Siguraduhing natatakpan ang gitna para magmukhang ring ang timer */
-    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    background-color: #000;
 }
 
-/* 3. ACTIVE TIMER (Dito ang Fix!) */
-/* Targetin ang .hud-avatar na NASA LOOB ng .hud-active */
+/* 3. TIMER ACTIVE (Ang Magic!) */
 .hud-active .hud-avatar {
-    /* Umiikot na Kulay: Gold (Oras) -> Red (Ubos na) */
+    /* Tanggalin ang static border para di matakpan ang timer */
+    border: none !important; 
+    padding: 3px !important; /* Space para sa ring */
+    
+    /* DETALYADONG GRADIENT SYNTAX (Ito ang solusyon sa stuck yellow) */
+    /* Gold ang nauubos, Red ang lumalabas */
     background: conic-gradient(
+        #FFD700 0deg, 
         #FFD700 var(--timer-deg, 360deg), 
-        #FF0000 0deg
+        #FF0000 var(--timer-deg, 360deg), 
+        #FF0000 360deg
     ) !important;
     
-    border: none !important; /* Alisin ang border para lumabas ang gradient */
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.8); /* Strong Gold Glow */
-    transform: scale(1.1);
-    z-index: 10;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.8) !important; /* Glow */
+    transform: scale(1.15); 
 }
 
-/* 4. WARNING MODE (Pag < 5 seconds) */
+/* 4. WARNING PULSE (Pag paubos na) */
 .hud-active .hud-avatar.timer-warning {
-    box-shadow: 0 0 20px #FF0000 !important; /* Red Glow Alert */
     animation: panicPulse 0.5s infinite alternate;
+    /* Pag warning, Red na ang glow */
+    box-shadow: 0 0 20px #FF0000 !important; 
 }
 
 @keyframes panicPulse {
-    from { transform: scale(1.1); }
-    to { transform: scale(1.15); }
+    from { transform: scale(1.15); }
+    to { transform: scale(1.25); }
 }
-
 /* --- TEXT STYLES (Retain lang natin) --- */
 .hud-name {
     font-size: 10px !important;
@@ -15307,145 +15309,149 @@ function showPotAnimation(betAmount) {
         }, delay);
     }
 }
+// ======================================================
+// 🛡️ FINAL "NO-FREEZE" TIMER SYSTEM 🛡️
+// ======================================================
 
-// --- ⏱️ FIXED TIMER LOGIC & SOUNDS (FINAL VERSION) ⏱️ ---
+// 1. SAFETY: Global Variables (Para hindi mawala)
+window.turnTimerInterval = null;
+window.TURN_TIME_LIMIT = 30; // 30 Seconds
 
-// 1. Missing Function Fix (Ito ang nagpa-freeze dati!)
-function playErrorSound() {
-    // Gamitin na lang ang existing 'uiSynth' kung meron, o 'lose-sfx'
-    if (typeof uiSynth !== 'undefined' && audioInitialized) {
-        uiSynth.triggerAttackRelease("A3", "8n");
-    } else {
-        // Fallback sound kung walang Tone.js
-        const sfx = document.getElementById('lose-sfx');
-        if (sfx) {
-            const clone = sfx.cloneNode();
-            clone.volume = 0.3;
-            clone.play().catch(e => {});
+// 2. SAFETY: Sound Fallback (Para hindi mag-crash pag walang audio)
+window.playErrorSound = function() {
+    try {
+        if (typeof uiSynth !== 'undefined' && audioInitialized) {
+            uiSynth.triggerAttackRelease("A2", "8n");
+        } else {
+            const sfx = document.getElementById('lose-sfx');
+            if (sfx) { 
+                const clone = sfx.cloneNode(); 
+                clone.volume = 0.3; 
+                clone.play().catch(() => {}); 
+            }
         }
-    }
-}
+    } catch (e) { console.warn("Sound error ignored"); }
+};
 
-// 2. Start Timer
+// 3. START TIMER (With Anti-Freeze Protection)
 window.startTurnTimer = function() {
-    stopTurnTimer(); // Reset muna
+    // Patayin ang lumang timer para hindi magpatong
+    window.stopTurnTimer(); 
 
-    // Check kung Game Over, Tutorial, o wala pang laro
-    if (typeof gameState === 'undefined' || gameState === 'gameover' || (typeof isTutorialActive !== 'undefined' && isTutorialActive)) return;
+    // Safety Checks: Wag mag-start kung tapos na ang laro
+    if (typeof gameState === 'undefined' || gameState === 'gameover' || 
+       (typeof isTutorialActive !== 'undefined' && isTutorialActive)) return;
 
-    // Kung Free Match (Walang Taya at AI), pwede nating i-off ang timer kung gusto mo.
-    // Pero sa ngayon, hayaan nating gumana para practice.
+    currentTurnTime = window.TURN_TIME_LIMIT;
     
-    if (typeof TURN_TIME_LIMIT === 'undefined') window.TURN_TIME_LIMIT = 30;
-    currentTurnTime = TURN_TIME_LIMIT;
-    
-    // Update visual agad
-    setTimeout(updateTimerVisuals, 0); 
+    // Update agad ang visual para makita ang Gold Ring
+    if(typeof updateTimerVisuals === 'function') updateTimerVisuals();
 
-    turnTimerInterval = setInterval(() => {
-        // PAUSE: Wag bumawas oras kung gumagalaw ang bola, nag-a-animation, o nag-iisip ang AI
-        if ((typeof chipsMoving !== 'undefined' && chipsMoving) || 
-            gameState === 'shooting' || 
-            gameState === 'shooting_animation' || 
-            gameState === 'ai_placing') {
-            return;
-        }
+    // Start Loop
+    window.turnTimerInterval = setInterval(() => {
+        try {
+            // PAUSE LOGIC: Wag bumawas kung gumagalaw ang bola o AI
+            if ((typeof chipsMoving !== 'undefined' && chipsMoving) || 
+                gameState === 'shooting' || 
+                gameState === 'shooting_animation' || 
+                gameState === 'ai_placing') {
+                return;
+            }
 
-        currentTurnTime--;
-        updateTimerVisuals();
+            currentTurnTime--;
+            
+            // Update Visuals
+            updateTimerVisuals();
 
-        // 🚨 TIME'S UP!
-        if (currentTurnTime <= 0) {
-            handleTimeout();
+            // TIME'S UP CHECK
+            if (currentTurnTime <= 0) {
+                window.stopTurnTimer(); // Stop muna bago mag-handle
+                handleTimeout();
+            }
+
+        } catch (error) {
+            // DITO ANG ANTI-FREEZE: Kung mag-error, i-log lang pero wag patayin ang laro
+            console.error("Timer Error (Game Saved):", error);
+            window.stopTurnTimer(); // Stop na lang para safe
         }
     }, 1000); 
 };
 
-// 3. Stop Timer
+// 4. STOP TIMER
 window.stopTurnTimer = function() {
-    if (turnTimerInterval) {
-        clearInterval(turnTimerInterval);
-        turnTimerInterval = null;
+    if (window.turnTimerInterval) {
+        clearInterval(window.turnTimerInterval);
+        window.turnTimerInterval = null;
     }
 };
 
-// 4. Visuals (Gold Ring Logic)
+// 5. UPDATE VISUALS (Gold Ring Animation)
 window.updateTimerVisuals = function() {
-    // 1. Alamin kung sino ang active
-    const isMyTurn = (typeof isOnlineGame !== 'undefined' && isOnlineGame) ? isMyTurnOnline : playerTurn;
-    
-    // 2. Targetin ang AVATAR sa loob ng active box
-    const activeSelector = isMyTurn ? '#player-info .hud-avatar' : '#opponent-info .hud-avatar';
-    const activeAvatar = document.querySelector(activeSelector);
-    
-    if (!activeAvatar) return;
+    try {
+        const isMyTurn = (typeof isOnlineGame !== 'undefined' && isOnlineGame) ? isMyTurnOnline : playerTurn;
+        
+        // Targetin ang Avatar (Siguradong CSS Selector)
+        const activeSelector = isMyTurn ? '#player-info .hud-avatar' : '#opponent-info .hud-avatar';
+        const activeAvatar = document.querySelector(activeSelector);
+        
+        // Kung wala, exit agad
+        if (!activeAvatar) return;
 
-    // 3. Compute Angle
-    const limit = (typeof TURN_TIME_LIMIT !== 'undefined') ? TURN_TIME_LIMIT : 30;
-    const percentage = Math.max(0, currentTurnTime / limit);
-    const degrees = percentage * 360;
+        // Compute Angle (Percentage)
+        const percentage = Math.max(0, currentTurnTime / window.TURN_TIME_LIMIT);
+        const degrees = percentage * 360;
 
-    // 4. Update CSS Variable
-    activeAvatar.style.setProperty('--timer-deg', `${degrees}deg`);
+        // I-set ang CSS Variable para sa Gradient
+        activeAvatar.style.setProperty('--timer-deg', `${degrees}deg`);
 
-    // 5. Warning Effect (5 seconds left)
-    if (currentTurnTime <= 5) {
-        activeAvatar.classList.add('timer-warning');
-        if(currentTurnTime > 0) {
-             // Tick tock sound (Optional)
-             // playButtonSound(); 
-        }
-    } else {
-        activeAvatar.classList.remove('timer-warning');
-    }
-};
-
-// 5. Timeout Handler
-window.handleTimeout = async function() {
-    stopTurnTimer();
-    playErrorSound(); // <-- ETO YUNG NAWAWALA DATI
-
-    const isMyTurn = (typeof isOnlineGame !== 'undefined' && isOnlineGame) ? isMyTurnOnline : playerTurn;
-    
-    // 1. ADD STRIKE
-    if (isMyTurn) {
-        myTimeouts++;
-        showMessage(`TIMEOUT! Strike ${myTimeouts}/${MAX_TIMEOUTS}`, 3000);
-    } else {
-        oppTimeouts++;
-        showMessage(`OPPONENT TIMEOUT! Strike ${oppTimeouts}/${MAX_TIMEOUTS}`, 3000);
-    }
-
-    // 2. CHECK FOR GAME OVER (3 Strikes)
-    if (myTimeouts >= MAX_TIMEOUTS) {
-        if (typeof isOnlineGame !== 'undefined' && isOnlineGame) {
-             if(typeof forfeitOnlineGame === 'function') await forfeitOnlineGame();
+        // Warning Color (Red)
+        if (currentTurnTime <= 5) {
+            activeAvatar.classList.add('timer-warning');
         } else {
-             if(typeof endGame === 'function') await endGame("You Forfeited (3 Timeouts). Opponent Wins!");
+            activeAvatar.classList.remove('timer-warning');
         }
-        return;
-    } 
-    
-    if (oppTimeouts >= MAX_TIMEOUTS) {
-        if(typeof endGame === 'function') await endGame("Opponent Forfeited (3 Timeouts). You Win!");
-        return;
-    }
-
-    // 3. FOUL PENALTY (Switch Turn + Ball in Hand)
-    if(typeof canMoveCueBall !== 'undefined') canMoveCueBall = true; 
-    
-    if (typeof isOnlineGame !== 'undefined' && isOnlineGame) {
-        // Online Logic (Force switch sa database)
-        if (isMyTurn && db && gameId) {
-             // ... (Existing online forfeit logic)
-        }
-    } else {
-        // Local AI Game
-        if(typeof updateLocalGameState === 'function') updateLocalGameState(true); 
+    } catch (e) {
+        console.warn("Visual update error ignored");
     }
 };
 
-</script>
+// 6. TIMEOUT HANDLER (Pag naubos ang oras)
+window.handleTimeout = async function() {
+    try {
+        window.playErrorSound(); 
+
+        const isMyTurn = (typeof isOnlineGame !== 'undefined' && isOnlineGame) ? isMyTurnOnline : playerTurn;
+        
+        // Dagdag Strike
+        if (isMyTurn) {
+            if (typeof myTimeouts !== 'undefined') myTimeouts++;
+            if (typeof showMessage === 'function') showMessage(`TIMEOUT! Strike ${myTimeouts}/3`, 3000);
+        } else {
+            if (typeof oppTimeouts !== 'undefined') oppTimeouts++;
+            if (typeof showMessage === 'function') showMessage(`OPPONENT TIMEOUT!`, 3000);
+        }
+
+        // Check kung Talo na (3 Strikes)
+        if ((typeof myTimeouts !== 'undefined' && myTimeouts >= 3) || 
+            (typeof oppTimeouts !== 'undefined' && oppTimeouts >= 3)) {
+            
+            if(typeof endGame === 'function') await endGame("Timeout Limit Reached! Game Over.");
+            return;
+        } 
+
+        // Penalty: Ball in Hand
+        if(typeof canMoveCueBall !== 'undefined') canMoveCueBall = true; 
+        
+        // Force Switch Turn (Local Game Only)
+        if (typeof isOnlineGame === 'undefined' || !isOnlineGame) {
+            if(typeof updateLocalGameState === 'function') updateLocalGameState(true); 
+        }
+
+    } catch (e) {
+        console.error("Timeout Handler Error:", e);
+    }
+};
+    </script>
 
 </body>
-</html>
+    </html>
