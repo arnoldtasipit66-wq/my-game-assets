@@ -9100,12 +9100,247 @@ async function updatePlayerData(uid, didWin = false) {
         // Kahit mag-error, hindi na ito mag-ca-crash ng malala
     }
 }
-// ▲▲▲ DULO NG STEP 5 ▲▲▲
-        async function cleanupMatchmakingEntry() { if (unsubscribeFromQueue) { unsubscribeFromQueue(); unsubscribeFromQueue = null; } const queueCollection = collection(db, "matchmakingQueue"); const q = query(queueCollection, where("uid", "==", localPlayerUid)); const snapshot = await getDocs(q); if (!snapshot.empty) { const myDocRef = snapshot.docs[0].ref; await deleteDoc(myDocRef); } }
+// ======================================================
+// 🛡️ ROBUST MATCHMAKING SYSTEM (ANTI-STUCK FIX) 🛡️
+// ======================================================
+
+// 1. Gawing Global ang Timeout ID para hindi mawala
+window.matchmakingTimeoutId = null;
+
+// --- 🔍 FIXED FIND MATCH ---
+async function findMatch() {
+    const displayName = localPlayerName || "Guest";
+    
+    // Check Auth
+    if (!isAuthReady || !localPlayerUid) { 
+        showMessage("Connecting to server..."); 
+        return; 
+    }
+
+    // Payment Logic
+    if (selectedBetAmount > 0) {
+        showMessage(`Processing Entry Fee: ${formatCurrencyShort(selectedBetAmount)}...`, 1000);
+        const isPaid = await processBet(selectedBetAmount);
+        if (!isPaid) return; 
+        currentMatchBet = selectedBetAmount;
+    }
+
+    // UI Setup
+    if(onlineMenu) onlineMenu.classList.remove('show');
+    if(matchmakingWaitModal) matchmakingWaitModal.classList.add('show');
+    history.pushState({ modal: 'matchmaking' }, 'Matchmaking', '#matchmaking');
+
+    const myPhoto = localStorage.getItem('pinoyPoolPlayerPhoto');
+
+    // 🛑 RESET TIMER (Siguraduhin walang lumang timer)
+    if (window.matchmakingTimeoutId) clearTimeout(window.matchmakingTimeoutId);
+    
+    // ✅ START TIMER (12 Seconds bago mag-AI)
+    window.matchmakingTimeoutId = setTimeout(async () => {
+        // Check kung may nahanap na habang naghihintay
+        if (gameId) return; 
         
+        console.log("⏰ Time's up! Switching to AI...");
+        showMessage("No player found. Switching to AI...", 1500);
 
+        // 🔥 FORCE START AI 🔥
+        try {
+            await startBotMatch();
+        } catch (err) {
+            console.error("Bot Match Error:", err);
+            // Emergency Start kung mag-fail ang standard start
+            startGame(`ai-${selectedOnlineGameType}`, 'pro');
+            if(matchmakingWaitModal) matchmakingWaitModal.classList.remove('show');
+        }
+    }, 12000); // 12 Seconds
 
+    // Database Logic (Queue)
+    const queueCollection = collection(db, "matchmakingQueue");
+    const q = query(
+        queueCollection, 
+        where("status", "==", "waiting"), 
+        where("gameType", "==", selectedOnlineGameType),
+        where("betAmount", "==", selectedBetAmount), 
+        limit(10)
+    );
+    
+    try {
+        const snapshot = await getDocs(q);
+        let opponentDoc = null;
 
+        // Filter opponents
+        for (const docSnap of snapshot.docs) {
+            const data = docSnap.data();
+            if (data.uid !== localPlayerUid) {
+                let time = data.timestamp?.toMillis ? data.timestamp.toMillis() : Date.now();
+                // 60 seconds validity
+                if (Date.now() - time < 60000) { 
+                    opponentDoc = docSnap;
+                    break;
+                }
+            }
+        }
+
+        if (opponentDoc) {
+            // --- OPPONENT FOUND! ---
+            clearTimeout(window.matchmakingTimeoutId); 
+            
+            const oppData = opponentDoc.data();
+            const oppRef = opponentDoc.ref;
+
+            // Verify if still waiting
+            const freshSnap = await getDoc(oppRef);
+            if (!freshSnap.exists() || freshSnap.data().status !== 'waiting') {
+                showMessage("Match failed. Retrying...", 1000);
+                findMatch(); // Retry loop
+                return;
+            }
+
+            // Create Game
+            gameId = Math.random().toString(36).substring(2, 7).toUpperCase();
+            localPlayerId = 'player1'; 
+            gameMode = `online-${selectedOnlineGameType}`;
+            resizeCanvas();
+            setupChips();
+            
+            const initialChips = chips.map(c => ({...c, x: c.x/canvas.width, y: c.y/canvas.height }));
+            const startUid = Math.random() < 0.5 ? localPlayerUid : oppData.uid;
+            
+            const myCue = equippedItems.cue || 'default';
+            const myRank = getPlayerRank(playerLevel).index;
+            const oppRank = oppData.rankIndex !== undefined ? oppData.rankIndex : 0;
+            const oppCue = oppData.equippedCueId || 'default';
+            const oppPhoto = oppData.photo || null;
+
+            const gameData = {
+                gameId, gameType: selectedOnlineGameType, gameState: 'playing', turnId: 1,
+                betAmount: selectedBetAmount,
+                pot: selectedBetAmount * 2, 
+                players: {
+                    player1: { uid: localPlayerUid, status: 'online', displayName: displayName, equippedCueId: myCue, rankIndex: myRank, photo: myPhoto },
+                    player2: { uid: oppData.uid, status: 'online', displayName: oppData.displayName, equippedCueId: oppCue, rankIndex: oppRank, photo: oppPhoto }
+                },
+                chips: initialChips, currentTurnUid: startUid, canMoveCueBall: true, isBreakShot: true, winner: null
+            };
+            
+            // Setup Mode Specifics
+            if (selectedOnlineGameType === 'poker') {
+                createDeck(); dealCards();
+                Object.assign(gameData, { deck, player1Hand: playerHand, player2Hand: opponentHand, originalPlayer1Hand: originalPlayerHand, originalPlayer2Hand: originalOpponentHand });
+            } else if (selectedOnlineGameType === 'straight-ball') {
+                Object.assign(gameData, { colorsAssigned: false, player1ChipsType: null, player2ChipsType: null });
+            } else if (selectedOnlineGameType === '61-ball') {
+                Object.assign(gameData, { player1_61Score: 0, player2_61Score: 0, lowestChipNumber: 1 });
+            }
+
+            // Save & Sync
+            await setDoc(doc(db, "games", gameId), gameData);
+            await updateDoc(oppRef, { status: 'matched', gameId: gameId });
+            
+            if (unsubscribeFromQueue) unsubscribeFromQueue();
+            if(matchmakingWaitModal) matchmakingWaitModal.classList.remove('show');
+            
+            if (selectedBetAmount > 0) showPotAnimation(selectedBetAmount);
+            listenToGameUpdates(gameId);
+
+        } else {
+            // --- NO OPPONENT YET (JOIN QUEUE) ---
+            if (!unsubscribeFromQueue) {
+                const myRank = getPlayerRank(playerLevel).index;
+                const myCue = equippedItems.cue || 'default';
+                
+                const ref = await addDoc(queueCollection, { 
+                    uid: localPlayerUid, 
+                    gameType: selectedOnlineGameType, 
+                    betAmount: selectedBetAmount, 
+                    status: 'waiting', 
+                    timestamp: serverTimestamp(), 
+                    displayName: displayName, 
+                    rankIndex: myRank, 
+                    equippedCueId: myCue, 
+                    photo: myPhoto
+                });
+                
+                unsubscribeFromQueue = onSnapshot(ref, (doc) => {
+                    if(doc.exists() && doc.data().status === 'matched' && doc.data().gameId) {
+                        clearTimeout(window.matchmakingTimeoutId); // Stop Timer pag may nahanap na
+                        if (unsubscribeFromQueue) unsubscribeFromQueue();
+                        if(matchmakingWaitModal) matchmakingWaitModal.classList.remove('show');
+                        
+                        if (selectedBetAmount > 0) showPotAnimation(selectedBetAmount);
+                        showMessage("Match found! Joining...", 2000);
+                        gameId = doc.data().gameId;
+                        localPlayerId = 'player2';
+                        listenToGameUpdates(gameId);
+                    }
+                });
+            }
+        }
+    } catch (e) {
+        console.error("Match Error:", e);
+        // Error Refund
+        if (selectedBetAmount > 0) {
+             showMessage("System Error. Refunding...", 2000);
+             fetch(`${window.SERVER_URL}/api/refund`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: localPlayerUid, amount: selectedBetAmount })
+             }).then(() => {
+                 playerTotalCurrency += selectedBetAmount;
+                 updateCurrencyDisplay();
+             });
+        }
+        if(matchmakingWaitModal) matchmakingWaitModal.classList.remove('show');
+    }
+}
+
+// --- 🤖 FIXED START BOT MATCH ---
+async function startBotMatch() {
+    // 1. Linisin ang Queue (Try-Catch para hindi mag-freeze kung fail)
+    try {
+        await cleanupMatchmakingEntry();
+    } catch (e) {
+        console.warn("Cleanup failed, proceeding anyway:", e);
+    }
+    
+    // 2. Isara ang Modal (Siguradong mawawala)
+    if(matchmakingWaitModal) matchmakingWaitModal.classList.remove('show');
+
+    // 3. Setup Bot Info
+    const botName = BotGenerator.generateName();
+    opponentPlayerName = botName;
+
+    playButtonSound(); 
+
+    // 4. Ensure Bet is set
+    if (!selectedBetAmount) selectedBetAmount = currentMatchBet;
+
+    // 5. Play Animation
+    if (selectedBetAmount > 0) showPotAnimation(selectedBetAmount);
+
+    // 6. START GAME AGAD!
+    startGame(`ai-${selectedOnlineGameType}`, 'pro');
+    
+    setTimeout(() => {
+        opponentPlayerName = botName; 
+        updateInfoBox(); 
+    }, 500); 
+}
+
+// --- ❌ FIXED CANCEL ---
+async function cancelMatchmaking() { 
+    if (window.matchmakingTimeoutId) { 
+        clearTimeout(window.matchmakingTimeoutId); 
+        window.matchmakingTimeoutId = null; 
+    } 
+    
+    await cleanupMatchmakingEntry(); 
+    showMessage("Matchmaking cancelled."); 
+
+    if(matchmakingWaitModal) matchmakingWaitModal.classList.remove('show'); 
+    if(onlineMenu) onlineMenu.classList.add('show'); 
+    history.back(); 
+}
         function animateAndApplyShot(shotData) { cueStick.angle = shotData.angle; cueStick.visible = true; if (cueStickElement) cueStickElement.style.display = 'block'; gameState = 'shooting_animation'; let startTime = null; const animationDuration = 100; const shotPowerNormalized = (shotData.power - 5) / 40; const startPullback = shotPowerNormalized * (150 * scale); const endPullback = -30 * scale; function animate(timestamp) { if (!startTime) startTime = timestamp; const progress = Math.min((timestamp - startTime) / animationDuration, 1); cueStick.pullback = startPullback + (endPullback - startPullback) * progress; if (progress < 1) { requestAnimationFrame(animate); } else { cueStick.visible = false; cueStick.pullback = 0; if (cueStickElement) cueStickElement.style.display = 'none'; applyShot(shotData); } } requestAnimationFrame(animate); }
         
         function syncGameState(data) {
