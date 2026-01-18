@@ -5842,7 +5842,17 @@ tg.BackButton.onClick(() => {
         // KUNG WALANG MODAL (Nasa Main Menu): Tawagin ang confirmation window
         handleExitRequest(); 
     }
-});      
+});     
+
+        // --- ⏱️ TURN TIMER SETTINGS ⏱️ ---
+const TURN_TIME_LIMIT = 30; // 30 Seconds per turn
+let currentTurnTime = TURN_TIME_LIMIT;
+let turnTimerInterval = null;
+
+// Strike Counters (3 Strikes = Talo)
+let myTimeouts = 0;
+let oppTimeouts = 0;
+const MAX_TIMEOUTS = 3;
                let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
 window.isInGame = false;
 
