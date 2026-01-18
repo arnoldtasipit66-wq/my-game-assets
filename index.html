@@ -9005,30 +9005,25 @@ async function updatePlayerData(uid, didWin = false) {
         
 // --- 🤖 STEP 2: START BOT MATCH FUNCTION (CORRECTED VERSION) 🤖 ---
 async function startBotMatch() {
-    // 1. Linisin ang Queue (Para di na maghanap ng iba)
     await cleanupMatchmakingEntry();
-    
-    // 2. Itago ang "Searching..." modal
     matchmakingWaitModal.classList.remove('show');
 
-    // 3. Gumawa ng Fake Opponent Name
+    // Generate Bot Name
     const botName = BotGenerator.generateName();
-    
-    // 4. I-set ang pangalan ng kalaban (Global Variable)
     opponentPlayerName = botName;
 
-    // 5. Ipakita ang "MATCH FOUND!" effect
     showMessage(`Match Found! Opponent: ${botName}`, 3000);
     playButtonSound(); 
 
-    // ❌ DITO DATI YUNG REFUND LOGIC. BINURA NA NATIN! ❌
-    // Dahil burado na, hawak na ng laro ang taya mo. 
-    // Pag natalo ka, goodbye coins. Pag nanalo ka, claimAiWinnings() ang bahala.
+    // ✅ IMPORTANT FIX:
+    // Siguraduhing naka-set pa rin ang taya kahit AI ang kalaban.
+    // (Para alam ng system na may premyo pag nanalo ka)
+    if (!selectedBetAmount) selectedBetAmount = currentMatchBet;
 
-    // 6. Start Game logic (AI Mode)
-    startGame(`ai-${selectedOnlineGameType}`, 'pro'); 
+    // Start Game
+    startGame(`ai-${selectedOnlineGameType}`, 'pro');
     
-    // 7. FORCE UPDATE: Siguraduhin na ang pangalan sa taas ay Bot Name
+    // Update Name Display
     setTimeout(() => {
         opponentPlayerName = botName; 
         updateInfoBox(); 
