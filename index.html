@@ -1853,21 +1853,17 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
 
 /* --- ⏱️ TIMER GLOW CSS (IPALIT MO ITO SA PART NA YUN) ⏱️ --- */
 
+/* --- ⏱️ FIXED TIMER GLOW CSS ⏱️ --- */
+
+/* 1. Base Avatar Style */
 .hud-avatar {
-    /* Pinalaki ko sa 40px para kitang-kita ang Timer Ring */
-    width: 40px !important; 
-    height: 40px !important; 
-    font-size: 14px !important; 
-    
+    width: 45px !important; 
+    height: 45px !important;
     border-radius: 50%;
-    background: #333; /* Background sa likod ng ring */
-    
-    /* ⚠️ IMPORTANTE: Tinanggal ko ang dating border */
-    border: none !important; 
-    
-    /* Ito ang magsisilbing kapal ng Timer (3px) */
-    padding: 3px !important; 
-    
+    background: #333; 
+    /* Importante: Transparent border para makita ang gradient sa likod o padding area */
+    border: 2px solid rgba(255,255,255,0.1); 
+    padding: 3px !important; /* Space para sa timer ring */
     display: flex; justify-content: center; align-items: center;
     flex-shrink: 0;
     position: relative;
@@ -1875,7 +1871,7 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
     box-sizing: border-box;
 }
 
-/* Siguraduhing bilog ang picture sa loob at hindi tatakpan ang timer */
+/* 2. Image sa loob */
 .hud-avatar img, .hud-avatar div {
     width: 100% !important;
     height: 100% !important;
@@ -1883,25 +1879,28 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
     object-fit: cover;
     z-index: 2; 
     background-color: #000;
-    display: flex; justify-content: center; align-items: center;
+    position: relative;
+    /* Siguraduhing natatakpan ang gitna para magmukhang ring ang timer */
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
 }
 
-/* --- DITO ANG MAGIC NG TIMER (Active Turn) --- */
-.hud-active {
+/* 3. ACTIVE TIMER (Dito ang Fix!) */
+/* Targetin ang .hud-avatar na NASA LOOB ng .hud-active */
+.hud-active .hud-avatar {
     /* Umiikot na Kulay: Gold (Oras) -> Red (Ubos na) */
-    /* Gumagamit ito ng CSS Variable --timer-deg galing sa Javascript */
     background: conic-gradient(
         #FFD700 var(--timer-deg, 360deg), 
         #FF0000 0deg
     ) !important;
     
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); /* Gold Glow */
-    transform: scale(1.1); /* Lumalaki konti pag turn mo */
+    border: none !important; /* Alisin ang border para lumabas ang gradient */
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.8); /* Strong Gold Glow */
+    transform: scale(1.1);
     z-index: 10;
 }
 
-/* --- WARNING MODE (Pag 5 seconds na lang) --- */
-.hud-active.timer-warning {
+/* 4. WARNING MODE (Pag < 5 seconds) */
+.hud-active .hud-avatar.timer-warning {
     box-shadow: 0 0 20px #FF0000 !important; /* Red Glow Alert */
     animation: panicPulse 0.5s infinite alternate;
 }
