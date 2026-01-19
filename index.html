@@ -5131,6 +5131,39 @@ div#opponent-info.hud-active {
     border-radius: 25px !important;
     background: rgba(0, 0, 0, 0.5) !important;
 }
+
+        /* Timer Overlay (Ang SVG na papatong sa box) */
+.timer-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Para hindi harang sa click */
+    z-index: 5; /* Nasa ibabaw ng background */
+    border-radius: 50px; /* Terno sa shape ng player-info */
+    overflow: visible;
+}
+
+/* Ang mismong Yellow Line */
+.timer-rect {
+    fill: none; /* Walang laman sa loob */
+    stroke: #FFD700; /* Kulay Yellow/Gold */
+    stroke-width: 4; /* Kapal ng guhit */
+    stroke-linecap: round; /* Bilog ang dulo ng guhit */
+    
+    /* GLOW EFFECT */
+    filter: drop-shadow(0 0 8px #FFD700); 
+    
+    /* Animation settings (JS ang magkokontrol nito) */
+    transition: stroke-dashoffset 0.1s linear;
+}
+
+/* Warning Color (Pag paubos na, magiging Pula) */
+.timer-rect.warning {
+    stroke: #FF0000;
+    filter: drop-shadow(0 0 8px #FF0000);
+}
         
 </style>
 </head>
