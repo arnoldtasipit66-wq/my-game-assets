@@ -6593,7 +6593,7 @@ async function endGame(winnerTextMessage, finalGameData = null) {
 }    
 
 
-function resetToMenu() {
+async function resetToMenu() {
     stopTurnTimer(); // <--- IDAGDAG
     consecutiveTimeouts = 0;
     playButtonSound();
