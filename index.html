@@ -1884,8 +1884,8 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
 
 
 @media (max-height: 500px) and (orientation: landscape) {
-    #player-info { left: 180px !important; top: 10px !important; }
-    #opponent-info { right: 190px !important; top: 10px !important; }
+    #player-info { left: 130px !important; top: 10px !important; }
+    #opponent-info { right: 130px !important; top: 10px !important; }
 }
 .flying-coin-particle {
     position: fixed;
@@ -6359,128 +6359,125 @@ setCueForCurrentTurn(); // Update history state
 
         function waitForCardPick() { return new Promise(resolve => { pokerFoulCardPickModal.classList.add('show'); pokerFoulCardsContainer.innerHTML = ''; const cardsToDraw = []; for (let i = 0; i < 5; i++) if (deck.length > 0) cardsToDraw.push(deck.splice(Math.floor(Math.random() * deck.length), 1)[0]); if (cardsToDraw.length === 0) { pokerFoulCardPickModal.classList.remove('show'); resolve(null); return; } cardsToDraw.forEach(card => { const cardDiv = document.createElement('div'); cardDiv.className = 'card face-down'; cardDiv.onclick = () => { playButtonSound(); cardDiv.classList.remove('face-down'); const color = (card.suit === '♥' || card.suit === '♦') ? '#ff0000' : '#212121'; cardDiv.innerHTML = `<span class="card-rank" style="color: ${color};">${card.rank}</span><span class="card-suit" style="color: ${color};">${card.suit}</span>`; pokerFoulCardsContainer.querySelectorAll('.card').forEach(c => { c.onclick = null; c.style.cursor = 'default'; }); setTimeout(() => { pokerFoulCardPickModal.classList.remove('show'); cardsToDraw.forEach(c => { if (c !== card) deck.push(c); }); resolve(card); }, 1500); }; pokerFoulCardsContainer.appendChild(cardDiv); }); }); }
         
-   // --- 🏁 FINAL & FIXED ENDGAME FUNCTION 🏁 ---
+       
 async function endGame(winnerTextMessage, finalGameData = null) {
     if (gameState === 'gameover') return;
 
-    // 1. SOUND EFFECTS
+    // --- 🔊 SOUND EFFECT LOGIC ---
     const winSound = document.getElementById('win-sfx');
     const loseSound = document.getElementById('lose-sfx');
     
     if (winSound) { winSound.pause(); winSound.currentTime = 0; }
     if (loseSound) { loseSound.pause(); loseSound.currentTime = 0; }
 
-    const didWin = winnerTextMessage.includes("You Win") || winnerTextMessage.includes("Opponent Forfeited");
-    const didLose = winnerTextMessage.includes("You Lose") || winnerTextMessage.includes("You Forfeited");
-
-    if (didWin) {
-        if (winSound) { winSound.volume = 0.8; winSound.play().catch(e => {}); }
-    } else if (didLose) {
-        if (loseSound) { loseSound.volume = 0.8; loseSound.play().catch(e => {}); }
+    if (winnerTextMessage.includes("You Win")) {
+        if (winSound) { winSound.volume = 0.8; winSound.play().catch(e => console.log("Win Sound Error:", e)); }
+    } else if (winnerTextMessage.includes("You Lose") || winnerTextMessage.includes("Forfeited") || winnerTextMessage.includes("Opponent Wins")) {
+        if (loseSound) { loseSound.volume = 0.8; loseSound.play().catch(e => console.log("Lose Sound Error:", e)); }
     }
 
-    // 2. CALCULATE REWARDS & BETS
+    let bonus = 0;
     let xpBonus = 0;
     let trophiesChange = 0;
+    let reason = "";
+    
     let bet = 0;
-
-    // Kunin ang taya (Check Online Data or Local Variable)
     if (isOnlineGame) {
         const gameData = finalGameData || (gameId ? (await getDoc(doc(db, "games", gameId))).data() : null);
-        if (gameData && gameData.betAmount !== undefined) { 
-            bet = gameData.betAmount; 
-        } else { 
-            bet = currentMatchBet; 
-        }
-    } else {
-        bet = selectedBetAmount || 0;
+        if (gameData && gameData.betAmount) { bet = gameData.betAmount; } else { bet = currentMatchBet; }
     }
 
-    // --- WIN LOGIC ---
-    if (didWin) {
-        trophiesChange = isOnlineGame ? 25 : 5; 
-        xpBonus = XP_WIN_BONUS;
-        triggerFireworks(); 
+    // --- 💰 REWARDS LOGIC (SERVER INTEGRATED) 💰 ---
+    if (!isOnlineGame) { // 🤖 AI GAME
+        if (winnerTextMessage.includes("You Win")) {
+            // Visuals lang (XP/Trophies)
+            xpBonus = XP_WIN_BONUS;
+            trophiesChange = 5; 
+            reason = "Practice Win!";
+            triggerFireworks(); 
 
-        // 💰 MONEY HANDLING (DITO ANG FIX!)
-        if (bet > 0) {
-            // A. Compute Winnings
-            const totalPot = bet * 2;
-            const houseCut = Math.floor(totalPot * 0.10); // 10% Tong
-            const netWin = totalPot - houseCut;
-
-            // B. VISUAL UPDATE (Agad-agad para masaya)
-            playerTotalCurrency += netWin;
-            updateCurrencyDisplay();
-            
-            // C. SERVER CALL (Para pumasok sa Database)
-            // Gamitin ang window.SERVER_URL at window.localPlayerUid
-            const uid = window.localPlayerUid || localPlayerUid;
-            const srvUrl = window.SERVER_URL;
-
-            if (uid && srvUrl) {
-                console.log("Claiming Online Win...", netWin);
-                fetch(`${srvUrl}/api/match-payout`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ uid: uid, betAmount: bet })
-                }).then(res => res.json())
-                  .then(data => {
-                      if(data.success) console.log("Payout Saved via Server");
-                  })
-                  .catch(e => console.error("Payout Sync Error:", e));
+            // 👇👇👇 ITO ANG MAJOR FIX 👇👇👇
+            // Tawagin ang Server para sa Pera + Tong
+            // (Siguraduhin na nasa dulo ng file mo ang claimAiWinnings function)
+            if (typeof claimAiWinnings === 'function') {
+                claimAiWinnings(); 
             }
+            // 👆👆👆 WALA NA YUNG MANUAL ADD (+-)
 
-            // D. Show Popup
-            setTimeout(() => { 
-                showRewardPopup(netWin, `POT WON!<br><small>(Tong: ${houseCut})</small>`); 
-            }, 1000);
+        } else if (winnerTextMessage.includes("You Lose")) {
+            xpBonus = XP_LOSE_CONSOLATION;
+            trophiesChange = 0; 
+            reason = "Good Game!";
+            // Wala ng bawas dito kasi nabawas na nung start (No Refund logic)
+        }
+
+    } else { // 🌐 ONLINE GAME
+        if (winnerTextMessage.includes("You Win")) {
+            trophiesChange = 25; // RANKED WIN
+            xpBonus = XP_WIN_BONUS;
+            triggerFireworks(); 
+
+            if (bet > 0) {
+                const totalPot = bet * 2;
+                const houseCut = Math.floor(totalPot * 0.10); 
+                const netWin = totalPot - houseCut;
+                
+                // Note: Sa future, papalitan din natin ito ng Server Call (/api/match-payout)
+                // Pero sa ngayon, hayaan muna natin para gumana ang Online
+                playerTotalCurrency += netWin;
+                saveCurrency();
+                updateCurrencyDisplay(); 
+                setTimeout(() => { showRewardPopup(netWin, `POT WON!<br><small>(Tong: ${houseCut})</small>`); }, 1000);
+                reason = "Pustahan King!";
+            } else {
+                bonus = REWARD_WIN_BONUS;
+                playerTotalCurrency += bonus;
+                saveCurrency();
+                updateCurrencyDisplay();
+                reason = "Online Win!";
+                showRewardPopup(bonus, reason);
+            }
         } else {
-            // Free Match Win (Visual lang)
-            showRewardPopup(100, "Winner!"); 
-        }
-
-    } else if (didLose) {
-        // --- LOSE LOGIC ---
-        trophiesChange = isOnlineGame ? -20 : 0;
-        xpBonus = XP_LOSE_CONSOLATION;
-        
-        if (bet > 0) { 
-            setTimeout(() => { showRewardPopup(0, `<span style="color:red">BET LOST: -${bet}</span>`); }, 1000); 
+            trophiesChange = -20; // RANKED LOSS
+            if (bet > 0) { setTimeout(() => { showRewardPopup(0, `<span style="color:red">BET LOST: -${bet}</span>`); }, 1000); }
+            else { setTimeout(() => { showRewardPopup(0, "Safe Match (No Bet)"); }, 1000); }
         }
     }
 
-    // 3. SAVE STATS (XP & Trophies ONLY)
-    // Siguraduhing ang updatePlayerData ay hindi nagsasave ng 'balance'
-    const uid = window.localPlayerUid || localPlayerUid;
-    
-    // Apply Stats Locally
-    playerTrophies += trophiesChange;
-    if (playerTrophies < 0) playerTrophies = 0;
-    gainXP(xpBonus);
+    // --- APPLY STATS (XP & Trophies) ---
+    if (trophiesChange !== 0) {
+        const oldRankIndex = getPlayerRank(playerTrophies).index;
+        playerTrophies += trophiesChange;
+        if (playerTrophies < 0) playerTrophies = 0;
+        const newRankIndex = getPlayerRank(playerTrophies).index;
 
-    // Save to Firestore (XP/Trophies)
-    if (typeof updatePlayerData === 'function') {
-        updatePlayerData(uid, didWin); 
+        if (newRankIndex > oldRankIndex) { setTimeout(() => { showRankUpScreen(newRankIndex); }, 2500); }
+        setTimeout(() => { showMessage(`${trophiesChange > 0 ? '+' : ''}${trophiesChange} Trophies`, 2000); }, 1500);
     }
 
-    // 4. RESET GAME STATE
+    if (xpBonus > 0) gainXP(xpBonus);
+    savePlayerStats();
     currentMatchBet = 0; 
     gameState = 'gameover'; 
     updateCurrencyDisplay();
-    if(typeof updateLegalTargetChips === 'function') updateLegalTargetChips();
+    updateLegalTargetChips();
 
-    // 5. UPDATE TEXT & MODAL
+    // --- VISUALS ---
     let finalWinnerText = winnerTextMessage;
     winnerText.style.color = "#FFFFFF"; 
     winnerText.style.textShadow = "4px 4px 0 #000";
 
-    if (didWin) {
+    if (winnerTextMessage.includes("You Win") || winnerTextMessage.includes("Opponent Forfeited")) {
         winnerText.style.color = "#FFD700"; 
         winnerText.style.textShadow = "4px 4px 0 #000, 0 0 20px gold";
-    } else if (didLose) {
+        if (winnerTextMessage.includes("Opponent Forfeited")) { finalWinnerText = "OPPONENT<br>FORFEITED"; }
+    } else if (winnerTextMessage.includes("You Lose") || winnerTextMessage.includes("You Forfeited")) {
         winnerText.style.color = "#FF4444"; 
         winnerText.style.textShadow = "4px 4px 0 #000, 0 0 20px red";
+        if (winnerTextMessage.includes("You Forfeited")) { finalWinnerText = "YOU<br>FORFEITED"; }
+    } else if (winnerTextMessage.includes("Draw")) {
+        winnerText.style.color = "#AAAAAA"; 
+        finalWinnerText = "DRAW GAME";
     }
 
     if (gameMode.includes('61-ball')) {
@@ -6489,60 +6486,78 @@ async function endGame(winnerTextMessage, finalGameData = null) {
         winnerText.innerHTML = finalWinnerText;
     }
     
-    // --- 6. SHOW BUTTONS (THE FIX) ---
-    // Pilitin nating ilabas ang buttons
-    const aiRematchBtn = document.getElementById('ai-rematch-button');
-    const menuBtn = document.getElementById('back-to-menu-button');
-    const onlineRematchBtn = document.getElementById('rematch-button');
+    // --- BUTTONS LOGIC ---
+    const onlineRematchButton = document.getElementById('rematch-button');
+    const didWin = winnerTextMessage.includes("You Win"); 
 
     if (isOnlineGame) {
-        if(aiRematchBtn) aiRematchBtn.style.display = 'none';
-        
-        // Show Back to Menu
-        if(menuBtn) {
-            menuBtn.style.display = 'block';
-            menuBtn.onclick = resetToMenu; // Attach listener directly
-        }
-
-        // Show Rematch Request
-        if(onlineRematchBtn) {
-            onlineRematchBtn.style.display = 'block';
-            onlineRematchBtn.onclick = handleRematchRequest; // Attach listener
-        }
-
+        updatePlayerData(localPlayerUid, didWin); 
+        aiRematchButton.style.display = 'none';
+        backToMenuButton.style.display = 'block';
+        onlineRematchButton.style.display = 'block';
     } else {
         // AI GAME
-        if(aiRematchBtn) {
-            aiRematchBtn.style.display = 'block';
-            aiRematchBtn.onclick = () => {
-                 winnerModal.classList.remove('show');
-                 if (typeof restartAiGame === 'function') restartAiGame();
-                 else startGame(gameMode);
-            };
-        }
-        if(menuBtn) {
-            menuBtn.style.display = 'block';
-            menuBtn.onclick = resetToMenu;
-        }
-        if(onlineRematchBtn) onlineRematchBtn.style.display = 'none';
+        updatePlayerData(localPlayerUid, didWin); 
+
+        aiRematchButton.style.display = 'block';
+        backToMenuButton.style.display = 'block';
+        onlineRematchButton.style.display = 'none';
+        
+        // Re-attach listener para sigurado
+        aiRematchButton.onclick = () => {
+             winnerModal.classList.remove('show');
+             // Siguraduhin na tatawagin ang tamang restart function
+             if (typeof restartAiGame === 'function') restartAiGame();
+             else startGame(gameMode);
+        };
     }
     
-    // Reveal Cards (Kung Poker)
+    // --- CARD REVEAL ---
     if (gameMode.includes('poker')) {
         opponentHandReveal.innerHTML = `<h4>${opponentPlayerName}'s Hand:</h4>`;
-        // (Simple reveal visual logic)
+        let opponentsOriginalHand, opponentsFinalHand;
+        if (isOnlineGame) {
+            const gameData = finalGameData || (await getDoc(doc(db, "games", gameId))).data();
+            if (gameData) {
+                opponentsOriginalHand = localPlayerId === 'player1' ? gameData.originalPlayer2Hand : gameData.originalPlayer1Hand;
+                opponentsFinalHand = localPlayerId === 'player1' ? gameData.player2Hand : gameData.player1Hand;
+            } else { opponentsOriginalHand = []; opponentsFinalHand = []; }
+        } else {
+            opponentsOriginalHand = originalOpponentHand; opponentsFinalHand = opponentHand;
+        }
+
+        if(opponentsOriginalHand && opponentsFinalHand) {
+            const pocketedCards = opponentsOriginalHand.filter(originalCard => !opponentsFinalHand.some(finalCard => finalCard.rank === originalCard.rank && finalCard.suit === originalCard.suit));
+            const createCardElement = (card) => {
+                const cardDiv = document.createElement('div'); cardDiv.className = 'card';
+                const color = (card.suit === '♥' || card.suit === '♦') ? '#D32F2F' : '#212121';
+                cardDiv.innerHTML = `<span class="card-rank" style="color: ${color};">${card.rank}</span><span class="card-suit" style="color: ${color};">${card.suit}</span>`;
+                return cardDiv;
+            };
+            if (pocketedCards.length > 0) {
+                const pocketedContainer = document.createElement('div'); pocketedContainer.innerHTML = '<p style="margin: 10px 0 5px 0;">Pocketed:</p>';
+                const pocketedCardsDiv = document.createElement('div'); pocketedCardsDiv.style.cssText = 'display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;';
+                pocketedCards.forEach(card => pocketedCardsDiv.appendChild(createCardElement(card)));
+                pocketedContainer.appendChild(pocketedCardsDiv); opponentHandReveal.appendChild(pocketedContainer);
+            }
+            if (opponentsFinalHand.length > 0) {
+                const remainingContainer = document.createElement('div'); remainingContainer.innerHTML = '<p style="margin: 10px 0 5px 0;">Remaining:</p>';
+                const remainingCardsDiv = document.createElement('div'); remainingCardsDiv.style.cssText = 'display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;';
+                opponentsFinalHand.forEach(card => remainingCardsDiv.appendChild(createCardElement(card)));
+                remainingContainer.appendChild(remainingCardsDiv); opponentHandReveal.appendChild(remainingContainer);
+            }
+            opponentHandReveal.style.display = 'flex';
+        }
+    } else if (gameMode.includes('61-ball')) {
+        opponentHandReveal.innerHTML = `<div style="text-align: center;"><h4>Final Score</h4><p style="font-size: 1.4em; margin: 10px 0; color: white;">${localPlayerName}: <span style="font-weight: bold; color: var(--gold-accent);">${player61Score}</span></p><p style="font-size: 1.4em; margin: 10px 0; color: white;">${opponentPlayerName}: <span style="font-weight: bold; color: var(--gold-accent);">${opponent61Score}</span></p></div>`;
         opponentHandReveal.style.display = 'flex';
     } else {
-        opponentHandReveal.style.display = 'none';
+        opponentHandReveal.innerHTML = ''; opponentHandReveal.style.display = 'none';
     }
     
-    // SHOW MODAL (Delay para sa drama)
-    setTimeout(() => { 
-        winnerModal.classList.add('show'); 
-        history.pushState({ modal: 'winner' }, 'Winner', '#winner'); 
-    }, 1000);
-}    
-
+    // Show Modal
+    setTimeout(() => { winnerModal.classList.add('show'); history.pushState({ modal: 'winner' }, 'Winner', '#winner'); }, 1000);
+}
 
 async function resetToMenu() {
     playButtonSound();
