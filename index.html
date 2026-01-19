@@ -6592,7 +6592,9 @@ async function endGame(winnerTextMessage, finalGameData = null) {
 }    
 
 
-async function resetToMenu() {
+function resetToMenu() {
+    stopTurnTimer(); // <--- IDAGDAG
+    consecutiveTimeouts = 0;
     playButtonSound();
 window.isInGame = false;
     document.getElementById('chat-toggle-button').style.display = 'none';
