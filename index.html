@@ -8891,7 +8891,11 @@ function checkWinCondition() {
 /**
  * Tumatanggap ng "raw power" (2-42) at ipinapasa ito sa animation at applyShot.
  */
-async function shoot(shotPowerValue) { // Renamed parameter to avoid conflict
+async function shoot(shotPowerValue) {
+    // 👇 IDAGDAG MO TONG DALAWANG LINE NA 'TO SA UNAHAN 👇
+    stopTurnTimer(); // Hinto muna ang timer habang tumitira
+    if (playerTurn) consecutiveTimeouts = 0; // Reset ang timeout count kasi nakatira ka na
+    // 👆 END NG DAGDAG 👆
     if (gameState !== 'aiming' || chipsMoving) return;
     const powerNormalized = (shotPowerValue - 2) / 40; // Normalize power (0 to ~1)
     playCueHitSound(powerNormalized); // Pass normalized power
