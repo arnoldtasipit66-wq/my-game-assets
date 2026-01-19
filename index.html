@@ -8827,7 +8827,7 @@ async function handleStraightBallTurnEnd() {
     resetPektus();
     updateCardDisplay();
     updateInfoBox(); // <-- ITO ANG MAGPAPALIT NG ILAW (HUD GLOW)
-    
+   
     if (gameState !== 'gameover') {
         if (canMoveCueBall) {
             gameState = 'moving';
@@ -8845,9 +8845,11 @@ async function handleStraightBallTurnEnd() {
                 setTimeout(aiTurn, 1000);
             }
         }
+
+        // 👇 DITO MO ILAGAY: Start timer pagkatapos ma-set ang state 👇
+        startTurnTimer(); 
     }
-}
-        // ▼▼▼ PALITAN MO ITONG BUONG FUNCTION ▼▼▼
+}        // ▼▼▼ PALITAN MO ITONG BUONG FUNCTION ▼▼▼
 
 function checkWinCondition() { 
     if (gameState === 'gameover') return null; 
