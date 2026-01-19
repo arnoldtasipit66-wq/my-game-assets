@@ -15242,33 +15242,34 @@ window.processBet = async function(amount) {
     }
 };
 
-    function startTurnTimer() {
-    // Reset muna para sigurado
-    stopTurnTimer();
-    
-    // Kung bola ay gumagalaw o tapos na ang laro, 'wag mag-start
-    if (chipsMoving || gameState === 'gameover' || gameState === 'menu') return;
-
-    currentTurnTime = MAX_TURN_TIME;
-    updateTimerVisuals(); // I-set ang full bar
-
-    // Simulan ang countdown
-    turnTimerInterval = setInterval(() => {
-        currentTurnTime -= 0.1; // Bawas 0.1s bawat takbo
-        
-        if (currentTurnTime <= 0) {
-            handleTurnTimeout(); // UBOS NA ORAS!
-        } else {
-            updateTimerVisuals(); // Update ang itsura ng border
-        }
-    }, 100); // Run every 100ms
-}
+    // --- UPDATED TIMER FUNCTIONS ---
 
 function stopTurnTimer() {
-    if (turnTimerInterval) {
-        clearInterval(turnTimerInterval);
-        turnTimerInterval = null;
+    if (window.turnTimerInterval) {
+        clearInterval(window.turnTimerInterval);
+        window.turnTimerInterval = null;
     }
+}
+
+function startTurnTimer() {
+    stopTurnTimer(); // Reset muna
+    
+    // Safety Checks
+    if (typeof chipsMoving !== 'undefined' && chipsMoving) return;
+    if (gameState === 'gameover' || gameState === 'menu') return;
+
+    window.currentTurnTime = window.MAX_TURN_TIME;
+    updateTimerVisuals(); 
+
+    window.turnTimerInterval = setInterval(() => {
+        window.currentTurnTime -= 0.1;
+        
+        if (window.currentTurnTime <= 0) {
+            handleTurnTimeout();
+        } else {
+            updateTimerVisuals();
+        }
+    }, 100);
 }
 
 function updateTimerVisuals() {
@@ -15339,6 +15340,14 @@ function handleTurnTimeout() {
         // Sa online, usually server ang magpapalit, pero pwede tayong mag-force pass
         // Depende sa setup mo, pero for safety, i-reset lang natin ang local state
         // at hayaan ang syncGameState na mag-handle ng turn switch.
+    }
+}
+    // Quick fix para sa missing function
+function aiDisplayMessage(msg) {
+    if (typeof showMessage === 'function') {
+        showMessage(msg);
+    } else {
+        console.log("AI Message:", msg);
     }
 }
 
