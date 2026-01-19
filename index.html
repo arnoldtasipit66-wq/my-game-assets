@@ -6081,21 +6081,75 @@ let equippedItems = {
 };
 let currentShopTab = 'cues'; 
         let currentTrackIndex = Math.floor(Math.random() * backgroundPlaylist.length), musicHasStarted = false;     
-const canvas = document.getElementById('game-canvas'), ctx = canvas.getContext('2d'), gameWrapper = document.getElementById('game-wrapper'), backgroundCanvas = document.createElement('canvas'), backgroundCtx = backgroundCanvas.getContext('2d'), messageBox = document.getElementById('message-box'), winnerModal = document.getElementById('winner-modal'), winnerText = document.getElementById('winner-text'), playerInfo = document.getElementById('player-info'), opponentInfo = document.getElementById('opponent-info'), powerControl = document.getElementById('power-control'), powerBar = document.getElementById('power-bar'), gameModeSelect = document.getElementById('game-mode-select'), /*difficultySelect = document.getElementById('difficulty-select'),*/ onlineMenu = document.getElementById('online-menu'), exitButton = document.getElementById('exit-button'), vsAiButton = document.getElementById('vs-ai-button'), onlineButton = document.getElementById('online-button'), createGameButton = document.getElementById('create-game-button'), joinGameButton = document.getElementById('join-game-button'), gameIdInput = document.getElementById('game-id-input'), /*difficultyBackButton = document.getElementById('difficulty-back-button'),*/  cardHandContainer = document.getElementById('card-hand-container'), opponentHandReveal = document.getElementById('opponent-hand-reveal');
-// --- ⏱️ GLOBAL TIMER VARIABLES (ILAGAY SA TAAS) ⏱️ ---
-window.turnTimerInterval = null; // Ginawa nating "window." para sure na global
+const canvas = document.getElementById('game-canvas'), 
+    ctx = canvas.getContext('2d'), 
+    gameWrapper = document.getElementById('game-wrapper'), 
+    backgroundCanvas = document.createElement('canvas'), 
+    backgroundCtx = backgroundCanvas.getContext('2d'), 
+    messageBox = document.getElementById('message-box'), 
+    winnerModal = document.getElementById('winner-modal'), 
+    winnerText = document.getElementById('winner-text'), 
+    playerInfo = document.getElementById('player-info'), 
+    opponentInfo = document.getElementById('opponent-info'), 
+    powerControl = document.getElementById('power-control'), 
+    powerBar = document.getElementById('power-bar'), 
+    gameModeSelect = document.getElementById('game-mode-select'), 
+    /*difficultySelect = document.getElementById('difficulty-select'),*/ 
+    onlineMenu = document.getElementById('online-menu'), 
+    exitButton = document.getElementById('exit-button'), 
+    vsAiButton = document.getElementById('vs-ai-button'), 
+    onlineButton = document.getElementById('online-button'), 
+    createGameButton = document.getElementById('create-game-button'), 
+    joinGameButton = document.getElementById('join-game-button'), 
+    gameIdInput = document.getElementById('game-id-input'), 
+    /*difficultyBackButton = document.getElementById('difficulty-back-button'),*/  
+    cardHandContainer = document.getElementById('card-hand-container'), 
+    opponentHandReveal = document.getElementById('opponent-hand-reveal'); // <--- NAGTAPOS DITO ANG UNANG CONST (SEMICOLON)
+
+// --- ⏱️ GLOBAL TIMER VARIABLES (NASA LABAS NA NG CONST) ⏱️ ---
+window.turnTimerInterval = null; 
 window.currentTurnTime = 0;
 window.MAX_TURN_TIME = 20; 
 window.consecutiveTimeouts = 0;
 window.MAX_TIMEOUTS = 3;            
-   
-            aiRematchButton = document.getElementById('ai-rematch-button'), // Updated ID
-            backToMenuButton = document.getElementById('back-to-menu-button'), // New button
-            // == END WINNER MODAL BUTTONS ==
-            aiMenu = document.getElementById('ai-menu'), aiStraightBallButton = document.getElementById('ai-straight-ball-button'), aiPokerButton = document.getElementById('ai-poker-button'), ai61Button = document.getElementById('ai-61-button'),  straightBallInstructions = document.getElementById('straight-ball-instructions'), pokerInstructions = document.getElementById('poker-instructions'), sixtyOneInstructions = document.getElementById('61-ball-instructions'), playStraightBallButton = document.getElementById('play-straight-ball-button'), playPokerButton = document.getElementById('play-poker-button'), play61BallButton = document.getElementById('play-61-ball-button'), cueBallGuide = document.getElementById('cue-ball-guide'), waitingRoom = document.getElementById('waiting-room'), gameIdDisplay = document.getElementById('game-id-display'),  onlineGameSelect = document.getElementById('online-game-select'), onlinePokerButton = document.getElementById('online-poker-button'), onlineStraightBallButton = document.getElementById('online-straight-ball-button'), online61Button = document.getElementById('online-61-button'),  confirmExitModal = document.getElementById('confirm-exit-modal'), confirmExitYes = document.getElementById('confirm-exit-yes'), confirmExitCancel = document.getElementById('confirm-exit-cancel'), pektusControl = document.getElementById('pektus-control'), pektusDot = document.getElementById('pektus-dot'), leftArrow = document.getElementById('left-arrow'), rightArrow = document.getElementById('right-arrow'), fullscreenButton = document.getElementById('fullscreen-button'), pokerFoulCardPickModal = document.getElementById('poker-foul-card-pick-modal'), pokerFoulCardsContainer = document.getElementById('poker-foul-cards'), leaderboardModal = document.getElementById('leaderboard-modal'), leaderboardButton = document.getElementById('leaderboard-button'),  leaderboardBody = document.getElementById('leaderboard-body'), 
-shopModal = document.getElementById('shop-modal'),
-dailyRewardModal = document.getElementById('daily-reward-modal'),
-ghostHand = document.getElementById('ghost-hand'),
+
+// --- IPAGPATULOY ANG VARIABLES (BAGONG CONST) ---
+const aiRematchButton = document.getElementById('ai-rematch-button'), // Updated ID
+    backToMenuButton = document.getElementById('back-to-menu-button'), // New button
+    // == END WINNER MODAL BUTTONS ==
+    aiMenu = document.getElementById('ai-menu'), 
+    aiStraightBallButton = document.getElementById('ai-straight-ball-button'), 
+    aiPokerButton = document.getElementById('ai-poker-button'), 
+    ai61Button = document.getElementById('ai-61-button'),  
+    straightBallInstructions = document.getElementById('straight-ball-instructions'), 
+    pokerInstructions = document.getElementById('poker-instructions'), 
+    sixtyOneInstructions = document.getElementById('61-ball-instructions'), 
+    playStraightBallButton = document.getElementById('play-straight-ball-button'), 
+    playPokerButton = document.getElementById('play-poker-button'), 
+    play61BallButton = document.getElementById('play-61-ball-button'), 
+    cueBallGuide = document.getElementById('cue-ball-guide'), 
+    waitingRoom = document.getElementById('waiting-room'), 
+    gameIdDisplay = document.getElementById('game-id-display'),  
+    onlineGameSelect = document.getElementById('online-game-select'), 
+    onlinePokerButton = document.getElementById('online-poker-button'), 
+    onlineStraightBallButton = document.getElementById('online-straight-ball-button'), 
+    online61Button = document.getElementById('online-61-button'),  
+    confirmExitModal = document.getElementById('confirm-exit-modal'), 
+    confirmExitYes = document.getElementById('confirm-exit-yes'), 
+    confirmExitCancel = document.getElementById('confirm-exit-cancel'), 
+    pektusControl = document.getElementById('pektus-control'), 
+    pektusDot = document.getElementById('pektus-dot'), 
+    leftArrow = document.getElementById('left-arrow'), 
+    rightArrow = document.getElementById('right-arrow'), 
+    fullscreenButton = document.getElementById('fullscreen-button'), 
+    pokerFoulCardPickModal = document.getElementById('poker-foul-card-pick-modal'), 
+    pokerFoulCardsContainer = document.getElementById('poker-foul-cards'), 
+    leaderboardModal = document.getElementById('leaderboard-modal'), 
+    leaderboardButton = document.getElementById('leaderboard-button'),  
+    leaderboardBody = document.getElementById('leaderboard-body'),  
+    shopModal = document.getElementById('shop-modal'),
+    dailyRewardModal = document.getElementById('daily-reward-modal'),
+    ghostHand = document.getElementById('ghost-hand'); // <--- SEMICOLON SA DULO
             
             // === START PLAYER NAME UPDATE ===
             playerNameInput = document.getElementById('player-name-input'),
