@@ -9533,8 +9533,11 @@ async function cancelMatchmaking() {
             if (isMyTurnOnline && !canMoveCueBall && gameState !== 'aiming') {
                 resetPektus();
             }
-        }
 
+            // 👇 DITO MO ILAGAY: Start timer pagkatapos ma-load ang lahat ng data 👇
+            startTurnTimer(); 
+
+        } // <--- Ito ang closing bracket ng "if (data.turnId > lastProcessedTurnId)"
         // State Management
         if (isMyTurnOnline) {
             gameState = canMoveCueBall ? 'moving' : 'aiming';
