@@ -1826,14 +1826,14 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
 
 
 #player-info {
-    left: 100px !important;
+    left: 120px !important;
     flex-direction: row !important;
     padding: 0 12px 0 3px !important; /* Adjusted padding para sa nipis */
 }
 
 
 #opponent-info {
-    right: 100px !important;
+    right: 120px !important;
     flex-direction: row-reverse !important;
     padding: 0 3px 0 12px !important; /* Adjusted padding para sa nipis */
 }
@@ -1884,8 +1884,8 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
 
 
 @media (max-height: 500px) and (orientation: landscape) {
-    #player-info { left: 180px !important; top: 10px !important; }
-    #opponent-info { right: 190px !important; top: 10px !important; }
+    #player-info { left: 130px !important; top: 10px !important; }
+    #opponent-info { right: 130px !important; top: 10px !important; }
 }
 .flying-coin-particle {
     position: fixed;
@@ -5131,39 +5131,6 @@ div#opponent-info.hud-active {
     border-radius: 25px !important;
     background: rgba(0, 0, 0, 0.5) !important;
 }
-
-        /* Timer Overlay (Ang SVG na papatong sa box) */
-.timer-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none; /* Para hindi harang sa click */
-    z-index: 5; /* Nasa ibabaw ng background */
-    border-radius: 50px; /* Terno sa shape ng player-info */
-    overflow: visible;
-}
-
-/* Ang mismong Yellow Line */
-.timer-rect {
-    fill: none; /* Walang laman sa loob */
-    stroke: #FFD700; /* Kulay Yellow/Gold */
-    stroke-width: 4; /* Kapal ng guhit */
-    stroke-linecap: round; /* Bilog ang dulo ng guhit */
-    
-    /* GLOW EFFECT */
-    filter: drop-shadow(0 0 8px #FFD700); 
-    
-    /* Animation settings (JS ang magkokontrol nito) */
-    transition: stroke-dashoffset 0.1s linear;
-}
-
-/* Warning Color (Pag paubos na, magiging Pula) */
-.timer-rect.warning {
-    stroke: #FF0000;
-    filter: drop-shadow(0 0 8px #FF0000);
-}
         
 </style>
 </head>
@@ -5289,19 +5256,9 @@ div#opponent-info.hud-active {
 
 </div>
     
-    <div id="player-info" class="info-box">
-    <svg class="timer-overlay">
-        <rect id="player-timer-bar" class="timer-rect" x="2" y="2" rx="14" ry="14" width="100%" height="100%"></rect>
-    </svg>
-    <span id="player-name-text">You: ?</span>
-</div>
-
-<div id="opponent-info" class="info-box">
-    <svg class="timer-overlay">
-        <rect id="opponent-timer-bar" class="timer-rect" x="2" y="2" rx="14" ry="14" width="100%" height="100%"></rect>
-    </svg>
-    <span id="opponent-name-text">Opponent: ?</span>
-</div>
+    <div id="player-info" class="info-box">You: ?</div>
+    <div id="opponent-info" class="info-box">Opponent: ?</div>
+    </div>
             <div id="message-box"></div>
             <div id="cue-ball-guide" class="guide-text"></div>
             <div id="chat-container">
@@ -6055,6 +6012,7 @@ let selectedBetAmount = 0; // Default: Free play
 const HOUSE_CUT_PERCENTAGE = 0.10; // 10% Tong ng laro
 
 
+
 function getCurrentCueStats() {
     // Hanapin ang data ng cue na naka-equip
     const equippedCue = SHOP_ITEMS.cues.find(cue => cue.id === equippedItems.cue);
@@ -6081,78 +6039,18 @@ let equippedItems = {
 };
 let currentShopTab = 'cues'; 
         let currentTrackIndex = Math.floor(Math.random() * backgroundPlaylist.length), musicHasStarted = false;     
-const canvas = document.getElementById('game-canvas'), 
-    ctx = canvas.getContext('2d'), 
-    gameWrapper = document.getElementById('game-wrapper'), 
-    backgroundCanvas = document.createElement('canvas'), 
-    backgroundCtx = backgroundCanvas.getContext('2d'), 
-    messageBox = document.getElementById('message-box'), 
-    winnerModal = document.getElementById('winner-modal'), 
-    winnerText = document.getElementById('winner-text'), 
-    playerInfo = document.getElementById('player-info'), 
-    opponentInfo = document.getElementById('opponent-info'), 
-    powerControl = document.getElementById('power-control'), 
-    powerBar = document.getElementById('power-bar'), 
-    gameModeSelect = document.getElementById('game-mode-select'), 
-    /*difficultySelect = document.getElementById('difficulty-select'),*/ 
-    onlineMenu = document.getElementById('online-menu'), 
-    exitButton = document.getElementById('exit-button'), 
-    vsAiButton = document.getElementById('vs-ai-button'), 
-    onlineButton = document.getElementById('online-button'), 
-    createGameButton = document.getElementById('create-game-button'), 
-    joinGameButton = document.getElementById('join-game-button'), 
-    gameIdInput = document.getElementById('game-id-input'), 
-    /*difficultyBackButton = document.getElementById('difficulty-back-button'),*/  
-    cardHandContainer = document.getElementById('card-hand-container'), 
-    opponentHandReveal = document.getElementById('opponent-hand-reveal'); // <--- NAGTAPOS DITO ANG UNANG CONST (SEMICOLON)
-
-// --- ⏱️ GLOBAL TIMER VARIABLES (NASA LABAS NA NG CONST) ⏱️ ---
-window.turnTimerInterval = null; 
-window.currentTurnTime = 0;
-window.MAX_TURN_TIME = 20; 
-window.consecutiveTimeouts = 0;
-window.MAX_TIMEOUTS = 3;            
-
-// --- IPAGPATULOY ANG VARIABLES (BAGONG CONST) ---
-const aiRematchButton = document.getElementById('ai-rematch-button'), // Updated ID
-    backToMenuButton = document.getElementById('back-to-menu-button'), // New button
-    // == END WINNER MODAL BUTTONS ==
-    aiMenu = document.getElementById('ai-menu'), 
-    aiStraightBallButton = document.getElementById('ai-straight-ball-button'), 
-    aiPokerButton = document.getElementById('ai-poker-button'), 
-    ai61Button = document.getElementById('ai-61-button'),  
-    straightBallInstructions = document.getElementById('straight-ball-instructions'), 
-    pokerInstructions = document.getElementById('poker-instructions'), 
-    sixtyOneInstructions = document.getElementById('61-ball-instructions'), 
-    playStraightBallButton = document.getElementById('play-straight-ball-button'), 
-    playPokerButton = document.getElementById('play-poker-button'), 
-    play61BallButton = document.getElementById('play-61-ball-button'), 
-    cueBallGuide = document.getElementById('cue-ball-guide'), 
-    waitingRoom = document.getElementById('waiting-room'), 
-    gameIdDisplay = document.getElementById('game-id-display'),  
-    onlineGameSelect = document.getElementById('online-game-select'), 
-    onlinePokerButton = document.getElementById('online-poker-button'), 
-    onlineStraightBallButton = document.getElementById('online-straight-ball-button'), 
-    online61Button = document.getElementById('online-61-button'),  
-    confirmExitModal = document.getElementById('confirm-exit-modal'), 
-    confirmExitYes = document.getElementById('confirm-exit-yes'), 
-    confirmExitCancel = document.getElementById('confirm-exit-cancel'), 
-    pektusControl = document.getElementById('pektus-control'), 
-    pektusDot = document.getElementById('pektus-dot'), 
-    leftArrow = document.getElementById('left-arrow'), 
-    rightArrow = document.getElementById('right-arrow'), 
-    fullscreenButton = document.getElementById('fullscreen-button'), 
-    pokerFoulCardPickModal = document.getElementById('poker-foul-card-pick-modal'), 
-    pokerFoulCardsContainer = document.getElementById('poker-foul-cards'), 
-    leaderboardModal = document.getElementById('leaderboard-modal'), 
-    leaderboardButton = document.getElementById('leaderboard-button'),  
-    leaderboardBody = document.getElementById('leaderboard-body'),  
-    shopModal = document.getElementById('shop-modal'),
-    dailyRewardModal = document.getElementById('daily-reward-modal'),
-    ghostHand = document.getElementById('ghost-hand'); // <--- SEMICOLON SA DULO
+const canvas = document.getElementById('game-canvas'), ctx = canvas.getContext('2d'), gameWrapper = document.getElementById('game-wrapper'), backgroundCanvas = document.createElement('canvas'), backgroundCtx = backgroundCanvas.getContext('2d'), messageBox = document.getElementById('message-box'), winnerModal = document.getElementById('winner-modal'), winnerText = document.getElementById('winner-text'), playerInfo = document.getElementById('player-info'), opponentInfo = document.getElementById('opponent-info'), powerControl = document.getElementById('power-control'), powerBar = document.getElementById('power-bar'), gameModeSelect = document.getElementById('game-mode-select'), /*difficultySelect = document.getElementById('difficulty-select'),*/ onlineMenu = document.getElementById('online-menu'), exitButton = document.getElementById('exit-button'), vsAiButton = document.getElementById('vs-ai-button'), onlineButton = document.getElementById('online-button'), createGameButton = document.getElementById('create-game-button'), joinGameButton = document.getElementById('join-game-button'), gameIdInput = document.getElementById('game-id-input'), /*difficultyBackButton = document.getElementById('difficulty-back-button'),*/  cardHandContainer = document.getElementById('card-hand-container'), opponentHandReveal = document.getElementById('opponent-hand-reveal'),
+            // == WINNER MODAL BUTTONS ==
+            aiRematchButton = document.getElementById('ai-rematch-button'), // Updated ID
+            backToMenuButton = document.getElementById('back-to-menu-button'), // New button
+            // == END WINNER MODAL BUTTONS ==
+            aiMenu = document.getElementById('ai-menu'), aiStraightBallButton = document.getElementById('ai-straight-ball-button'), aiPokerButton = document.getElementById('ai-poker-button'), ai61Button = document.getElementById('ai-61-button'),  straightBallInstructions = document.getElementById('straight-ball-instructions'), pokerInstructions = document.getElementById('poker-instructions'), sixtyOneInstructions = document.getElementById('61-ball-instructions'), playStraightBallButton = document.getElementById('play-straight-ball-button'), playPokerButton = document.getElementById('play-poker-button'), play61BallButton = document.getElementById('play-61-ball-button'), cueBallGuide = document.getElementById('cue-ball-guide'), waitingRoom = document.getElementById('waiting-room'), gameIdDisplay = document.getElementById('game-id-display'),  onlineGameSelect = document.getElementById('online-game-select'), onlinePokerButton = document.getElementById('online-poker-button'), onlineStraightBallButton = document.getElementById('online-straight-ball-button'), online61Button = document.getElementById('online-61-button'),  confirmExitModal = document.getElementById('confirm-exit-modal'), confirmExitYes = document.getElementById('confirm-exit-yes'), confirmExitCancel = document.getElementById('confirm-exit-cancel'), pektusControl = document.getElementById('pektus-control'), pektusDot = document.getElementById('pektus-dot'), leftArrow = document.getElementById('left-arrow'), rightArrow = document.getElementById('right-arrow'), fullscreenButton = document.getElementById('fullscreen-button'), pokerFoulCardPickModal = document.getElementById('poker-foul-card-pick-modal'), pokerFoulCardsContainer = document.getElementById('poker-foul-cards'), leaderboardModal = document.getElementById('leaderboard-modal'), leaderboardButton = document.getElementById('leaderboard-button'),  leaderboardBody = document.getElementById('leaderboard-body'), 
+shopModal = document.getElementById('shop-modal'),
+dailyRewardModal = document.getElementById('daily-reward-modal'),
+ghostHand = document.getElementById('ghost-hand'),
             
             // === START PLAYER NAME UPDATE ===
-            playerNameInput = document.getElementById('player-name-input');
+            playerNameInput = document.getElementById('player-name-input'),
             // === END PLAYER NAME UPDATE ===
 
             dragGuideText = document.getElementById('drag-guide-text'), findMatchButton = document.getElementById('find-match-button'), matchmakingWaitModal = document.getElementById('matchmaking-wait-modal'),  chatContainer = document.getElementById('chat-container'), chatMessages = document.getElementById('chat-messages'), chatInput = document.getElementById('chat-input'), chatSendBtn = document.getElementById('chat-send-btn'), cueStickElement = document.getElementById('cue-stick-element'); 
@@ -6464,7 +6362,6 @@ setCueForCurrentTurn(); // Update history state
    // --- 🏁 FINAL & FIXED ENDGAME FUNCTION 🏁 ---
 async function endGame(winnerTextMessage, finalGameData = null) {
     if (gameState === 'gameover') return;
-    stopTurnTimer();
 
     // 1. SOUND EFFECTS
     const winSound = document.getElementById('win-sfx');
@@ -6648,8 +6545,6 @@ async function endGame(winnerTextMessage, finalGameData = null) {
 
 
 async function resetToMenu() {
-    stopTurnTimer(); // <--- IDAGDAG
-    consecutiveTimeouts = 0;
     playButtonSound();
 window.isInGame = false;
     document.getElementById('chat-toggle-button').style.display = 'none';
@@ -8884,7 +8779,7 @@ async function handleStraightBallTurnEnd() {
     resetPektus();
     updateCardDisplay();
     updateInfoBox(); // <-- ITO ANG MAGPAPALIT NG ILAW (HUD GLOW)
-   
+    
     if (gameState !== 'gameover') {
         if (canMoveCueBall) {
             gameState = 'moving';
@@ -8902,11 +8797,9 @@ async function handleStraightBallTurnEnd() {
                 setTimeout(aiTurn, 1000);
             }
         }
-
-        // 👇 DITO MO ILAGAY: Start timer pagkatapos ma-set ang state 👇
-        startTurnTimer(); 
     }
-}        // ▼▼▼ PALITAN MO ITONG BUONG FUNCTION ▼▼▼
+}
+        // ▼▼▼ PALITAN MO ITONG BUONG FUNCTION ▼▼▼
 
 function checkWinCondition() { 
     if (gameState === 'gameover') return null; 
@@ -8950,11 +8843,7 @@ function checkWinCondition() {
 /**
  * Tumatanggap ng "raw power" (2-42) at ipinapasa ito sa animation at applyShot.
  */
-async function shoot(shotPowerValue) {
-    // 👇 IDAGDAG MO TONG DALAWANG LINE NA 'TO SA UNAHAN 👇
-    stopTurnTimer(); // Hinto muna ang timer habang tumitira
-    if (playerTurn) consecutiveTimeouts = 0; // Reset ang timeout count kasi nakatira ka na
-    // 👆 END NG DAGDAG 👆
+async function shoot(shotPowerValue) { // Renamed parameter to avoid conflict
     if (gameState !== 'aiming' || chipsMoving) return;
     const powerNormalized = (shotPowerValue - 2) / 40; // Normalize power (0 to ~1)
     playCueHitSound(powerNormalized); // Pass normalized power
@@ -9590,11 +9479,8 @@ async function cancelMatchmaking() {
             if (isMyTurnOnline && !canMoveCueBall && gameState !== 'aiming') {
                 resetPektus();
             }
+        }
 
-            // 👇 DITO MO ILAGAY: Start timer pagkatapos ma-load ang lahat ng data 👇
-            startTurnTimer(); 
-
-        } // <--- Ito ang closing bracket ng "if (data.turnId > lastProcessedTurnId)"
         // State Management
         if (isMyTurnOnline) {
             gameState = canMoveCueBall ? 'moving' : 'aiming';
@@ -9948,21 +9834,26 @@ function updateXPDisplay() {
     }
 }
 
- function updateInfoBox() {
-    // 1. Get Names & Ranks
-    const player1Name = isOnlineGame ? (localPlayerId === 'player1' ? "You" : "Opponent") : localPlayerName;
-    let player2Name = isOnlineGame ? (localPlayerId === 'player1' ? "Opponent" : "You") : opponentPlayerName;
+function updateInfoBox() { 
+    // 1. Kunin ang Rank Data
+    const safeTrophies = (typeof playerTrophies !== 'undefined') ? playerTrophies : 0;
+    const myRank = getPlayerRank(safeTrophies);
+    const opponentRank = RANKS[opponentRankIndex] || RANKS[0]; 
 
-    // Get stats for borders
-    const myRank = getPlayerRank(playerLevel);
-    const opponentRank = isOnlineGame ? RANKS[opponentRankIndex] || RANKS[0] : { cssClass: 'rank-border-bronze' }; // Default AI
-
+    const player1Name = localPlayerName || 'You'; 
+    let player2Name = opponentPlayerName || 'Opponent'; 
+    
+    // --- BAGO: Kunin ang CSS Class para sa Border (Bronze, Gold, Mythical, etc.) ---
+    // Kung walang cssClass, mag-default sa Bronze
     const myBorderClass = myRank.cssClass || 'rank-border-bronze';
+    
+    // Check kung Online o AI para sa border ng kalaban
     const oppBorderClass = (isOnlineGame ? opponentRank.cssClass : 'rank-border-bronze') || 'rank-border-bronze';
 
     // A. My Avatar HTML
     const myLocalPhoto = localStorage.getItem('pinoyPoolPlayerPhoto');
-    let myAvatarHTML = myRank.icon;
+    let myAvatarHTML = myRank.icon; 
+    
     if (myLocalPhoto && myLocalPhoto !== 'null' && myLocalPhoto !== 'undefined') {
         myAvatarHTML = `<img src="${myLocalPhoto}" onclick="event.stopPropagation(); window.viewFullPhoto('${myLocalPhoto}')" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; cursor: pointer;">`;
     }
@@ -9976,38 +9867,38 @@ function updateXPDisplay() {
     } else {
         opponentAvatarHTML = "🤖";
         if (opponentPlayerName && opponentPlayerName !== "Opponent") {
-            player2Name = opponentPlayerName;
+            player2Name = opponentPlayerName; 
         } else {
-            player2Name = "AI Bot";
+            player2Name = "AI Bot"; 
         }
     }
 
     // --- GAME SUBTEXT (Score/Cards) ---
     let p1Sub = "", p2Sub = "";
-    if (gameMode.includes('poker')) {
+    if (gameMode.includes('poker')) { 
         p1Sub = `<span style="color:#33FF57">${playerHand?.length || 0} Cards</span>`;
         p2Sub = `<span style="color:#FF6B6B">${opponentHand?.length || 0} Cards</span>`;
-    } else if (gameMode.includes('straight-ball')) {
+    } else if (gameMode.includes('straight-ball')) { 
         const myColor = playerChipsType ? playerChipsType.toUpperCase() : 'OPEN';
         const oppColor = opponentChipsType ? opponentChipsType.toUpperCase() : 'OPEN';
         const c1 = myColor === 'RED' ? '#ff6b6b' : (myColor === 'BLUE' ? '#54a0ff' : '#ddd');
         const c2 = oppColor === 'RED' ? '#ff6b6b' : (oppColor === 'BLUE' ? '#54a0ff' : '#ddd');
         p1Sub = `<span style="color:${c1}">${myColor}</span>`;
         p2Sub = `<span style="color:${c2}">${oppColor}</span>`;
-    } else if (gameMode.includes('61-ball')) {
+    } else if (gameMode.includes('61-ball')) { 
         p1Sub = `<span style="color:#FFD700">${player61Score} Pts</span>`;
         p2Sub = `<span style="color:#FFD700">${opponent61Score} Pts</span>`;
-        if (lowestChipNumber > 0 && gameState === 'aiming') {
-            cueBallGuide.innerHTML = `Target: Chip #${lowestChipNumber}`;
-            cueBallGuide.style.display = 'block';
-        } else {
-            cueBallGuide.style.display = 'none';
-        }
+        if(lowestChipNumber > 0 && gameState === 'aiming') { 
+            cueBallGuide.innerHTML = `Target: Chip #${lowestChipNumber}`; 
+            cueBallGuide.style.display = 'block'; 
+        } else { 
+            cueBallGuide.style.display = 'none'; 
+        } 
     }
 
-    // --- RENDER HTML (MAY KASAMANG TIMER SVG NA!) ---
+    // --- RENDER HTML (ETO ANG IMPORTANTE: GINAMIT ANG CLASSES) ---
+    
     playerInfo.innerHTML = `
-        <svg class="timer-overlay"><rect id="player-timer-bar" class="timer-rect" x="2" y="2" rx="14" ry="14" width="100%" height="100%"></rect></svg>
         <div class="hud-avatar ${myBorderClass}" style="overflow: hidden; padding: 0;">${myAvatarHTML}</div>
         <div class="hud-details">
             <div class="hud-name">${player1Name}</div>
@@ -10018,7 +9909,6 @@ function updateXPDisplay() {
     playerInfo.onclick = () => showProfile('player');
 
     opponentInfo.innerHTML = `
-        <svg class="timer-overlay"><rect id="opponent-timer-bar" class="timer-rect" x="2" y="2" rx="14" ry="14" width="100%" height="100%"></rect></svg>
         <div class="hud-details">
             <div class="hud-name">${player2Name}</div>
             <div class="hud-sub">${p2Sub}</div>
@@ -10031,16 +9921,15 @@ function updateXPDisplay() {
     // Active Turn Glow
     const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
     if (isMyTurn) {
-        playerInfo.classList.add('hud-active');
-        opponentInfo.classList.remove('hud-active');
+        playerInfo.classList.add('hud-active'); 
+        opponentInfo.classList.remove('hud-active'); 
     } else {
-        playerInfo.classList.remove('hud-active');
-        opponentInfo.classList.add('hud-active');
+        playerInfo.classList.remove('hud-active'); 
+        opponentInfo.classList.add('hud-active'); 
     }
-
-    updateLegalTargetChips();
+    
+    updateLegalTargetChips(); 
 }
-
         function initializeFirebase() { 
     try { 
         // onlineButton.textContent = "Connecting..."; // <--- BINURA KO NA ITO (Commented out)
@@ -14559,25 +14448,6 @@ startBtn.addEventListener('click', async () => {
 });
 
 // Simulan ang proseso
-// --- 🛡️ SAFETY TIMER (FIX SA 76% STUCK) ---
-// Kapag lumampas ng 7 seconds at naglo-load pa rin, pilitin nang tapusin.
-setTimeout(() => {
-    const loadingDiv = document.getElementById('preloader-overlay');
-    // Check kung nakaharang pa rin ang loading screen
-    if (loadingDiv && !loadingDiv.classList.contains('hidden')) {
-        console.warn("Loading too slow! Forcing start...");
-        
-        // I-update ang text para alam ng user
-        const loadText = document.getElementById('loading-text');
-        if(loadText) loadText.textContent = "Taking too long... Force Starting!";
-        
-        // Pilitin tapusin ang loading
-        loadedCount = totalAssets; 
-        onLoadingComplete();
-    }
-}, 7000); // 7000ms = 7 seconds waiting time
-
-// Simulan ang proseso (Normal Start)
 startPreloading();
 
  // --- PROFILE PICTURE UPLOAD LOGIC ---
@@ -15295,115 +15165,6 @@ window.processBet = async function(amount) {
         return false;
     }
 };
-
-    // --- UPDATED TIMER FUNCTIONS ---
-
-function stopTurnTimer() {
-    if (window.turnTimerInterval) {
-        clearInterval(window.turnTimerInterval);
-        window.turnTimerInterval = null;
-    }
-}
-
-function startTurnTimer() {
-    stopTurnTimer(); // Reset muna
-    
-    // Safety Checks
-    if (typeof chipsMoving !== 'undefined' && chipsMoving) return;
-    if (gameState === 'gameover' || gameState === 'menu') return;
-
-    window.currentTurnTime = window.MAX_TURN_TIME;
-    updateTimerVisuals(); 
-
-    window.turnTimerInterval = setInterval(() => {
-        window.currentTurnTime -= 0.1;
-        
-        if (window.currentTurnTime <= 0) {
-            handleTurnTimeout();
-        } else {
-            updateTimerVisuals();
-        }
-    }, 100);
-}
-
-function updateTimerVisuals() {
-    // Tukuyin kung sino ang active (Player o Opponent)
-    const isPlayer = (isOnlineGame ? isMyTurnOnline : playerTurn);
-    const barId = isPlayer ? 'player-timer-bar' : 'opponent-timer-bar';
-    const otherBarId = isPlayer ? 'opponent-timer-bar' : 'player-timer-bar';
-    
-    const bar = document.getElementById(barId);
-    const otherBar = document.getElementById(otherBarId);
-
-    // Itago ang timer ng hindi active
-    if (otherBar) otherBar.style.strokeDasharray = `0 9999`; 
-
-    if (bar) {
-        // Compute SVG path length (Perimeter ng box)
-        // Gamitin ang getBBox para makuha ang exact size
-        // Pero dahil dynamic, tantyahin natin base sa width ng element
-        const parent = bar.parentElement;
-        const width = parent.clientWidth;
-        const height = parent.clientHeight;
-        const perimeter = (2 * width) + (2 * height); // Simpleng perimeter formula
-
-        // Calculate percentage
-        const percent = Math.max(0, currentTurnTime / MAX_TURN_TIME);
-        const drawLength = perimeter * percent;
-
-        // Update stroke (Ito ang nagpapaikli sa line)
-        bar.style.strokeDasharray = `${drawLength} ${perimeter}`;
-        bar.style.strokeDashoffset = 0;
-
-        // Kulay: Magiging Pula pag 5 seconds na lang
-        if (currentTurnTime <= 5) {
-            bar.classList.add('warning');
-        } else {
-            bar.classList.remove('warning');
-        }
-    }
-}
-
-function handleTurnTimeout() {
-    stopTurnTimer();
-    playButtonSound(); // Sound effect pag naubusan (optional)
-
-    // Check kung Player ba ang naubusan
-    const isPlayer = (isOnlineGame ? isMyTurnOnline : playerTurn);
-
-    if (isPlayer) {
-        consecutiveTimeouts++;
-        showMessage(`TIME OUT! (${consecutiveTimeouts}/${MAX_TIMEOUTS})`, 2000);
-
-        // CHECK LOSE CONDITION
-        if (consecutiveTimeouts >= MAX_TIMEOUTS) {
-            endGame("You Lose! Too many timeouts.");
-            return;
-        }
-    } else {
-        // Kung kalaban ang naubusan (AI o Online)
-        showMessage("Opponent Timed Out!", 2000);
-    }
-
-    // LIPAT TURN (Force Switch)
-    // Kung online, kailangan ng server logic, pero sa local/AI ganito:
-    if (!isOnlineGame) {
-        playerTurn = !playerTurn;
-        updateLocalGameState(true); // True = Switch Turn
-    } else {
-        // Sa online, usually server ang magpapalit, pero pwede tayong mag-force pass
-        // Depende sa setup mo, pero for safety, i-reset lang natin ang local state
-        // at hayaan ang syncGameState na mag-handle ng turn switch.
-    }
-}
-    // Quick fix para sa missing function
-function aiDisplayMessage(msg) {
-    if (typeof showMessage === 'function') {
-        showMessage(msg);
-    } else {
-        console.log("AI Message:", msg);
-    }
-}
 
 </script>
 
