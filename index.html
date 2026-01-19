@@ -9894,26 +9894,21 @@ function updateXPDisplay() {
     }
 }
 
-function updateInfoBox() { 
-    // 1. Kunin ang Rank Data
-    const safeTrophies = (typeof playerTrophies !== 'undefined') ? playerTrophies : 0;
-    const myRank = getPlayerRank(safeTrophies);
-    const opponentRank = RANKS[opponentRankIndex] || RANKS[0]; 
+ function updateInfoBox() {
+    // 1. Get Names & Ranks
+    const player1Name = isOnlineGame ? (localPlayerId === 'player1' ? "You" : "Opponent") : localPlayerName;
+    let player2Name = isOnlineGame ? (localPlayerId === 'player1' ? "Opponent" : "You") : opponentPlayerName;
 
-    const player1Name = localPlayerName || 'You'; 
-    let player2Name = opponentPlayerName || 'Opponent'; 
-    
-    // --- BAGO: Kunin ang CSS Class para sa Border (Bronze, Gold, Mythical, etc.) ---
-    // Kung walang cssClass, mag-default sa Bronze
+    // Get stats for borders
+    const myRank = getPlayerRank(playerLevel);
+    const opponentRank = isOnlineGame ? RANKS[opponentRankIndex] || RANKS[0] : { cssClass: 'rank-border-bronze' }; // Default AI
+
     const myBorderClass = myRank.cssClass || 'rank-border-bronze';
-    
-    // Check kung Online o AI para sa border ng kalaban
     const oppBorderClass = (isOnlineGame ? opponentRank.cssClass : 'rank-border-bronze') || 'rank-border-bronze';
 
     // A. My Avatar HTML
     const myLocalPhoto = localStorage.getItem('pinoyPoolPlayerPhoto');
-    let myAvatarHTML = myRank.icon; 
-    
+    let myAvatarHTML = myRank.icon;
     if (myLocalPhoto && myLocalPhoto !== 'null' && myLocalPhoto !== 'undefined') {
         myAvatarHTML = `<img src="${myLocalPhoto}" onclick="event.stopPropagation(); window.viewFullPhoto('${myLocalPhoto}')" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; cursor: pointer;">`;
     }
@@ -9927,38 +9922,38 @@ function updateInfoBox() {
     } else {
         opponentAvatarHTML = "🤖";
         if (opponentPlayerName && opponentPlayerName !== "Opponent") {
-            player2Name = opponentPlayerName; 
+            player2Name = opponentPlayerName;
         } else {
-            player2Name = "AI Bot"; 
+            player2Name = "AI Bot";
         }
     }
 
     // --- GAME SUBTEXT (Score/Cards) ---
     let p1Sub = "", p2Sub = "";
-    if (gameMode.includes('poker')) { 
+    if (gameMode.includes('poker')) {
         p1Sub = `<span style="color:#33FF57">${playerHand?.length || 0} Cards</span>`;
         p2Sub = `<span style="color:#FF6B6B">${opponentHand?.length || 0} Cards</span>`;
-    } else if (gameMode.includes('straight-ball')) { 
+    } else if (gameMode.includes('straight-ball')) {
         const myColor = playerChipsType ? playerChipsType.toUpperCase() : 'OPEN';
         const oppColor = opponentChipsType ? opponentChipsType.toUpperCase() : 'OPEN';
         const c1 = myColor === 'RED' ? '#ff6b6b' : (myColor === 'BLUE' ? '#54a0ff' : '#ddd');
         const c2 = oppColor === 'RED' ? '#ff6b6b' : (oppColor === 'BLUE' ? '#54a0ff' : '#ddd');
         p1Sub = `<span style="color:${c1}">${myColor}</span>`;
         p2Sub = `<span style="color:${c2}">${oppColor}</span>`;
-    } else if (gameMode.includes('61-ball')) { 
+    } else if (gameMode.includes('61-ball')) {
         p1Sub = `<span style="color:#FFD700">${player61Score} Pts</span>`;
         p2Sub = `<span style="color:#FFD700">${opponent61Score} Pts</span>`;
-        if(lowestChipNumber > 0 && gameState === 'aiming') { 
-            cueBallGuide.innerHTML = `Target: Chip #${lowestChipNumber}`; 
-            cueBallGuide.style.display = 'block'; 
-        } else { 
-            cueBallGuide.style.display = 'none'; 
-        } 
+        if (lowestChipNumber > 0 && gameState === 'aiming') {
+            cueBallGuide.innerHTML = `Target: Chip #${lowestChipNumber}`;
+            cueBallGuide.style.display = 'block';
+        } else {
+            cueBallGuide.style.display = 'none';
+        }
     }
 
-    // --- RENDER HTML (ETO ANG IMPORTANTE: GINAMIT ANG CLASSES) ---
-    
+    // --- RENDER HTML (MAY KASAMANG TIMER SVG NA!) ---
     playerInfo.innerHTML = `
+        <svg class="timer-overlay"><rect id="player-timer-bar" class="timer-rect" x="2" y="2" rx="14" ry="14" width="100%" height="100%"></rect></svg>
         <div class="hud-avatar ${myBorderClass}" style="overflow: hidden; padding: 0;">${myAvatarHTML}</div>
         <div class="hud-details">
             <div class="hud-name">${player1Name}</div>
@@ -9969,6 +9964,7 @@ function updateInfoBox() {
     playerInfo.onclick = () => showProfile('player');
 
     opponentInfo.innerHTML = `
+        <svg class="timer-overlay"><rect id="opponent-timer-bar" class="timer-rect" x="2" y="2" rx="14" ry="14" width="100%" height="100%"></rect></svg>
         <div class="hud-details">
             <div class="hud-name">${player2Name}</div>
             <div class="hud-sub">${p2Sub}</div>
@@ -9981,15 +9977,16 @@ function updateInfoBox() {
     // Active Turn Glow
     const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
     if (isMyTurn) {
-        playerInfo.classList.add('hud-active'); 
-        opponentInfo.classList.remove('hud-active'); 
+        playerInfo.classList.add('hud-active');
+        opponentInfo.classList.remove('hud-active');
     } else {
-        playerInfo.classList.remove('hud-active'); 
-        opponentInfo.classList.add('hud-active'); 
+        playerInfo.classList.remove('hud-active');
+        opponentInfo.classList.add('hud-active');
     }
-    
-    updateLegalTargetChips(); 
+
+    updateLegalTargetChips();
 }
+
         function initializeFirebase() { 
     try { 
         // onlineButton.textContent = "Connecting..."; // <--- BINURA KO NA ITO (Commented out)
