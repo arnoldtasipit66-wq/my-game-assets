@@ -15233,6 +15233,106 @@ window.processBet = async function(amount) {
     }
 };
 
+    function startTurnTimer() {
+    // Reset muna para sigurado
+    stopTurnTimer();
+    
+    // Kung bola ay gumagalaw o tapos na ang laro, 'wag mag-start
+    if (chipsMoving || gameState === 'gameover' || gameState === 'menu') return;
+
+    currentTurnTime = MAX_TURN_TIME;
+    updateTimerVisuals(); // I-set ang full bar
+
+    // Simulan ang countdown
+    turnTimerInterval = setInterval(() => {
+        currentTurnTime -= 0.1; // Bawas 0.1s bawat takbo
+        
+        if (currentTurnTime <= 0) {
+            handleTurnTimeout(); // UBOS NA ORAS!
+        } else {
+            updateTimerVisuals(); // Update ang itsura ng border
+        }
+    }, 100); // Run every 100ms
+}
+
+function stopTurnTimer() {
+    if (turnTimerInterval) {
+        clearInterval(turnTimerInterval);
+        turnTimerInterval = null;
+    }
+}
+
+function updateTimerVisuals() {
+    // Tukuyin kung sino ang active (Player o Opponent)
+    const isPlayer = (isOnlineGame ? isMyTurnOnline : playerTurn);
+    const barId = isPlayer ? 'player-timer-bar' : 'opponent-timer-bar';
+    const otherBarId = isPlayer ? 'opponent-timer-bar' : 'player-timer-bar';
+    
+    const bar = document.getElementById(barId);
+    const otherBar = document.getElementById(otherBarId);
+
+    // Itago ang timer ng hindi active
+    if (otherBar) otherBar.style.strokeDasharray = `0 9999`; 
+
+    if (bar) {
+        // Compute SVG path length (Perimeter ng box)
+        // Gamitin ang getBBox para makuha ang exact size
+        // Pero dahil dynamic, tantyahin natin base sa width ng element
+        const parent = bar.parentElement;
+        const width = parent.clientWidth;
+        const height = parent.clientHeight;
+        const perimeter = (2 * width) + (2 * height); // Simpleng perimeter formula
+
+        // Calculate percentage
+        const percent = Math.max(0, currentTurnTime / MAX_TURN_TIME);
+        const drawLength = perimeter * percent;
+
+        // Update stroke (Ito ang nagpapaikli sa line)
+        bar.style.strokeDasharray = `${drawLength} ${perimeter}`;
+        bar.style.strokeDashoffset = 0;
+
+        // Kulay: Magiging Pula pag 5 seconds na lang
+        if (currentTurnTime <= 5) {
+            bar.classList.add('warning');
+        } else {
+            bar.classList.remove('warning');
+        }
+    }
+}
+
+function handleTurnTimeout() {
+    stopTurnTimer();
+    playButtonSound(); // Sound effect pag naubusan (optional)
+
+    // Check kung Player ba ang naubusan
+    const isPlayer = (isOnlineGame ? isMyTurnOnline : playerTurn);
+
+    if (isPlayer) {
+        consecutiveTimeouts++;
+        showMessage(`TIME OUT! (${consecutiveTimeouts}/${MAX_TIMEOUTS})`, 2000);
+
+        // CHECK LOSE CONDITION
+        if (consecutiveTimeouts >= MAX_TIMEOUTS) {
+            endGame("You Lose! Too many timeouts.");
+            return;
+        }
+    } else {
+        // Kung kalaban ang naubusan (AI o Online)
+        showMessage("Opponent Timed Out!", 2000);
+    }
+
+    // LIPAT TURN (Force Switch)
+    // Kung online, kailangan ng server logic, pero sa local/AI ganito:
+    if (!isOnlineGame) {
+        playerTurn = !playerTurn;
+        updateLocalGameState(true); // True = Switch Turn
+    } else {
+        // Sa online, usually server ang magpapalit, pero pwede tayong mag-force pass
+        // Depende sa setup mo, pero for safety, i-reset lang natin ang local state
+        // at hayaan ang syncGameState na mag-handle ng turn switch.
+    }
+}
+
 </script>
 
 </body>
