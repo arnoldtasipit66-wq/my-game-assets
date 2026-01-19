@@ -5289,9 +5289,19 @@ div#opponent-info.hud-active {
 
 </div>
     
-    <div id="player-info" class="info-box">You: ?</div>
-    <div id="opponent-info" class="info-box">Opponent: ?</div>
-    </div>
+    <div id="player-info" class="info-box">
+    <svg class="timer-overlay">
+        <rect id="player-timer-bar" class="timer-rect" x="2" y="2" rx="14" ry="14" width="100%" height="100%"></rect>
+    </svg>
+    <span id="player-name-text">You: ?</span>
+</div>
+
+<div id="opponent-info" class="info-box">
+    <svg class="timer-overlay">
+        <rect id="opponent-timer-bar" class="timer-rect" x="2" y="2" rx="14" ry="14" width="100%" height="100%"></rect>
+    </svg>
+    <span id="opponent-name-text">Opponent: ?</span>
+</div>
             <div id="message-box"></div>
             <div id="cue-ball-guide" class="guide-text"></div>
             <div id="chat-container">
