@@ -6054,7 +6054,12 @@ const BET_TIERS = [
 let selectedBetAmount = 0; // Default: Free play
 const HOUSE_CUT_PERCENTAGE = 0.10; // 10% Tong ng laro
 
-
+// --- ⏱️ TURN TIMER SETTINGS ⏱️ ---
+let turnTimerInterval = null;
+let currentTurnTime = 0;
+const MAX_TURN_TIME = 20; // 20 Seconds per turn (Pwede mo baguhin)
+let consecutiveTimeouts = 0; // Bilang ng sunod-sunod na ubos oras
+const MAX_TIMEOUTS = 3; // Tatlong ubos = TALO
 
 function getCurrentCueStats() {
     // Hanapin ang data ng cue na naka-equip
