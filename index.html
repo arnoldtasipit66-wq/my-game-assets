@@ -7449,47 +7449,27 @@ function playCoinSound() {
         // ▼▼▼ PALITAN MO ANG BUONG draw FUNCTION NITO ▼▼▼
 
 function draw() { 
-    // 1. I-drawing ang "master copy" (litrato) ng mesa. Sobrang bilis nito.
-    // (Pinalitan nito ang dating ctx.clearRect at drawTable)
+    // 1. I-drawing ang background (Mabilis ito)
     ctx.drawImage(backgroundCanvas, 0, 0);
 
-        // --- VIGNETTE EFFECT (UNIVERSAL FIX) ---
-    // Gamitin ang canvas dimensions para laging sentro sa game world
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
+    // ❌ WALA NA DAPAT DITO YUNG VIGNETTE CODE ❌
 
-    // TRICK: Sa landscape, gusto natin na ang liwanag ay hindi sobrang laki.
-    // Kaya ibabase natin ang "Inner Light" sa Height (mas maikli) para focused sa gitna.
-    // Ang "Outer Shadow" naman ay ibabase sa Width (mas mahaba) para umabot sa kanto.
-    
-    // Radius ng Liwanag (Center)
-    const rInner = canvas.height * 0.0; 
-    
-    // Radius ng Shadow (Edges) - Gumamit ng Math.max para safe sa portrait/landscape
-    const rOuter = Math.max(canvas.width, canvas.height) * 0.8;
-
-    const vignette = ctx.createRadialGradient(cx, cy, rInner, cx, cy, rOuter);
-
-    // Color Steps
-    vignette.addColorStop(0, "rgba(255, 255, 255, 0.1)");  // Kintab sa gitna (Dagdagan mo kung gusto mo mas shiny)
-    vignette.addColorStop(0.5, "rgba(0, 0, 0, 0)");       // Transition (Clear part)
-    vignette.addColorStop(1, "rgba(0, 0, 0, 0.9)");        // Shadow sa gilid
-
-    // Drawing
-    ctx.fillStyle = vignette;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // --- END VIGNETTE ---
-    // 2. I-drawing ang mga bagay na gumagalaw (Walang babaguhin dito)
+    // 2. I-drawing ang mga chips
     drawChips(); 
     
+    // 3. Guidelines
     const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn; 
     if (isMyTurn && gameState === 'aiming' && !isTutorialActive) { 
         drawGuidelines(); 
     } 
+
+    // 4. Tako / Cue Stick
     if ((gameState === 'aiming' || gameState === 'shooting_animation' || (isOnlineGame && !isMyTurnOnline)) && cueStick.visible) { 
         drawCueStick(); 
     } 
-updateAndDrawFireworks();
+
+    // 5. Fireworks
+    updateAndDrawFireworks();
 }
 
 function toggleMusic() { const isMuted = backgroundPlaylist[0].muted; backgroundPlaylist.forEach(player => { player.muted = !isMuted; }); muteButton.textContent = isMuted ? "🎵" : "🔇"; }
