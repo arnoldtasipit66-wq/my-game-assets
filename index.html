@@ -6201,7 +6201,8 @@ tableSurfaceImage.src = 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my
         window.Telegram.WebApp.ready();
         window.Telegram.WebApp.expand(); // Para mag-fullscreen sa Telegram
     }
-    
+
+            setupNavigationSystem();
     
             resizeCanvas();
 
@@ -14370,45 +14371,7 @@ if (fixProfileCloseBtn) {
     });
 }
 
-function attachSafeCloseListener(btnId, modalId) {
-    const btn = document.getElementById(btnId);
-    const modal = document.getElementById(modalId);
 
-    if (btn) {
-        const newBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newBtn, btn);
-
-        newBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Check kung may sound function bago tawagin para iwas error
-            if (typeof playButtonSound === 'function') playButtonSound();
-
-            // 1. ITAAS ANG FLAG! (Safe ito!)
-            window.isClosingModal = true; 
-
-            // 2. SET STATE (ITO ANG FIX) ✅
-            // Check natin kung nasa laro ka ba o nasa menu
-            if (typeof gameMode !== 'undefined' && (gameMode === 'online' || gameMode === 'practice')) {
-                gameState = 'playing'; // Kung naglalaro, resume game
-            } else {
-                gameState = 'menu';    // Kung nasa labas, balik sa menu
-            }
-
-            // 3. Hide Modal
-            if (modal) modal.classList.remove('show');
-
-            // 4. Trigger Back
-            history.back();
-        });
-    }
-}
-
-// Apply
-attachSafeCloseListener('profile-close-btn', 'profile-modal');
-attachSafeCloseListener('settings-close-btn', 'settings-modal');
-        
 const assetsToLoad = [
     // 1. Audio Files (Music & SFX)
     'https://arnoldtasipit66-wq.github.io/my-game-assets/mrbas-music-labs-roots-reggae-285790.mp3',
