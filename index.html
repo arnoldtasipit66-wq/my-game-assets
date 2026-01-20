@@ -15030,19 +15030,17 @@ async function saveWalletToFirestore(uid, address) {
 // ⬇️ ILAGAY ITO SA DULONG-DULO NG SCRIPT (Bago mag </script>) ⬇️
 // ============================================================
 
-// 1. Paandarin ang Navigation System (Yung nilagay natin kanina)
+// 1. Paandarin ang Navigation System
 if (typeof setupNavigationSystem === 'function') {
     setupNavigationSystem();
 }
 
 // 2. I-connect ang mga OPEN BUTTONS
 // (Ginagamitan natin ng 'try-catch' para safe kahit wala yung button)
-
 try {
-    // Profile
+    // --- Profile Button ---
     const profileBtn = document.getElementById('profile-btn');
     if (profileBtn) {
-        // Clone para matanggal ang lumang listeners
         const newBtn = profileBtn.cloneNode(true);
         profileBtn.parentNode.replaceChild(newBtn, profileBtn);
         
@@ -15052,7 +15050,7 @@ try {
         };
     }
 
-    // Settings
+    // --- Settings Button ---
     const settingsBtn = document.getElementById('settings-btn');
     if (settingsBtn) {
         const newBtn = settingsBtn.cloneNode(true);
@@ -15064,7 +15062,7 @@ try {
         };
     }
 
-    // Shop
+    // --- Shop Button ---
     const shopBtn = document.getElementById('shop-btn');
     if (shopBtn) {
         const newBtn = shopBtn.cloneNode(true);
@@ -15075,6 +15073,7 @@ try {
             openUniversalModal('shop-modal'); 
         };
     }
+
 } catch (err) {
     console.log("Button setup error:", err);
 }
@@ -15103,9 +15102,6 @@ closeButtonsList.forEach(btnId => {
 });
 
 console.log("✅ Buttons & Navigation Setup Complete!");
-
-// ============================================================
-   
 
 </script>
 
