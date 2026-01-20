@@ -6045,6 +6045,81 @@ const canvas = document.getElementById('game-canvas'), ctx = canvas.getContext('
 shopModal = document.getElementById('shop-modal'),
 dailyRewardModal = document.getElementById('daily-reward-modal'),
 ghostHand = document.getElementById('ghost-hand'),
+    // ==========================================
+// 🆕 BAGONG NAVIGATION SYSTEM (Copy Paste Ito)
+// ==========================================
+
+let currentOpenModal = null; // Variable para sa Back Button logic
+
+// 1. Setup System (Tatawagin ito sa init() mamaya)
+function setupNavigationSystem() {
+    console.log("Navigation System Activated");
+
+    // A. Telegram Back Button Listener
+    if (typeof tg !== 'undefined' && tg.BackButton) {
+        tg.BackButton.onClick(() => {
+            console.log("Telegram Back Pressed");
+            window.history.back(); // Gayahin ang browser back
+        });
+    }
+
+    // B. Browser History Listener (Ito ang "Tagasalo")
+    window.addEventListener('popstate', (event) => {
+        console.log("History Back Triggered. Current Modal:", currentOpenModal);
+        
+        // Kung may nakabukas na modal, isara ito
+        if (currentOpenModal) {
+            closeModalUI(currentOpenModal);
+        } else {
+             // Kung walang modal at nasa main menu, itago ang TG back button
+             if (typeof tg !== 'undefined' && tg.BackButton) tg.BackButton.hide();
+        }
+    });
+}
+
+// 2. Universal OPEN Modal (Gamitin ito sa pagbukas ng Shop, Settings, etc.)
+function openUniversalModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    if (typeof playButtonSound === 'function') playButtonSound();
+
+    // Show Modal
+    modal.classList.add('show');
+    currentOpenModal = modalId;
+
+    // Add History Entry (Magic trick para gumana ang Back button)
+    history.pushState({ modal: modalId }, null, `#${modalId}`);
+
+    // Show TG Back Button
+    if (typeof tg !== 'undefined' && tg.BackButton) tg.BackButton.show();
+
+    // Pause Game Logic (Gamit ang fix natin kanina)
+    if (typeof gameState !== 'undefined') gameState = 'modal_open';
+}
+
+// 3. Universal CLOSE Logic (Taga-linis)
+function closeModalUI(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('show');
+    }
+
+    currentOpenModal = null;
+    
+    // Hide TG Back Button
+    if (typeof tg !== 'undefined' && tg.BackButton) tg.BackButton.hide();
+
+    // Reset Game State (Para hindi mag-freeze ang laro)
+    if (typeof gameState !== 'undefined') {
+        if (typeof gameMode !== 'undefined' && (gameMode === 'online' || gameMode === 'practice')) {
+            gameState = 'playing';
+        } else {
+            gameState = 'menu';
+        }
+    }
+}
+// ==========================================
             
             // === START PLAYER NAME UPDATE ===
             playerNameInput = document.getElementById('player-name-input'),
