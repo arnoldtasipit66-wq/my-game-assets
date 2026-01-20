@@ -6046,22 +6046,29 @@ shopModal = document.getElementById('shop-modal'),
 dailyRewardModal = document.getElementById('daily-reward-modal'),
     ghostHand = document.getElementById('ghost-hand'); 
 
-    // ==========================================
-    // 🆕 NAVIGATION SYSTEM (ISINGIT DITO)
-    // ==========================================
-
+    
     let currentOpenModal = null; 
 
     function setupNavigationSystem() {
-        console.log("Navigation System Activated");
+        console.log("Anti-Exit System Activated");
+
+        // 1. Telegram Back Button
         if (typeof tg !== 'undefined' && tg.BackButton) {
             tg.BackButton.onClick(() => {
+                // Pag click sa taas, gayahin ang back ng phone
                 window.history.back(); 
             });
         }
+
+        // 2. Physical Back Button (Android)
         window.addEventListener('popstate', (event) => {
+            // Pag nag-back, at may modal, isara lang ang modal
             if (currentOpenModal) {
                 closeModalUI(currentOpenModal);
+                
+                // PIGILAN ANG PAG-EXIT:
+                // Nagpupush tayo ulit ng state kung nasa laro pa para di agad makalabas
+                history.pushState(null, null, window.location.href);
             } else {
                  if (typeof tg !== 'undefined' && tg.BackButton) tg.BackButton.hide();
             }
@@ -6071,10 +6078,16 @@ dailyRewardModal = document.getElementById('daily-reward-modal'),
     function openUniversalModal(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
+
         if (typeof playButtonSound === 'function') playButtonSound();
+
         modal.classList.add('show');
         currentOpenModal = modalId;
-        history.pushState({ modal: modalId }, null, `#${modalId}`);
+
+        // ⚠️ DITO ANG PAGBABAGO:
+        // Gumamit tayo ng 'window.location.href' para mas stable sa Android
+        history.pushState({ modal: modalId }, null, window.location.href);
+
         if (typeof tg !== 'undefined' && tg.BackButton) tg.BackButton.show();
         if (typeof gameState !== 'undefined') gameState = 'modal_open';
     }
@@ -6082,8 +6095,11 @@ dailyRewardModal = document.getElementById('daily-reward-modal'),
     function closeModalUI(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) modal.classList.remove('show');
+        
         currentOpenModal = null;
+        
         if (typeof tg !== 'undefined' && tg.BackButton) tg.BackButton.hide();
+
         if (typeof gameState !== 'undefined') {
             if (typeof gameMode !== 'undefined' && (gameMode === 'online' || gameMode === 'practice')) {
                 gameState = 'playing';
@@ -6093,9 +6109,10 @@ dailyRewardModal = document.getElementById('daily-reward-modal'),
         }
     }
     // ==========================================
-    // ⬆️ END OF NAVIGATION SYSTEM ⬆️
+    // ⬆️ END OF NEW SYSTEM ⬆️
     // ==========================================
 
+    
 
     // 2. DITO NATIN I-RERESTART ANG 'CONST' CHAIN (Importante ito!)
     const playerNameInput = document.getElementById('player-name-input'), 
