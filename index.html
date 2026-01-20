@@ -6046,29 +6046,22 @@ shopModal = document.getElementById('shop-modal'),
 dailyRewardModal = document.getElementById('daily-reward-modal'),
     ghostHand = document.getElementById('ghost-hand'); 
 
-    
+    // ==========================================
+    // 🆕 NAVIGATION SYSTEM (ISINGIT DITO)
+    // ==========================================
+
     let currentOpenModal = null; 
 
     function setupNavigationSystem() {
-        console.log("Anti-Exit System Activated");
-
-        // 1. Telegram Back Button
+        console.log("Navigation System Activated");
         if (typeof tg !== 'undefined' && tg.BackButton) {
             tg.BackButton.onClick(() => {
-                // Pag click sa taas, gayahin ang back ng phone
                 window.history.back(); 
             });
         }
-
-        // 2. Physical Back Button (Android)
         window.addEventListener('popstate', (event) => {
-            // Pag nag-back, at may modal, isara lang ang modal
             if (currentOpenModal) {
                 closeModalUI(currentOpenModal);
-                
-                // PIGILAN ANG PAG-EXIT:
-                // Nagpupush tayo ulit ng state kung nasa laro pa para di agad makalabas
-                history.pushState(null, null, window.location.href);
             } else {
                  if (typeof tg !== 'undefined' && tg.BackButton) tg.BackButton.hide();
             }
@@ -6078,16 +6071,10 @@ dailyRewardModal = document.getElementById('daily-reward-modal'),
     function openUniversalModal(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
-
         if (typeof playButtonSound === 'function') playButtonSound();
-
         modal.classList.add('show');
         currentOpenModal = modalId;
-
-        // ⚠️ DITO ANG PAGBABAGO:
-        // Gumamit tayo ng 'window.location.href' para mas stable sa Android
-        history.pushState({ modal: modalId }, null, window.location.href);
-
+        history.pushState({ modal: modalId }, null, `#${modalId}`);
         if (typeof tg !== 'undefined' && tg.BackButton) tg.BackButton.show();
         if (typeof gameState !== 'undefined') gameState = 'modal_open';
     }
@@ -6095,11 +6082,8 @@ dailyRewardModal = document.getElementById('daily-reward-modal'),
     function closeModalUI(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) modal.classList.remove('show');
-        
         currentOpenModal = null;
-        
         if (typeof tg !== 'undefined' && tg.BackButton) tg.BackButton.hide();
-
         if (typeof gameState !== 'undefined') {
             if (typeof gameMode !== 'undefined' && (gameMode === 'online' || gameMode === 'practice')) {
                 gameState = 'playing';
@@ -6109,10 +6093,9 @@ dailyRewardModal = document.getElementById('daily-reward-modal'),
         }
     }
     // ==========================================
-    // ⬆️ END OF NEW SYSTEM ⬆️
+    // ⬆️ END OF NAVIGATION SYSTEM ⬆️
     // ==========================================
 
-    
 
     // 2. DITO NATIN I-RERESTART ANG 'CONST' CHAIN (Importante ito!)
     const playerNameInput = document.getElementById('player-name-input'), 
@@ -6201,8 +6184,7 @@ tableSurfaceImage.src = 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my
         window.Telegram.WebApp.ready();
         window.Telegram.WebApp.expand(); // Para mag-fullscreen sa Telegram
     }
-
-            setupNavigationSystem();
+    
     
             resizeCanvas();
 
@@ -14371,7 +14353,45 @@ if (fixProfileCloseBtn) {
     });
 }
 
+function attachSafeCloseListener(btnId, modalId) {
+    const btn = document.getElementById(btnId);
+    const modal = document.getElementById(modalId);
 
+    if (btn) {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+
+        newBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Check kung may sound function bago tawagin para iwas error
+            if (typeof playButtonSound === 'function') playButtonSound();
+
+            // 1. ITAAS ANG FLAG! (Safe ito!)
+            window.isClosingModal = true; 
+
+            // 2. SET STATE (ITO ANG FIX) ✅
+            // Check natin kung nasa laro ka ba o nasa menu
+            if (typeof gameMode !== 'undefined' && (gameMode === 'online' || gameMode === 'practice')) {
+                gameState = 'playing'; // Kung naglalaro, resume game
+            } else {
+                gameState = 'menu';    // Kung nasa labas, balik sa menu
+            }
+
+            // 3. Hide Modal
+            if (modal) modal.classList.remove('show');
+
+            // 4. Trigger Back
+            history.back();
+        });
+    }
+}
+
+// Apply
+attachSafeCloseListener('profile-close-btn', 'profile-modal');
+attachSafeCloseListener('settings-close-btn', 'settings-modal');
+        
 const assetsToLoad = [
     // 1. Audio Files (Music & SFX)
     'https://arnoldtasipit66-wq.github.io/my-game-assets/mrbas-music-labs-roots-reggae-285790.mp3',
@@ -14967,12 +14987,10 @@ tonConnectUI.onStatusChange(async (wallet) => {
     }
 });
 
-// ============================================================
-// ⬇️ START NG CLEAN CODE (Paste mo ito sa dulo) ⬇️
-// ============================================================
-
+// Gawa tayo ng hiwalay na function para malinis
+// Gawa tayo ng hiwalay na function para malinis
 async function saveWalletToFirestore(uid, address) {
-    // 1. CHECK: Siguraduhin na ready na ang 'db'
+    // 1. CHECK: Siguraduhin na ready na ang 'db' bago gamitin
     if (!db) {
         console.warn("⚠️ Database not initialized yet. Retrying in 1s...");
         setTimeout(() => saveWalletToFirestore(uid, address), 1000);
@@ -14980,6 +14998,9 @@ async function saveWalletToFirestore(uid, address) {
     }
 
     try {
+        // 2. Hindi mo na kailangan ang 'await import' dito kung naka-import na sila sa taas ng script
+        // Gagamitin natin ang global 'db' at ang mga imported functions (doc, setDoc, serverTimestamp)
+        
         const playerDocRef = doc(db, "players", uid);
         
         await setDoc(playerDocRef, {
@@ -14989,58 +15010,71 @@ async function saveWalletToFirestore(uid, address) {
 
         console.log("✅ Wallet successfully saved to Firestore!");
         
-        // I-clear ang pending status
+        // I-clear ang pending status sa phone
         localStorage.removeItem('pendingWalletAddress');
         
-        // Visual feedback
+        // Visual feedback sa Telegram
         if (typeof tg !== 'undefined' && tg.showAlert) {
             tg.showAlert("Wallet Linked Successfully!");
         }
     } catch (error) {
+        // Dito papasok yung 'permission-denied' kung hindi mo pa naaayos ang Rules
         console.error("❌ Error saving wallet to Firestore:", error);
+        
         if (error.code === 'permission-denied') {
             console.error("👉 PAKIAYOS ANG FIRESTORE RULES SA FIREBASE CONSOLE!");
         }
     }
 }
+    // ============================================================
+// ⬇️ ILAGAY ITO SA DULONG-DULO NG SCRIPT (Bago mag </script>) ⬇️
+// ============================================================
 
-// ------------------------------------------------------------
-// 🚀 NAVIGATION & BUTTON SYSTEM ACTIVATOR
-// ------------------------------------------------------------
-
-// 1. Paandarin ang Navigation System (Back Button Support)
-// (Siguraduhing na-paste mo na yung 'setupNavigationSystem' function sa gitna kanina)
+// 1. Paandarin ang Navigation System (Yung nilagay natin kanina)
 if (typeof setupNavigationSystem === 'function') {
     setupNavigationSystem();
 }
 
-// 2. I-connect ang mga MENU BUTTONS (Open Modals)
+// 2. I-connect ang mga OPEN BUTTONS
+// (Ginagamitan natin ng 'try-catch' para safe kahit wala yung button)
+
 try {
-    const menuButtons = [
-        { id: 'profile-btn', modal: 'profile-modal' },
-        { id: 'settings-btn', modal: 'settings-modal' },
-        { id: 'shop-btn', modal: 'shop-modal' }
-    ];
+    // Profile
+    const profileBtn = document.getElementById('profile-btn');
+    if (profileBtn) {
+        // Clone para matanggal ang lumang listeners
+        const newBtn = profileBtn.cloneNode(true);
+        profileBtn.parentNode.replaceChild(newBtn, profileBtn);
+        
+        newBtn.onclick = (e) => {
+            e.preventDefault();
+            openUniversalModal('profile-modal'); 
+        };
+    }
 
-    menuButtons.forEach(item => {
-        const btn = document.getElementById(item.id);
-        if (btn) {
-            // Clone para fresh ang listener (iwas doble)
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
+    // Settings
+    const settingsBtn = document.getElementById('settings-btn');
+    if (settingsBtn) {
+        const newBtn = settingsBtn.cloneNode(true);
+        settingsBtn.parentNode.replaceChild(newBtn, settingsBtn);
 
-            newBtn.onclick = (e) => {
-                e.preventDefault();
-                // Tawagin ang Universal Modal Opener
-                if (typeof openUniversalModal === 'function') {
-                    openUniversalModal(item.modal);
-                } else {
-                    console.error("⚠️ Missing function: openUniversalModal");
-                }
-            };
-        }
-    });
+        newBtn.onclick = (e) => {
+            e.preventDefault();
+            openUniversalModal('settings-modal'); 
+        };
+    }
 
+    // Shop
+    const shopBtn = document.getElementById('shop-btn');
+    if (shopBtn) {
+        const newBtn = shopBtn.cloneNode(true);
+        shopBtn.parentNode.replaceChild(newBtn, shopBtn);
+
+        newBtn.onclick = (e) => {
+            e.preventDefault();
+            openUniversalModal('shop-modal'); 
+        };
+    }
 } catch (err) {
     console.log("Button setup error:", err);
 }
@@ -15056,22 +15090,24 @@ const closeButtonsList = [
 closeButtonsList.forEach(btnId => {
     const btn = document.getElementById(btnId);
     if (btn) {
+        // Clone para sure na malinis
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
 
         newBtn.onclick = (e) => {
             e.preventDefault();
             if (typeof playButtonSound === 'function') playButtonSound();
-            window.history.back(); // Ito ang magsasara ng modal
+            window.history.back(); // Ito ang sikreto!
         };
     }
 });
 
-console.log("✅ ALL SYSTEMS GO: Navigation & Buttons Ready!");
+console.log("✅ Buttons & Navigation Setup Complete!");
 
 // ============================================================
-// 🛑 DITO NA MAGTATAPOS ANG SCRIPT MO
-// ============================================================
+   
+
 </script>
+
 </body>
 </html>
