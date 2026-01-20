@@ -15026,36 +15026,85 @@ async function saveWalletToFirestore(uid, address) {
         }
     }
 }
-    // --- 3. SAFE CLOSE LISTENER (Back Button Fix) ---
-    function attachSafeCloseListener(btnId, modalId) {
-        const btn = document.getElementById(btnId);
-        const modal = document.getElementById(modalId);
+    // ============================================================
+// ⬇️ ILAGAY ITO SA DULONG-DULO NG SCRIPT (Bago mag </script>) ⬇️
+// ============================================================
 
-        if (btn) {
-            // Tanggalin ang lumang listener para iwas conflict
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
+// 1. Paandarin ang Navigation System (Yung nilagay natin kanina)
+if (typeof setupNavigationSystem === 'function') {
+    setupNavigationSystem();
+}
 
-            newBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Play sound kung available
-                if (typeof playButtonSound === 'function') playButtonSound();
+// 2. I-connect ang mga OPEN BUTTONS
+// (Ginagamitan natin ng 'try-catch' para safe kahit wala yung button)
 
-                // Itaas ang Flag para alam ng system na safe ito
-                if (window) window.isClosingModal = true; 
-                if (typeof gameState !== 'undefined') gameState = 'modal_open'; 
-
-                if (modal) modal.classList.remove('show');
-                
-                tg.BackButton.hide();
-                history.back();
-            });
-        }
+try {
+    // Profile
+    const profileBtn = document.getElementById('profile-btn');
+    if (profileBtn) {
+        // Clone para matanggal ang lumang listeners
+        const newBtn = profileBtn.cloneNode(true);
+        profileBtn.parentNode.replaceChild(newBtn, profileBtn);
+        
+        newBtn.onclick = (e) => {
+            e.preventDefault();
+            openUniversalModal('profile-modal'); 
+        };
     }
 
- 
+    // Settings
+    const settingsBtn = document.getElementById('settings-btn');
+    if (settingsBtn) {
+        const newBtn = settingsBtn.cloneNode(true);
+        settingsBtn.parentNode.replaceChild(newBtn, settingsBtn);
+
+        newBtn.onclick = (e) => {
+            e.preventDefault();
+            openUniversalModal('settings-modal'); 
+        };
+    }
+
+    // Shop
+    const shopBtn = document.getElementById('shop-btn');
+    if (shopBtn) {
+        const newBtn = shopBtn.cloneNode(true);
+        shopBtn.parentNode.replaceChild(newBtn, shopBtn);
+
+        newBtn.onclick = (e) => {
+            e.preventDefault();
+            openUniversalModal('shop-modal'); 
+        };
+    }
+} catch (err) {
+    console.log("Button setup error:", err);
+}
+
+// 3. I-connect ang mga CLOSE BUTTONS (X)
+const closeButtonsList = [
+    'profile-close-btn', 
+    'settings-close-btn', 
+    'shop-close-btn',
+    'daily-reward-close-btn'
+];
+
+closeButtonsList.forEach(btnId => {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+        // Clone para sure na malinis
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+
+        newBtn.onclick = (e) => {
+            e.preventDefault();
+            if (typeof playButtonSound === 'function') playButtonSound();
+            window.history.back(); // Ito ang sikreto!
+        };
+    }
+});
+
+console.log("✅ Buttons & Navigation Setup Complete!");
+
+// ============================================================
    
 
 </script>
