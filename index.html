@@ -14987,10 +14987,12 @@ tonConnectUI.onStatusChange(async (wallet) => {
     }
 });
 
-// Gawa tayo ng hiwalay na function para malinis
-// Gawa tayo ng hiwalay na function para malinis
+// ============================================================
+// ⬇️ START NG CLEAN CODE (Paste mo ito sa dulo) ⬇️
+// ============================================================
+
 async function saveWalletToFirestore(uid, address) {
-    // 1. CHECK: Siguraduhin na ready na ang 'db' bago gamitin
+    // 1. CHECK: Siguraduhin na ready na ang 'db'
     if (!db) {
         console.warn("⚠️ Database not initialized yet. Retrying in 1s...");
         setTimeout(() => saveWalletToFirestore(uid, address), 1000);
@@ -14998,9 +15000,6 @@ async function saveWalletToFirestore(uid, address) {
     }
 
     try {
-        // 2. Hindi mo na kailangan ang 'await import' dito kung naka-import na sila sa taas ng script
-        // Gagamitin natin ang global 'db' at ang mga imported functions (doc, setDoc, serverTimestamp)
-        
         const playerDocRef = doc(db, "players", uid);
         
         await setDoc(playerDocRef, {
@@ -15010,71 +15009,58 @@ async function saveWalletToFirestore(uid, address) {
 
         console.log("✅ Wallet successfully saved to Firestore!");
         
-        // I-clear ang pending status sa phone
+        // I-clear ang pending status
         localStorage.removeItem('pendingWalletAddress');
         
-        // Visual feedback sa Telegram
+        // Visual feedback
         if (typeof tg !== 'undefined' && tg.showAlert) {
             tg.showAlert("Wallet Linked Successfully!");
         }
     } catch (error) {
-        // Dito papasok yung 'permission-denied' kung hindi mo pa naaayos ang Rules
         console.error("❌ Error saving wallet to Firestore:", error);
-        
         if (error.code === 'permission-denied') {
             console.error("👉 PAKIAYOS ANG FIRESTORE RULES SA FIREBASE CONSOLE!");
         }
     }
 }
-    // ============================================================
-// ⬇️ ILAGAY ITO SA DULONG-DULO NG SCRIPT (Bago mag </script>) ⬇️
-// ============================================================
 
-// 1. Paandarin ang Navigation System (Yung nilagay natin kanina)
+// ------------------------------------------------------------
+// 🚀 NAVIGATION & BUTTON SYSTEM ACTIVATOR
+// ------------------------------------------------------------
+
+// 1. Paandarin ang Navigation System (Back Button Support)
+// (Siguraduhing na-paste mo na yung 'setupNavigationSystem' function sa gitna kanina)
 if (typeof setupNavigationSystem === 'function') {
     setupNavigationSystem();
 }
 
-// 2. I-connect ang mga OPEN BUTTONS
-// (Ginagamitan natin ng 'try-catch' para safe kahit wala yung button)
-
+// 2. I-connect ang mga MENU BUTTONS (Open Modals)
 try {
-    // Profile
-    const profileBtn = document.getElementById('profile-btn');
-    if (profileBtn) {
-        // Clone para matanggal ang lumang listeners
-        const newBtn = profileBtn.cloneNode(true);
-        profileBtn.parentNode.replaceChild(newBtn, profileBtn);
-        
-        newBtn.onclick = (e) => {
-            e.preventDefault();
-            openUniversalModal('profile-modal'); 
-        };
-    }
+    const menuButtons = [
+        { id: 'profile-btn', modal: 'profile-modal' },
+        { id: 'settings-btn', modal: 'settings-modal' },
+        { id: 'shop-btn', modal: 'shop-modal' }
+    ];
 
-    // Settings
-    const settingsBtn = document.getElementById('settings-btn');
-    if (settingsBtn) {
-        const newBtn = settingsBtn.cloneNode(true);
-        settingsBtn.parentNode.replaceChild(newBtn, settingsBtn);
+    menuButtons.forEach(item => {
+        const btn = document.getElementById(item.id);
+        if (btn) {
+            // Clone para fresh ang listener (iwas doble)
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
 
-        newBtn.onclick = (e) => {
-            e.preventDefault();
-            openUniversalModal('settings-modal'); 
-        };
-    }
+            newBtn.onclick = (e) => {
+                e.preventDefault();
+                // Tawagin ang Universal Modal Opener
+                if (typeof openUniversalModal === 'function') {
+                    openUniversalModal(item.modal);
+                } else {
+                    console.error("⚠️ Missing function: openUniversalModal");
+                }
+            };
+        }
+    });
 
-    // Shop
-    const shopBtn = document.getElementById('shop-btn');
-    if (shopBtn) {
-        const newBtn = shopBtn.cloneNode(true);
-        shopBtn.parentNode.replaceChild(newBtn, shopBtn);
-
-        newBtn.onclick = (e) => {
-            e.preventDefault();
-            openUniversalModal('shop-modal'); 
-        };
-    }
 } catch (err) {
     console.log("Button setup error:", err);
 }
@@ -15090,24 +15076,22 @@ const closeButtonsList = [
 closeButtonsList.forEach(btnId => {
     const btn = document.getElementById(btnId);
     if (btn) {
-        // Clone para sure na malinis
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
 
         newBtn.onclick = (e) => {
             e.preventDefault();
             if (typeof playButtonSound === 'function') playButtonSound();
-            window.history.back(); // Ito ang sikreto!
+            window.history.back(); // Ito ang magsasara ng modal
         };
     }
 });
 
-console.log("✅ Buttons & Navigation Setup Complete!");
+console.log("✅ ALL SYSTEMS GO: Navigation & Buttons Ready!");
 
 // ============================================================
-   
-
+// 🛑 DITO NA MAGTATAPOS ANG SCRIPT MO
+// ============================================================
 </script>
-
 </body>
 </html>
