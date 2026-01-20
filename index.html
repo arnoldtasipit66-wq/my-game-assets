@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://adgram.io/js/adgram.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <title>Pinoy Pool</title>
     <!-- Tone.js for audio synthesis -->
@@ -5309,8 +5308,9 @@ div#opponent-info.hud-active {
     
     <p style="color: white; margin-top: 15px; font-size: 14px; text-shadow: 1px 1px 2px black; pointer-events: none;">(Release to Set)</p>
 </div>
-    <div id="lobby-screen" style="display: none;">
- <div class="lobby-header">
+<div id="lobby-screen" style="display: none;">
+    
+    <div class="lobby-header">
         <div class="profile-section">
             <div class="avatar-circle">👤</div>
             <div class="profile-details">
@@ -5330,28 +5330,24 @@ div#opponent-info.hud-active {
         <div id="online-button" class="game-card primary-card">
             <div class="card-bg"></div>
             <div class="card-content">
-                <div class="card-icon">🏆</div> <div class="card-title">RANKED MATCH</div> 
-                
-                <div class="card-subtitle">Competitive • Live PVP</div>
+                <div class="card-icon">🌍</div>
+                <div class="card-title">PLAY ONLINE</div>
+                <div class="card-subtitle">Ranked Match • PVP</div>
             </div>
         </div>
 
         <div id="vs-ai-button" class="game-card secondary-card">
             <div class="card-content">
-                <div class="card-icon">🎱</div> <div class="card-title">FREEMATCH</div>
-                
-                <div class="card-subtitle">Training • No Risk</div>
+                <div class="card-icon">🤖</div>
+                <div class="card-title">PRACTICE</div>
+                <div class="card-subtitle">vs AI Computer</div>
             </div>
         </div>
-        
+
         <div id="ton-connect" style="margin-top: 15px; margin-bottom: 10px; display: flex; justify-content: center;"></div>
     </div>
 
     <div class="lobby-dock">
-    <div id="watch-ad-button" class="dock-item" onclick="watchAdForCoins()">
-        <div class="dock-icon">📺</div> <div class="dock-label" style="color: #00FF00;">FREE 500</div>
-    </div>
-
         <div id="shop-button" class="dock-item">
             <div class="dock-icon">🛒</div>
             <div class="dock-label">Shop</div>
@@ -5398,7 +5394,7 @@ div#opponent-info.hud-active {
     
 <div id="online-menu" class="modal-overlay">
     <span class="modal-close-btn" id="online-menu-close-btn">&times;</span>
-    <h2>Online Match</h2> 
+    <h2>Online Pustahan</h2> 
 
     <div id="bet-selection-container" style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; justify-content: center;">
         </div>
@@ -5725,7 +5721,7 @@ div#opponent-info.hud-active {
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, serverTimestamp, increment, collection, query, orderBy, limit, getDocs, addDoc, runTransaction, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-window.SERVER_URL = "https://b896d275-697c-4062-b661-fd8a8bc57373-00-1gbm6uwc56d17.sisko.replit.dev";
+const SERVER_URL = "https://70b11688-6910-4031-aef0-f32f14b103a4-00-2pgkc6r631kqx.sisko.replit.dev";
 // --- DITO MAGSISIMULA ANG TELEGRAM SETUP ---
 const tg = window.Telegram.WebApp; // Ngayon, kilala na ng code mo si 'tg'
 tg.ready(); // Sinasabi nito sa Telegram na handa na ang game
@@ -6002,12 +5998,13 @@ const SHOP_ITEMS = {
 
 // --- 💰 PUSTAHAN SETTINGS (BETTING SYSTEM) 💰 ---
 const BET_TIERS = [
-    { id: 'tambay',    name: 'Tambay Lane',   amount: 0,      icon: '😊' }, // Free
-    { id: 'barangay',  name: 'Barangay Cup',  amount: 500,    icon: '🪙' }, // Dati 100 -> Ngayon 500
-    { id: 'town',      name: 'Town Plaza',    amount: 2500,   icon: '💵' }, // Dati 1000 -> Ngayon 2500
-    { id: 'coliseum',  name: 'Grand Coliseum',amount: 10000,  icon: '💎' }, // High Stakes
-    { id: 'world',     name: 'World Stage',   amount: 50000,  icon: '👑' }  // Ultra High Stakes
+    { id: 'tambay',   name: 'Tambay Lane',   amount: 0,      icon: '😊' }, // Free Play
+    { id: 'barangay', name: 'Barangay Cup',  amount: 100,    icon: '🪙' },
+    { id: 'town',     name: 'Town Plaza',    amount: 1000,   icon: '💵' },
+    { id: 'coliseum', name: 'Grand Coliseum',amount: 5000,   icon: '💎' },
+    { id: 'world',    name: 'World Stage',   amount: 20000,  icon: '👑' }
 ];
+
 let selectedBetAmount = 0; // Default: Free play
 const HOUSE_CUT_PERCENTAGE = 0.10; // 10% Tong ng laro
 
@@ -6387,31 +6384,29 @@ async function endGame(winnerTextMessage, finalGameData = null) {
         if (gameData && gameData.betAmount) { bet = gameData.betAmount; } else { bet = currentMatchBet; }
     }
 
-    // --- 💰 REWARDS LOGIC (SERVER INTEGRATED) 💰 ---
-    if (!isOnlineGame) { // 🤖 AI GAME
+    // --- REWARDS LOGIC (UPDATED) ---
+    if (!isOnlineGame) { // AI GAME
         if (winnerTextMessage.includes("You Win")) {
-            // Visuals lang (XP/Trophies)
+            bonus = REWARD_WIN_BONUS;
             xpBonus = XP_WIN_BONUS;
+            
+            // ✅ FIX: Gawing 5 para maka-rank up kahit sa AI
             trophiesChange = 5; 
+            
             reason = "Practice Win!";
             triggerFireworks(); 
-
-            // 👇👇👇 ITO ANG MAJOR FIX 👇👇👇
-            // Tawagin ang Server para sa Pera + Tong
-            // (Siguraduhin na nasa dulo ng file mo ang claimAiWinnings function)
-            if (typeof claimAiWinnings === 'function') {
-                claimAiWinnings(); 
-            }
-            // 👆👆👆 WALA NA YUNG MANUAL ADD (+-)
-
         } else if (winnerTextMessage.includes("You Lose")) {
+            bonus = REWARD_LOSE_CONSOLATION;
             xpBonus = XP_LOSE_CONSOLATION;
-            trophiesChange = 0; 
+            trophiesChange = 0; // Wala ring bawas sa AI
             reason = "Good Game!";
-            // Wala ng bawas dito kasi nabawas na nung start (No Refund logic)
         }
-
-    } else { // 🌐 ONLINE GAME
+        if(bonus > 0) {
+            playerTotalCurrency += bonus;
+            saveCurrency();
+            updateCurrencyDisplay();
+        }
+    } else { // ONLINE GAME
         if (winnerTextMessage.includes("You Win")) {
             trophiesChange = 25; // RANKED WIN
             xpBonus = XP_WIN_BONUS;
@@ -6421,9 +6416,6 @@ async function endGame(winnerTextMessage, finalGameData = null) {
                 const totalPot = bet * 2;
                 const houseCut = Math.floor(totalPot * 0.10); 
                 const netWin = totalPot - houseCut;
-                
-                // Note: Sa future, papalitan din natin ito ng Server Call (/api/match-payout)
-                // Pero sa ngayon, hayaan muna natin para gumana ang Online
                 playerTotalCurrency += netWin;
                 saveCurrency();
                 updateCurrencyDisplay(); 
@@ -6444,7 +6436,7 @@ async function endGame(winnerTextMessage, finalGameData = null) {
         }
     }
 
-    // --- APPLY STATS (XP & Trophies) ---
+    // --- APPLY STATS ---
     if (trophiesChange !== 0) {
         const oldRankIndex = getPlayerRank(playerTrophies).index;
         playerTrophies += trophiesChange;
@@ -6486,30 +6478,24 @@ async function endGame(winnerTextMessage, finalGameData = null) {
         winnerText.innerHTML = finalWinnerText;
     }
     
-    // --- BUTTONS LOGIC ---
+    // --- ITO ANG PART NA DAPAT MONG I-UPDATE ---
     const onlineRematchButton = document.getElementById('rematch-button');
-    const didWin = winnerTextMessage.includes("You Win"); 
+    const didWin = winnerTextMessage.includes("You Win"); // Check natin kung nanalo
 
     if (isOnlineGame) {
+        // Ito yung existing code mo para sa Online
         updatePlayerData(localPlayerUid, didWin); 
         aiRematchButton.style.display = 'none';
         backToMenuButton.style.display = 'block';
         onlineRematchButton.style.display = 'block';
     } else {
-        // AI GAME
+        // --- 👇 DITO MO ILALAGAY ANG FIX PARA SA AI 👇 ---
+        // ✅ Sabihan ang Firestore na i-save ang stats kahit AI ang kalaro
         updatePlayerData(localPlayerUid, didWin); 
 
         aiRematchButton.style.display = 'block';
         backToMenuButton.style.display = 'block';
         onlineRematchButton.style.display = 'none';
-        
-        // Re-attach listener para sigurado
-        aiRematchButton.onclick = () => {
-             winnerModal.classList.remove('show');
-             // Siguraduhin na tatawagin ang tamang restart function
-             if (typeof restartAiGame === 'function') restartAiGame();
-             else startGame(gameMode);
-        };
     }
     
     // --- CARD REVEAL ---
@@ -6554,11 +6540,8 @@ async function endGame(winnerTextMessage, finalGameData = null) {
     } else {
         opponentHandReveal.innerHTML = ''; opponentHandReveal.style.display = 'none';
     }
-    
-    // Show Modal
     setTimeout(() => { winnerModal.classList.add('show'); history.pushState({ modal: 'winner' }, 'Winner', '#winner'); }, 1000);
 }
-
 async function resetToMenu() {
     playButtonSound();
 window.isInGame = false;
@@ -8975,26 +8958,26 @@ async function handleRematchRequest() {
 
 async function updatePlayerData(uid, didWin = false) {
     if (!uid || !db) return;
-    
+   
     const playerDocRef = doc(db, "players", uid);
-    
+   
     try {
         const playerDoc = await getDoc(playerDocRef);
         const displayName = localStorage.getItem('pinoyPoolPlayerName') || "Anonymous";
-        const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-        const currentWalletAddress = tonConnectUI?.account?.address || null;
         
+        // Kunin ang data mula sa Telegram
+        const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+        
+        // Kunin ang Wallet Address mula sa TON Connect UI
+        const currentWalletAddress = tonConnectUI.account?.address || null;
+       
         const dataToSave = {
             displayName: displayName,
             searchableName: displayName.toLowerCase(),
             trophies: playerTrophies,
             level: playerLevel,
             xp: playerXP,
-            
-            // ❌ TINANGGAL KO NA ANG BALANCE DITO! ❌
-            // balance: playerTotalCurrency, <--- ITO ANG NAGPAPACRASH!
-            // Hayaan na natin si Replit Server ang mag-update ng pera.
-            
+            balance: playerTotalCurrency, // <--- Ngayon nase-save na rin ang Coins dito
             tgId: tgUser ? tgUser.id.toString() : (playerDoc.exists() ? (playerDoc.data().tgId || null) : null),
             walletAddress: currentWalletAddress || (playerDoc.exists() ? (playerDoc.data().walletAddress || null) : null),
             lastPlayed: serverTimestamp()
@@ -9003,16 +8986,15 @@ async function updatePlayerData(uid, didWin = false) {
         if (didWin) {
             dataToSave.wins = increment(1);
         }
-        
-        // Save (XP, Trophies, Name lang ang ise-save ng Client)
+       
+        // Gamitin ang setDoc na may { merge: true } para hindi mabura ang ibang fields
         await setDoc(playerDocRef, dataToSave, { merge: true });
-        
-        console.log("✅ Stats synced (XP/Trophies only). Balance handled by Server.");
-        updateCurrencyDisplay(); 
-        
+       
+        console.log("✅ All stats synced to Firestore (Coins, Trophies, Wallet, etc.)");
+        updateCurrencyDisplay(); // I-refresh ang UI
+       
     } catch (error) {
         console.error("❌ Error updating player data:", error);
-        // Kahit mag-error, hindi na ito mag-ca-crash ng malala
     }
 }
 // ▲▲▲ DULO NG STEP 5 ▲▲▲
@@ -9020,7 +9002,7 @@ async function updatePlayerData(uid, didWin = false) {
         
 // --- 🤖 STEP 2: START BOT MATCH FUNCTION (CORRECTED VERSION) 🤖 ---
 async function startBotMatch() {
-    // 1. Linisin ang Queue (Para di na maghanap ng iba)
+    // 1. Linisin ang Queue
     await cleanupMatchmakingEntry();
     
     // 2. Itago ang "Searching..." modal
@@ -9036,14 +9018,30 @@ async function startBotMatch() {
     showMessage(`Match Found! Opponent: ${botName}`, 3000);
     playButtonSound(); 
 
-    // ❌ DITO DATI YUNG REFUND LOGIC. BINURA NA NATIN! ❌
-    // Dahil burado na, hawak na ng laro ang taya mo. 
-    // Pag natalo ka, goodbye coins. Pag nanalo ka, claimAiWinnings() ang bahala.
+    // 6. REFUND LOGIC (VIA SERVER) 
+    // Ibabalik natin ang pera gamit ang Server API para tanggapin ng database.
+    if (selectedBetAmount > 0) {
+        // Visual update agad para sa player (para di nila halata na nag-refund)
+        playerTotalCurrency += selectedBetAmount;
+        updateCurrencyDisplay();
 
-    // 6. Start Game logic (AI Mode)
+        // SILENT SERVER REFUND:
+        // Hindi natin hihintayin (no 'await') para tuloy-tuloy ang laro.
+        // Bahala na ang server mag-update sa background.
+        fetch(`${SERVER_URL}/api/refund`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                uid: localPlayerUid,
+                amount: selectedBetAmount
+            })
+        }).catch(err => console.error("Background refund failed:", err));
+    }
+
+    // 7. Start Game logic (AI Mode)
     startGame(`ai-${selectedOnlineGameType}`, 'pro'); 
     
-    // 7. FORCE UPDATE: Siguraduhin na ang pangalan sa taas ay Bot Name
+    // 8. FORCE UPDATE: Siguraduhin na ang pangalan sa taas ay Bot Name
     setTimeout(() => {
         opponentPlayerName = botName; 
         updateInfoBox(); 
@@ -9703,26 +9701,10 @@ function loadPlayerStats() {
 /**
  * 2. Save Stats: Sine-save ang progress.
  */
-// --- UPDATED SAVE STATS (Safe sa New Rules) ---
-async function savePlayerStats() {
-    if (!localPlayerUid) return;
-    
-    // Tandaan: Huwag isama ang 'balance' dito kasi Server na ang bahala dun.
-    const statsToSave = {
-        xp: playerXP,
-        trophies: playerTrophies,
-        playerName: localPlayerName,
-        // balance: playerTotalCurrency  <-- ❌ TINANGGAL KO NA TO (Ito ang salarin!)
-        // level: playerLevel 
-    };
-
-    try {
-        await setDoc(doc(db, "players", localPlayerUid), statsToSave, { merge: true });
-        console.log("Stats saved (XP/Trophies only).");
-    } catch (error) {
-        console.error("Error saving stats:", error);
-        // Kahit mag-error, okay lang, hindi titigil ang laro
-    }
+function savePlayerStats() {
+    localStorage.setItem('pinoyPoolPlayerLevel', playerLevel.toString());
+    localStorage.setItem('pinoyPoolPlayerXP', playerXP.toString());
+    localStorage.setItem('pinoyPoolPlayerTrophies', playerTrophies.toString());
 }
 
 /**
@@ -11360,52 +11342,46 @@ function showColorAssignmentPopup(message, color) {
 // ▲▲▲ HANGGANG DITO ANG BAGONG FUNCTION ▲▲▲
      function signInPlayer() { 
     onAuthStateChanged(auth, (user) => { 
-        if (user) { 
-            // 1. SAVE SA LOCAL VARIABLE (Para sa loob ng module)
-            localPlayerUid = user.uid; 
-            
-            // 2. 👇 SAVE SA GLOBAL VARIABLE (Para sa Betting/HTML) 👇
-            window.localPlayerUid = user.uid; 
-            // -----------------------------------------------------
+    if (user) { 
+        localPlayerUid = user.uid; 
+        isAuthReady = true; 
+        onlineButton.disabled = false; 
+        
+        // --- 1. Load Currency ---
+        if (typeof loadCurrency === 'function') {
+            loadCurrency(); 
+        }
 
-            isAuthReady = true; 
-            if(onlineButton) onlineButton.disabled = false; 
-            
-            // --- Load Currency ---
-            if (typeof loadCurrency === 'function') {
-                loadCurrency(); 
+        // --- 2. 👇 DAGDAG: CHECK PENDING WALLET 👇 ---
+        // I-check kung may naka-store na wallet address sa localStorage
+        const pendingWallet = localStorage.getItem('pendingWalletAddress');
+        if (pendingWallet) {
+            console.log("Saving pending wallet for logged-in user...");
+            // Siguraduhin na ang saveWalletToFirestore function ay defined sa script mo
+            if (typeof saveWalletToFirestore === 'function') {
+                saveWalletToFirestore(localPlayerUid, pendingWallet);
             }
+        }
+        // ----------------------------------------------
+        
+        // Update UI (Subtitle lang)
+        const sub = document.querySelector('#online-button .card-subtitle');
+        if(sub) {
+            sub.textContent = "Ranked Match • Online";
+            sub.style.color = "#00FF00"; 
+        }
 
-            // --- Check Pending Wallet ---
-            const pendingWallet = localStorage.getItem('pendingWalletAddress');
-            if (pendingWallet) {
-                console.log("Saving pending wallet for logged-in user...");
-                if (typeof saveWalletToFirestore === 'function') {
-                    saveWalletToFirestore(localPlayerUid, pendingWallet);
-                }
-            }
-            
-            // --- Update UI ---
-            const sub = document.querySelector('#online-button .card-subtitle');
-            if(sub) {
-                sub.textContent = "Ranked Match • Online";
-                sub.style.color = "#00FF00"; 
-            }
-
-            // --- Start Listeners ---
-            createPlayerDocument(); 
-            startInviteListener(); 
-            setupOnlineStatus(); 
-
-        } else { 
-            // Kung walang user, mag-login as Anonymous
-            signInAnonymously(auth).catch((error) => { 
-                console.error("Sign-in failed:", error); 
-                isAuthReady = false; 
-                if(onlineButton) onlineButton.disabled = true; 
-            }); 
-        } 
-    }); 
+        createPlayerDocument(); 
+        startInviteListener(); 
+        setupOnlineStatus(); 
+    } else { 
+        signInAnonymously(auth).catch((error) => { 
+            console.error("Sign-in failed:", error); 
+            isAuthReady = false; 
+            onlineButton.disabled = true; 
+        }); 
+    } 
+}); 
 }
 // Dito ise-save ang "unsubscribe" function para sa invite listener
 let unsubscribeFromInvites = null;
@@ -14994,192 +14970,8 @@ async function saveWalletToFirestore(uid, address) {
         }
     }
 
-
-// --- 💰 FINAL FIX: SERVER PAYOUT (AI WIN) 💰 ---
-// Ito ang tatawagin pag nanalo ka sa Bot para makuha ang pera
-window.claimAiWinnings = function() {
-    // 1. SAFETY CHECK
-    // Kung 0 ang taya (Free Play), wag na istorbohin ang server
-    if (!selectedBetAmount || selectedBetAmount <= 0) {
-        if(typeof showMessage === 'function') showMessage("You Won! (Practice Mode)", 3000);
-        return; 
-    }
-
-    console.log("Contacting Server for Payout...");
-    if(typeof showMessage === 'function') showMessage("Claiming Prize...", 1500);
-
-    // 2. TAWAG SA SERVER (Gamit ang window.SERVER_URL)
-    // Dito nag-eerror dati kasi 'SERVER_URL' lang ang gamit
-    fetch(`${window.SERVER_URL}/api/match-payout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            uid: window.localPlayerUid || localPlayerUid,
-            betAmount: selectedBetAmount
-        })
-    })
-    .then(response => {
-        if (!response.ok) throw new Error("Server Response Error");
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // ✅ SUCCESS! Pumasok na ang pera
-            playerTotalCurrency = data.newBalance; 
-            if(typeof updateCurrencyDisplay === 'function') updateCurrencyDisplay();
-            
-            // Visual feedback
-            const totalPot = selectedBetAmount * 2;
-            const tong = Math.floor(totalPot * 0.10);
-            const netWin = totalPot - tong;
-            
-            if(typeof showMessage === 'function') showMessage(`WINNER! +${formatCurrencyShort(netWin)} Coins!`, 4000);
-            if(typeof playCoinSound === 'function') playCoinSound(); 
-        } else {
-            console.error("Payout Failed:", data.error);
-            if(typeof showMessage === 'function') showMessage("Server Error: Payout Failed", 3000);
-        }
-    })
-    .catch(err => {
-        console.error("Network Error:", err);
-        // RETRY OPTION
-        let retry = confirm("⚠️ NETWORK ERROR: Hindi pumasok ang panalo mo. Gusto mo bang i-try ulit?");
-        if (retry) {
-            setTimeout(window.claimAiWinnings, 1000);
-        }
-    });
-};
-
-// --- 📺 FINAL FIX: AD REWARD 📺 ---
-// Ito naman para sa Ads (kung meron)
-window.claimAdReward = function() {
-    const REWARD_AMOUNT = 500; 
-
-    if(typeof showMessage === 'function') showMessage("Verifying Reward...", 1500);
-
-    fetch(`${window.SERVER_URL}/api/ad-reward`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            uid: window.localPlayerUid || localPlayerUid,
-            amount: REWARD_AMOUNT
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            playerTotalCurrency = data.newBalance;
-            if(typeof updateCurrencyDisplay === 'function') updateCurrencyDisplay();
-            
-            if(typeof showMessage === 'function') showMessage(`+${REWARD_AMOUNT} Coins Received! 💰`, 3000);
-            if(typeof playCoinSound === 'function') playCoinSound();
-            if(typeof triggerFireworks === 'function') triggerFireworks();
-        } else {
-            if(typeof showMessage === 'function') showMessage("Error claiming reward.", 2000);
-        }
-    })
-    .catch(err => console.error("Ad Reward Error:", err));
-};
  
-  // --- 📺 ADGRAM CONFIGURATION ---
-// Palitan mo ito ng BLOCK ID galing sa Adgram dashboard mo
-const ADGRAM_BLOCK_ID = "YOUR_ADGRAM_BLOCK_ID_HERE"; 
-
-function watchAdForCoins() {
-    playButtonSound();
-    
-    if (typeof Adgram === 'undefined') {
-        showMessage("Ads not ready yet.", 2000);
-        return;
-    }
-
-    // Show Loading
-    showMessage("Loading Ad...", 1000);
-
-    // Call Adgram
-    Adgram.init({ blockId: ADGRAM_BLOCK_ID, debug: true }) // Debug: true muna para sa testing
-        .show()
-        .then((result) => {
-            if (result.done) {
-                // ✅ SUCCESS: Tinapos niya ang video
-                console.log("Ad watched successfully!");
-                claimAdReward(); // Tawagin ang server para ibigay ang coins
-            } else {
-                // ❌ SKIPPED: In-exit niya o nag-error
-                showMessage("Ad skipped. No coins given.", 2000);
-            }
-        })
-        .catch((error) => {
-            console.error("Adgram Error:", error);
-            showMessage("No Ads available right now.", 2000);
-        });
-}
-
-
-
-// --- 💰 FINAL WORKING PROCESS BET 💰 ---
-window.processBet = async function(amount) {
-    // 1. Kung Free Play (0), lusot agad
-    if (amount <= 0) return true; 
-
-    // 2. CHECK PLAYER ID (Gamit ang Global Variable)
-    // Kukunin natin ang ID galing sa Step 2
-    const uid = window.localPlayerUid || localPlayerUid;
-
-    if (!uid) {
-        alert("TEKA LANG! ✋\nLoading pa ang account mo.\nIntayin lumabas ang iyong Pangalan at Level bago tumaya.");
-        return false;
-    }
-
-    // 3. CHECK SERVER URL
-    if (!window.SERVER_URL) {
-        alert("ERROR: Nawawala ang SERVER_URL. Check Step 1.");
-        return false;
-    }
-
-    try {
-        console.log(`🚀 Betting: ${amount} | User: ${uid}`);
-
-        // 4. TAWAG SA SERVER (Replit)
-        const response = await fetch(`${window.SERVER_URL}/api/place-bet`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                uid: uid,
-                amount: amount
-            })
-        });
-
-        // 5. CHECK KUNG MAY ERROR ANG SERVER
-        if (!response.ok) {
-            const text = await response.text();
-            alert(`SERVER ERROR: ${response.status}\n${text}`);
-            return false;
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // ✅ SUCCESS: NABAWASAN NA ANG PERA
-            console.log("Bet Accepted!");
-            
-            // Update Visuals
-            if(typeof playerTotalCurrency !== 'undefined') playerTotalCurrency = data.newBalance;
-            if(typeof updateCurrencyDisplay === 'function') updateCurrencyDisplay();
-            
-            return true; // TULOY ANG LARO!
-        } else {
-            // ❌ FAIL: KULANG PERA O ERROR
-            alert(`FAILED: ${data.error}`);
-            return false;
-        }
-    } catch (err) {
-        // ❌ NETWORK ERROR
-        console.error(err);
-        alert(`NETWORK ERROR:\n${err.message}\n\nCheck mo kung naka-RUN ang Replit mo!`);
-        return false;
-    }
-};
+   
 
 </script>
 
