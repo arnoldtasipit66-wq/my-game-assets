@@ -14304,20 +14304,25 @@ function attachSafeCloseListener(btnId, modalId) {
         newBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            playButtonSound();
+            
+            // Check kung may sound function bago tawagin para iwas error
+            if (typeof playButtonSound === 'function') playButtonSound();
 
-            // 1. ITAAS ANG FLAG! (Ito ang nagsasabing "Safe ito!")
+            // 1. ITAAS ANG FLAG! (Safe ito!)
             window.isClosingModal = true; 
 
-            // 2. Set State
-            gameState = 'modal_open'; 
+            // 2. SET STATE (ITO ANG FIX) ✅
+            // Check natin kung nasa laro ka ba o nasa menu
+            if (typeof gameMode !== 'undefined' && (gameMode === 'online' || gameMode === 'practice')) {
+                gameState = 'playing'; // Kung naglalaro, resume game
+            } else {
+                gameState = 'menu';    // Kung nasa labas, balik sa menu
+            }
 
             // 3. Hide Modal
             if (modal) modal.classList.remove('show');
 
             // 4. Trigger Back
-            // Kahit ano pa ang nasa history, dahil naka-true ang isClosingModal,
-            // tatanggapin ito ng onpopstate bilang "Safe".
             history.back();
         });
     }
