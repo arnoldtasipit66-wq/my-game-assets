@@ -9169,29 +9169,32 @@ async function findMatch() {
         
         console.log("Time's up. Switching to Bot Match.");
 
-        // ▼▼▼ REFUND LOGIC (IBALIK ANG PERA) ▼▼▼
-        if (selectedBetAmount > 0) {
-            showMessage("No opponent found. Refunded entry fee.", 2000);
-            try {
-                // Ibalik ang pera sa Server
-                await fetch(`${SERVER_URL}/api/refund`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        uid: localPlayerUid,
-                        amount: selectedBetAmount
-                    })
-                });
-                
-                // Ibalik ang pera sa Visual Display
-                playerTotalCurrency += selectedBetAmount; 
-                updateCurrencyDisplay();
-            } catch(e) {
-                console.error("Refund failed:", e);
-                // (Sa totoong buhay, dapat may retry mechanism dito)
-            }
-        }
-        // ▲▲▲ END REFUND ▲▲▲
+        // ▼▼▼ REFUND LOGIC (CORRECTED: SAFE & CLIENT-SIDE) ▼▼▼
+    
+    // 1. STRICT CHECK: Gamitin ang 'currentMatchBet'. 
+    // Ito ay nagiging > 0 LAMANG kung success ang bawas sa taas.
+    if (currentMatchBet > 0) {
+        
+        // 2. Ibalik ang pera sa Local Variable
+        playerTotalCurrency += currentMatchBet; 
+        
+        // 3. I-save agad sa Firebase at Update UI
+        saveCurrency(); 
+        updateCurrencyDisplay();
+
+        // 4. Ipakita ang message
+        showMessage(`No opponent found.<br><span style="color:#00FF00">Bet Refunded: +${formatCurrencyShort(currentMatchBet)}</span>`, 3000);
+        
+        // 5. RESET: Importanteng ibalik sa 0 para di na maulit
+        currentMatchBet = 0; 
+        selectedBetAmount = 0; 
+
+    } else {
+        // Kung walang nabawas (o Free Play), walang refund message.
+        // Hahayaan lang natin tumuloy sa Bot Match.
+        console.log("No active bet to refund.");
+    }
+    // ▲▲▲ END REFUND ▲▲▲
 
         // Start Bot Match (Practice Mode na lang ito)
         startBotMatch(); 
