@@ -6366,33 +6366,35 @@ setCueForCurrentTurn();
             } 
         }
         
-        // --- 🤖 AI REMATCH FUNCTION (HIGH STAKES UPDATE) 🤖 ---
+        // --- 🤖 AI REMATCH FUNCTION (SUREBALL BAWAS) 🤖 ---
 async function restartAiGame() {
     playButtonSound();
     
-    // 1. PAYMENT CHECK (Dito ang bago)
-    // Tinitignan kung may history ng taya sa last game
+    // Check sa console kung magkano ang naaalala niyang taya
+    console.log("Attempting Rematch. Saved Bet:", window.lastAiBetAmount);
+
+    // 1. PAYMENT CHECK
     if (window.lastAiBetAmount > 0) {
         
-        // Subukang maningil ulit
+        // MANINGIL ULIT!
         const isPaid = await processBet(window.lastAiBetAmount);
         
         if (!isPaid) {
-            // Kung walang pang-bayad, STOP. Hindi tutuloy ang rematch.
-            return; 
+            return; // Walang pera, hinto.
         }
 
-        // Kung success, i-set ang Active Bet
+        // Pagkabayad, I-SET AGAD ang currentMatchBet
         currentMatchBet = window.lastAiBetAmount;
+        
         showMessage(`Rematch Started! <br><span style="color:#FFD700">Bet Active: ${formatCurrencyShort(currentMatchBet)}</span>`, 2000);
         
     } else {
-        // Kung Free Play lang dati, Free Play pa rin ngayon
+        // Free Play logic
         currentMatchBet = 0;
         showMessage("Rematch Started! (Practice)", 2000);
     }
 
-    // 2. RESET GAME LOGIC (Galing sa luma mong code)
+    // 2. RESET GAME (Standard)
     winnerModal.classList.remove('show');
     resizeCanvas();
     
@@ -6404,7 +6406,6 @@ async function restartAiGame() {
     opponentChipsType = null;
     
     setupChips();
-    
     isBreakShot = true;
     canMoveCueBall = true;
     gameState = 'moving';
@@ -6413,13 +6414,11 @@ async function restartAiGame() {
     if (playerTurn) {
         dragGuideText.style.display = 'block';
     } else {
-        showMessage("Opponent breaks.", 2000);
         placeCueChipForAI();
     }
     
     resetPektus();
     
-    // Reset Game Modes
     if (gameMode.includes('poker')) {
         createDeck();
         dealCards();
@@ -6434,13 +6433,11 @@ async function restartAiGame() {
     history.pushState({ modal: 'game' }, 'Game', '#game');
     setCueForCurrentTurn(); 
 
-    // 3. UPDATE HUD POT MONEY (Dito ang bago)
-    // Ipakita sa screen ang Pot Money para ganahan ka
+    // 3. HUD UPDATE (Siguraduhing kita ang Pot)
     setTimeout(() => {
         const sub = document.querySelector('#opponent-info .hud-sub');
         if (sub) {
             if (currentMatchBet > 0) {
-                // Bet * 2 = Kunwari tumaya din ang AI
                 sub.innerHTML = `<span style="color:#FFD700">Pot: ${formatCurrencyShort(currentMatchBet * 2)}</span>`;
             } else {
                 sub.innerHTML = '<span style="color:#aaa">Practice Bot</span>';
@@ -6452,8 +6449,6 @@ async function restartAiGame() {
         setTimeout(() => { aiDisplayMessage(getAiChatMessage('start')); }, 1500);
     }
 }
-// === END NEW FUNCTION ===
-
 
         function waitForCardPick() { return new Promise(resolve => { pokerFoulCardPickModal.classList.add('show'); pokerFoulCardsContainer.innerHTML = ''; const cardsToDraw = []; for (let i = 0; i < 5; i++) if (deck.length > 0) cardsToDraw.push(deck.splice(Math.floor(Math.random() * deck.length), 1)[0]); if (cardsToDraw.length === 0) { pokerFoulCardPickModal.classList.remove('show'); resolve(null); return; } cardsToDraw.forEach(card => { const cardDiv = document.createElement('div'); cardDiv.className = 'card face-down'; cardDiv.onclick = () => { playButtonSound(); cardDiv.classList.remove('face-down'); const color = (card.suit === '♥' || card.suit === '♦') ? '#ff0000' : '#212121'; cardDiv.innerHTML = `<span class="card-rank" style="color: ${color};">${card.rank}</span><span class="card-suit" style="color: ${color};">${card.suit}</span>`; pokerFoulCardsContainer.querySelectorAll('.card').forEach(c => { c.onclick = null; c.style.cursor = 'default'; }); setTimeout(() => { pokerFoulCardPickModal.classList.remove('show'); cardsToDraw.forEach(c => { if (c !== card) deck.push(c); }); resolve(card); }, 1500); }; pokerFoulCardsContainer.appendChild(cardDiv); }); }); }
         
