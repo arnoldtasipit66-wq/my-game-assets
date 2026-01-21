@@ -9100,61 +9100,50 @@ async function updatePlayerData(uid, didWin = false) {
 
         
         // --- 🤖 STEP 2: START BOT MATCH (HIGH STAKES AI - NO REFUND) 🤖 ---
+// --- 🤖 STEP 2: START BOT MATCH (MEMORY FIX) 🤖 ---
 async function startBotMatch() {
-    // 1. Linisin ang Queue (Standard procedure)
     await cleanupMatchmakingEntry();
-    
-    // 2. Itago ang "Searching..." modal
     matchmakingWaitModal.classList.remove('show');
 
-    // 3. Gumawa ng Fake Opponent Name
     const botName = BotGenerator.generateName();
-    
-    // 4. I-set ang pangalan ng kalaban
     opponentPlayerName = botName;
 
-    // 5. BETTING LOGIC (LOCK THE BET)
+    // ▼▼▼ DITO ANG FIX: SAVE & LOCK ▼▼▼
     if (currentMatchBet > 0) {
-        
-        // IMPORTANT: I-save ang halaga ng taya para sa REMATCH logic.
-        // Kapag pinindot ang Rematch mamaya, ito ang gagamiting basehan ng singil.
+        // 1. I-save sa Global Variable para hindi makalimutan ng Rematch
         window.lastAiBetAmount = currentMatchBet; 
 
-        // Ipakita ang message na TULOY ang pustahan kahit AI
+        // 2. Ipakita na ACTIVE ang taya (Wag i-refund, wag i-reset sa 0)
         showMessage(`No human found. Playing vs AI.<br><span style="color:#FFD700">Bet Active: ${formatCurrencyShort(currentMatchBet)}</span>`, 3000);
-
-        // NOTE: HINDI natin re-reset ang currentMatchBet sa 0. 
-        // Hahayaan natin siyang > 0 para alam ng endGame na may premyo pag nanalo ka.
+        
+        console.log("AI Match Started. Bet Locked:", currentMatchBet); // Debugging
 
     } else {
-        // Kung Free Play, siguraduhing 0 ang lastAiBetAmount
+        // Kung Free Play, siguraduhing 0 din ang memory
         window.lastAiBetAmount = 0;
         showMessage(`Match Found! Opponent: ${botName}`, 3000);
     }
+    // ▲▲▲ ▲▲▲
 
     playButtonSound(); 
-
-    // 6. Start Game logic (AI Mode)
     startGame(`ai-${selectedOnlineGameType}`, 'pro'); 
     
-    // 7. Update UI info (Para makita ang Pot Money sa HUD)
     setTimeout(() => {
         opponentPlayerName = botName; 
         updateInfoBox(); 
         
-        // Update HUD para makita kung may Pot Money o Practice lang
+        // Update HUD
         const sub = document.querySelector('#opponent-info .hud-sub');
         if(sub) {
+            // Check kung may laman ang currentMatchBet
             if (currentMatchBet > 0) {
-                // Ipakita ang Pot Money (Bet * 2) - Kunwari tumaya din ang AI
                 sub.innerHTML = `<span style="color:#FFD700">Pot: ${formatCurrencyShort(currentMatchBet * 2)}</span>`;
             } else {
                 sub.innerHTML = '<span style="color:#aaa">Practice Bot</span>';
             }
         }
     }, 500); 
-}        // --- 💰 UPDATED PAYMENT PROCESSOR (CLIENT-SIDE VERSION) 💰 ---
-async function processBet(amount) {
+}async function processBet(amount) {
     // 1. Kung libre, lusot agad
     if (amount <= 0) return true; 
 
