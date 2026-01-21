@@ -9088,6 +9088,52 @@ async function startBotMatch() {
     }, 500); 
 }
 
+        // --- 💰 PAYMENT PROCESSOR FUNCTION 💰 ---
+async function processBet(amount) {
+    if (amount <= 0) return true; // Libre lang, so Go lang!
+
+    // 1. Check kung may sapat na coins sa local (Visual check)
+    if (playerTotalCurrency < amount) {
+        showMessage(`Kulang ang coins! Need: ${formatCurrencyShort(amount)}`, 3000);
+        return false;
+    }
+
+    // 2. Ipakita ang loading message
+    showMessage(`Processing payment: ${formatCurrencyShort(amount)}...`, 1500);
+
+    try {
+        // 3. Tumawag sa Server para bawasan ang balance
+        const response = await fetch(`${SERVER_URL}/api/deduct-balance`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                uid: localPlayerUid,
+                amount: amount,
+                reason: 'entry_fee'
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update local display pag success
+            playerTotalCurrency = result.newBalance;
+            updateCurrencyDisplay();
+            console.log("Payment successful!");
+            return true;
+        } else {
+            // Pag nag-fail (e.g. kulang pala sa database)
+            showMessage(result.message || "Transaction failed.", 3000);
+            return false;
+        }
+    } catch (error) {
+        console.error("Payment Error:", error);
+        // Fallback: Kung offline ang server, wag payagan maglaro ng may taya para safe
+        showMessage("Server Error: Cannot process bet.", 3000);
+        return false;
+    }
+}
+// ----------------------------------------
     // ---------------------------------------------  
 async function findMatch() {
     const displayName = localPlayerName || "Guest";
