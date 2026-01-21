@@ -9036,7 +9036,94 @@ async function updatePlayerData(uid, didWin = false) {
 // ▲▲▲ DULO NG STEP 5 ▲▲▲
         async function cleanupMatchmakingEntry() { if (unsubscribeFromQueue) { unsubscribeFromQueue(); unsubscribeFromQueue = null; } const queueCollection = collection(db, "matchmakingQueue"); const q = query(queueCollection, where("uid", "==", localPlayerUid)); const snapshot = await getDocs(q); if (!snapshot.empty) { const myDocRef = snapshot.docs[0].ref; await deleteDoc(myDocRef); } }
         
-// --- 🤖 STEP 2: START BOT MATCH (HIGH STAKES AI - NO REFUND) 🤖 ---
+// --- 🤖 AI REMATCH FUNCTION (NEW) 🤖 ---
+async function restartAiGame() {
+    playButtonSound();
+    
+    // 1. Check kung may dapat bayaran para sa Rematch (Base sa last game)
+    if (window.lastAiBetAmount > 0) {
+        
+        // Subukang magbayad ulit gamit ang saved amount
+        const isPaid = await processBet(window.lastAiBetAmount);
+        
+        if (!isPaid) {
+            // Kung walang pera, huwag ituloy ang restart
+            return; 
+        }
+
+        // Kung success ang bayad, i-set ang Active Bet
+        currentMatchBet = window.lastAiBetAmount;
+        showMessage(`Rematch Started! <br><span style="color:#FFD700">Bet Active: ${formatCurrencyShort(currentMatchBet)}</span>`, 2000);
+        
+    } else {
+        // Kung Free Play lang dati, Free Play pa rin ngayon
+        currentMatchBet = 0;
+        showMessage("Rematch Started! (Practice)", 2000);
+    }
+
+    // 2. Reset UI & Game State (Gaya ng normal start)
+    winnerModal.classList.remove('show');
+    resizeCanvas();
+    
+    playerTurn = Math.random() < 0.5;
+    canMoveCueBall = false;
+    chipsMoving = false;
+    colorsAssigned = false;
+    playerChipsType = null;
+    opponentChipsType = null;
+    
+    setupChips();
+    
+    isBreakShot = true;
+    canMoveCueBall = true;
+    gameState = 'moving';
+    cueStick.visible = true;
+    
+    // Pwesto ng bola o tira
+    if (playerTurn) {
+        dragGuideText.style.display = 'block';
+    } else {
+        placeCueChipForAI();
+    }
+    
+    resetPektus();
+    
+    // Reset rules base sa mode
+    if (gameMode.includes('poker')) {
+        createDeck();
+        dealCards();
+        updateCardDisplay();
+    } else if (gameMode.includes('61-ball')) {
+        player61Score = 0;
+        opponent61Score = 0;
+        lowestChipNumber = 1;
+    }
+    
+    // Update HUD
+    updateInfoBox(); 
+    history.pushState({ modal: 'game' }, 'Game', '#game');
+    setCueForCurrentTurn();
+
+    // 3. Ipakita sa HUD kung may taya (Pot Money display)
+    setTimeout(() => {
+        const sub = document.querySelector('#opponent-info .hud-sub');
+        if (sub) {
+            if (currentMatchBet > 0) {
+                // Bet * 2 = Pot Money
+                sub.innerHTML = `<span style="color:#FFD700">Pot: ${formatCurrencyShort(currentMatchBet * 2)}</span>`;
+            } else {
+                sub.innerHTML = '<span style="color:#aaa">Practice Bot</span>';
+            }
+        }
+    }, 500);
+
+    // AI Start Speech
+    if (gameMode.startsWith('ai')) {
+        setTimeout(() => { aiDisplayMessage(getAiChatMessage('start')); }, 1500);
+    }
+}
+        
+        // --- 🤖 STEP 2: START BOT MATCH (HIGH STAKES AI - NO REFUND) 🤖 ---
 async function startBotMatch() {
     // 1. Linisin ang Queue (Standard procedure)
     await cleanupMatchmakingEntry();
