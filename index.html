@@ -6054,11 +6054,7 @@ dailyRewardModal = document.getElementById('daily-reward-modal'),
 
     function setupNavigationSystem() {
         console.log("Navigation System Activated");
-        if (typeof tg !== 'undefined' && tg.BackButton) {
-            tg.BackButton.onClick(() => {
-                window.history.back(); 
-            });
-        }
+        
         window.addEventListener('popstate', (event) => {
             if (currentOpenModal) {
                 closeModalUI(currentOpenModal);
