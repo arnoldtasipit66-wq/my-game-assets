@@ -9036,9 +9036,9 @@ async function updatePlayerData(uid, didWin = false) {
 // ▲▲▲ DULO NG STEP 5 ▲▲▲
         async function cleanupMatchmakingEntry() { if (unsubscribeFromQueue) { unsubscribeFromQueue(); unsubscribeFromQueue = null; } const queueCollection = collection(db, "matchmakingQueue"); const q = query(queueCollection, where("uid", "==", localPlayerUid)); const snapshot = await getDocs(q); if (!snapshot.empty) { const myDocRef = snapshot.docs[0].ref; await deleteDoc(myDocRef); } }
         
-// --- 🤖 STEP 2: START BOT MATCH (STRICT REFUND FIX) 🤖 ---
+// --- 🤖 STEP 2: START BOT MATCH (HIGH STAKES AI - NO REFUND) 🤖 ---
 async function startBotMatch() {
-    // 1. Linisin ang Queue
+    // 1. Linisin ang Queue (Standard procedure)
     await cleanupMatchmakingEntry();
     
     // 2. Itago ang "Searching..." modal
@@ -9047,49 +9047,50 @@ async function startBotMatch() {
     // 3. Gumawa ng Fake Opponent Name
     const botName = BotGenerator.generateName();
     
-    // 4. I-set ang pangalan ng kalaban (Global Variable)
+    // 4. I-set ang pangalan ng kalaban
     opponentPlayerName = botName;
 
-    // 5. STRICT REFUND LOGIC (ETO ANG FIX)
-    // Chine-check natin kung may "active bet" (currentMatchBet) na CONFIRMED na nabawas.
-    // Hindi natin ginagamit ang selectedBetAmount kasi baka hindi naman yun nakaltas.
+    // 5. BETTING LOGIC (LOCK THE BET)
     if (currentMatchBet > 0) {
         
-        // Ibalik ang pera (Refund)
-        playerTotalCurrency += currentMatchBet; 
-        
-        // I-save sa database agad para hindi mawala
-        saveCurrency();
-        updateCurrencyDisplay();
+        // IMPORTANT: I-save ang halaga ng taya para sa REMATCH logic.
+        // Kapag pinindot ang Rematch mamaya, ito ang gagamiting basehan ng singil.
+        window.lastAiBetAmount = currentMatchBet; 
 
-        // Ipakita ang message na REFUNDED para alam ng player
-        showMessage(`No opponent found.<br><span style="color:#00FF00">Bet Refunded: +${formatCurrencyShort(currentMatchBet)}</span>`, 3000);
-        
-        // IMPORTANT: I-reset ang mga variable para sa AI Match (Free Play na ito)
-        currentMatchBet = 0; 
-        selectedBetAmount = 0; 
+        // Ipakita ang message na TULOY ang pustahan kahit AI
+        showMessage(`No human found. Playing vs AI.<br><span style="color:#FFD700">Bet Active: ${formatCurrencyShort(currentMatchBet)}</span>`, 3000);
+
+        // NOTE: HINDI natin re-reset ang currentMatchBet sa 0. 
+        // Hahayaan natin siyang > 0 para alam ng endGame na may premyo pag nanalo ka.
 
     } else {
-        // Kung walang nabawas (o Free Play), diretso laro lang.
+        // Kung Free Play, siguraduhing 0 ang lastAiBetAmount
+        window.lastAiBetAmount = 0;
         showMessage(`Match Found! Opponent: ${botName}`, 3000);
     }
 
     playButtonSound(); 
 
-    // 6. Start Game logic (AI Mode - Free Play)
+    // 6. Start Game logic (AI Mode)
     startGame(`ai-${selectedOnlineGameType}`, 'pro'); 
     
-    // 7. Update UI info (Lagyan ng label na Practice Bot)
+    // 7. Update UI info (Para makita ang Pot Money sa HUD)
     setTimeout(() => {
         opponentPlayerName = botName; 
         updateInfoBox(); 
         
-        // Update HUD para ipakita na "Practice" na lang
+        // Update HUD para makita kung may Pot Money o Practice lang
         const sub = document.querySelector('#opponent-info .hud-sub');
-        if(sub) sub.innerHTML = '<span style="color:#FFD700">Practice Bot</span>';
+        if(sub) {
+            if (currentMatchBet > 0) {
+                // Ipakita ang Pot Money (Bet * 2) - Kunwari tumaya din ang AI
+                sub.innerHTML = `<span style="color:#FFD700">Pot: ${formatCurrencyShort(currentMatchBet * 2)}</span>`;
+            } else {
+                sub.innerHTML = '<span style="color:#aaa">Practice Bot</span>';
+            }
+        }
     }, 500); 
-}
-        // --- 💰 UPDATED PAYMENT PROCESSOR (CLIENT-SIDE VERSION) 💰 ---
+}        // --- 💰 UPDATED PAYMENT PROCESSOR (CLIENT-SIDE VERSION) 💰 ---
 async function processBet(amount) {
     // 1. Kung libre, lusot agad
     if (amount <= 0) return true; 
