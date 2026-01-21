@@ -8966,25 +8966,46 @@ function applyShot(shotData) {
         lastTurnControllerUid = shotData.uid;
     }
 }
+// --- 🤝 ONLINE REMATCH REQUEST (SECURED) 🤝 ---
 async function handleRematchRequest() { 
     if (!isOnlineGame || !gameId) return; 
     
-    // 1. Check muna kung may pambayad sa Rematch
-    // Gamitin ang naka-save na currentMatchBet
-    
-    if (currentMatchBet > 0 && playerTotalCurrency < currentMatchBet) {
-        showMessage(`Cannot Rematch! Not enough coins. Need: ${formatCurrencyShort(currentMatchBet)}`, 3000);
-        return; // Bawal mag-proceed pag walang pera
-    }
-
     const rematchButton = document.getElementById('rematch-button'); 
+    
+    // Disable button muna para hindi spam
     rematchButton.disabled = true; 
-    rematchButton.textContent = 'Waiting for Opponent...'; 
-    
-    const gameDocRef = doc(db, "games", gameId); 
-    
-    try { 
+    rematchButton.textContent = 'Checking funds...'; 
+
+    try {
+        // 1. KUNIN ANG TOTOONG BET AMOUNT SA DATABASE
+        // (Kasi na-reset na sa 0 ang local variable natin after game)
+        const gameDocRef = doc(db, "games", gameId); 
+        const docSnap = await getDoc(gameDocRef);
+        
+        if (!docSnap.exists()) {
+            showMessage("Game error. Cannot rematch.", 2000);
+            return;
+        }
+
+        const gameData = docSnap.data();
+        const betForRematch = gameData.betAmount || 0;
+
+        // 2. CHECK BALANCE (Meron ka bang pambayad?)
+        if (betForRematch > 0 && playerTotalCurrency < betForRematch) {
+            showMessage(`Cannot Rematch! Not enough coins. Need: ${formatCurrencyShort(betForRematch)}`, 3000);
+            rematchButton.textContent = 'Request Rematch';
+            rematchButton.disabled = false;
+            return; // STOP! Bawal ituloy.
+        }
+
+        // 3. KUNG MAY PERA, SEND REQUEST
+        rematchButton.textContent = 'Waiting for Opponent...'; 
+        
+        // I-flag sa database na gusto mo ng rematch
         await updateDoc(gameDocRef, { [`rematchRequest.${localPlayerUid}`]: true }); 
+        
+        console.log(`Rematch requested. Bet needed: ${betForRematch}`);
+
     } catch (error) { 
         console.error("Error sending rematch request:", error); 
         rematchButton.textContent = 'Error! Try Again'; 
