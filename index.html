@@ -5722,12 +5722,29 @@ div#opponent-info.hud-active {
         import { getFirestore, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, serverTimestamp, increment, collection, query, orderBy, limit, getDocs, addDoc, runTransaction, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 const SERVER_URL = "https://pinoypooldugz-pldf60qvz-arnoldtasipit66-wqs-projects.vercel.app";
-// --- DITO MAGSISIMULA ANG TELEGRAM SETUP ---
-const tg = window.Telegram.WebApp; // Ngayon, kilala na ng code mo si 'tg'
-tg.ready(); // Sinasabi nito sa Telegram na handa na ang game
-tg.expand(); // Para mag-full screen
-tg.enableClosingConfirmation(); // Ito ang sikreto para magtanong bago mag-close
+const tg = window.Telegram.WebApp; 
+tg.ready();
+tg.expand(); 
+tg.enableClosingConfirmation();
+
+// --- DITO MO ISINGIT ---
+window.vibrate = function(style = 'light') {
+    // Gagamit tayo ng 'tg' variable dahil define mo na sa itaas
+    if (tg && tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred(style);
+    }
+};
+
+// Notification pattern para sa mga Success/Error events
+window.vibrateNotify = function(type = 'success') {
+    if (tg && tg.HapticFeedback) {
+        tg.HapticFeedback.notificationOccurred(type);
+    }
+};
+// ----------------------
+
 function handleExitRequest() {
+    // ... rest of your code
     if (typeof tg !== 'undefined') {
         // Ipakita ang native Telegram confirmation dialog
         tg.showConfirm("Are you sure you want to exit Pinoy Pool Monster?", (isConfirmed) => {
@@ -7372,7 +7389,8 @@ function playCoinSound() {
     }
 }
         async function playButtonSound() {
-             if (buttonSoundPlaying) return;
+    vibrate('light'); // Mag-vibrate ng mahina bawat pindot
+    if (buttonSoundPlaying) return;
              // Ensure audio is initialized, especially if this is the first interaction
              if (!audioInitialized) await initAudio();
              if (!audioInitialized || !uiSynth) {
@@ -10976,8 +10994,12 @@ window.switchShopTab = function(tabName) {
 function renderShopItems() {
     const container = document.getElementById('shop-items-container');
     if (!container) return;
-    container.innerHTML = ''; 
 
+    // --- ITO ANG FIX PARA SA 0/2 -> 1/2 INSTANT UPDATE ---
+    adWatchProgress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
+    // ----------------------------------------------------
+
+    container.innerHTML = '';
     const itemsToDisplay = SHOP_ITEMS[currentShopTab]; 
     if (!itemsToDisplay) return;
 
@@ -10993,13 +11015,17 @@ let isEquipped = (equippedItems.cue === item.id || equippedItems.frame === item.
 
         let buttonHtml = '';
 
-        if (isEquipped) {
+        
+
+if (isEquipped) {
             buttonHtml = `<button class="shop-buy-button equipped" disabled>Equipped</button>`;
         } else if (isOwned) {
             // Kung nabili na o na-unlock na via ads, "Equip" na lang ang button
             buttonHtml = `<button class="shop-buy-button equip" onclick="handleShopAction('${item.id}', '${currentShopTab}')">Equip</button>`;
         } else {
-            // 3. DITO ANG MONETIZATION: Coins o Ads?
+            // 1. Check kung sapat na ang napanood na ads para i-claim
+            const canClaim = currentAds >= adsNeeded;
+            
             buttonHtml = `
                 <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
                     <button class="shop-buy-button buy" onclick="handleShopAction('${item.id}', '${currentShopTab}')">
@@ -11008,14 +11034,15 @@ let isEquipped = (equippedItems.cue === item.id || equippedItems.frame === item.
                     
                     ${adsNeeded > 0 ? `
                     <button class="shop-buy-button" 
-                        style="background: linear-gradient(135deg, #FF8C00, #FFD700); color: black; font-weight: 800; border: 2px solid white;" 
-                        onclick="window.watchAdForItem('${item.id}', '${currentShopTab}', ${adsNeeded})">
-                        📺 ADS (${currentAds}/${adsNeeded})
+                        style="background: ${canClaim ? 'linear-gradient(135deg, #00FF00, #008000)' : 'linear-gradient(135deg, #FF8C00, #FFD700)'}; 
+                               color: ${canClaim ? 'white' : 'black'}; 
+                               font-weight: 800; border: 2px solid white;" 
+                        onclick="${canClaim ? `window.claimAdItem('${item.id}', '${currentShopTab}')` : `window.watchAdForItem('${item.id}', '${currentShopTab}', ${adsNeeded})`}">
+                        📺 ${canClaim ? '✅ CLAIM REWARD' : `WATCH (${currentAds}/${adsNeeded})`}
                     </button>` : ''}
                 </div>
             `;
         }
-
         // 4. I-render ang Stats (para sa Cues)
         let statsHtml = '';
         if (currentShopTab === 'cues' && item.stats) {
@@ -15198,47 +15225,51 @@ function restoreGameState() {
 console.log("✅ ALL SYSTEMS GO: Navigation & Buttons Ready!");
 
 // --- ADSGRAM REWARD SYSTEM (BLOCK ID: 21752) ---
-window.watchAdForItem = function(itemId, category, required) {
-    if (typeof playButtonSound === 'function') playButtonSound();
-    
-    if (!window.Adsgram) {
-        showMessage("Adsgram is still loading...", 3000);
-        return;
+
+
+window.claimAdItem = function(itemId, category) {
+    // 1. Haptic Feedback (Success Pattern)
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
 
-    const AdController = window.Adsgram.init({ blockId: "21752" });
+    // 2. Sound Effect
+    if (typeof playButtonSound === 'function') playButtonSound();
+    
+    // 3. Basahin ang latest record mula sa storage
+    let progress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
+    let item = SHOP_ITEMS[category].find(i => i.id === itemId);
+    
+    if (!item) return;
 
-    AdController.show().then((result) => {
-        // 1. Siguraduhing existing ang tracker
-        if (!adWatchProgress) adWatchProgress = {};
-        if (!adWatchProgress[itemId]) adWatchProgress[itemId] = 0;
-        
-        // 2. Dagdagan ang count
-        adWatchProgress[itemId]++;
-
-        // 3. I-save agad sa memory
-        localStorage.setItem('pinoyPoolAdProgress', JSON.stringify(adWatchProgress));
-
-        // 4. Unlock logic
-        if (adWatchProgress[itemId] >= required) {
-            if (!playerInventory[category].includes(itemId)) {
-                playerInventory[category].push(itemId);
-                saveInventory();
-                showMessage(`🎉 Unlocked: ${itemId.toUpperCase()}!`, 4000);
-                if (typeof triggerFireworks === 'function') triggerFireworks();
-            }
+    // 4. Double check kung sapat na ang napanood na ads
+    if ((progress[itemId] || 0) >= item.adRequired) {
+        if (!playerInventory[category].includes(itemId)) {
+            
+            // I-unlock ang item
+            playerInventory[category].push(itemId);
+            
+            // AUTO-EQUIP: Isuot na agad para ramdam ang reward
+            if (category === 'cues') equippedItems.cue = itemId;
+            if (category === 'frames') equippedItems.frame = itemId;
+            if (category === 'felts') equippedItems.felt = itemId;
+            
+            // I-save ang pagbabago
+            saveInventory(); 
+            if (typeof applyEquippedItems === 'function') applyEquippedItems();
+            
+            // Visual celebration
+            showMessage(`🎉 SUCCESS! ${item.name.toUpperCase()} UNLOCKED!`, 5000);
+            if (typeof triggerFireworks === 'function') triggerFireworks();
+            
+            // I-refresh ang shop display para maging "Equipped" na ang button
+            renderShopItems();
         } else {
-            const remaining = required - adWatchProgress[itemId];
-            showMessage(`Ad watched! ${remaining} more to go.`, 3000);
+            showMessage("Nakuha mo na ang item na ito.", 2000);
         }
-        
-        // 5. Refresh Shop UI
-        if (typeof renderShopItems === 'function') renderShopItems();
-
-    }).catch((error) => {
-        console.error("Adsgram Error:", error);
-        showMessage("Ad failed or skipped.", 3000);
-    });
+    } else {
+        showMessage("Kulang pa ang ads na napanood!", 3000);
+    }
 };
     
 </script>
