@@ -11004,10 +11004,12 @@ function renderShopItems() {
         let requiredLevel = item.minLevel || 1; 
         let isLevelLocked = playerLevel < requiredLevel;
 
+        // ▼▼▼ SIMULA NG BAGONG CODE (Wala nang Level Lock) ▼▼▼
+
         const itemDiv = document.createElement('div');
         itemDiv.className = 'shop-item';
 
-        // ▼▼▼ FIX SA STATS (Kopya mula sa code mo) ▼▼▼
+        // 1. STATS LOGIC (Walang pagbabago)
         let statsHtml = '';
         if (currentShopTab === 'cues' && item.stats) {
             statsHtml = `
@@ -11028,28 +11030,34 @@ function renderShopItems() {
             `;
         }
 
-        // ▼▼▼ DITO ANG PAGBABAGO SA BUTTONS ▼▼▼
+        // 2. BUTTONS LOGIC (Inayos para sa Ads at Buy)
         let buttonHtml = '';
         
         if (isEquipped) {
             buttonHtml = `<button class="shop-buy-button equipped" disabled>Equipped</button>`;
         } else if (isOwned) {
-            buttonHtml = `<button class="shop-buy-button equip" data-item-id="${item.id}" data-category="${currentShopTab}">Equip</button>`;
-        } 
-        // 🔒 LOCK LOGIC: Kung mababa pa ang level, ipakita ang Lock button
-        else if (isLevelLocked) {
-            buttonHtml = `<button class="shop-buy-button disabled" disabled>🔒 Unlocks at Lv. ${requiredLevel}</button>`;
-        } 
-        else {
-            // Normal Buy Logic (Kung may pera o wala)
-            if (playerTotalCurrency >= item.price) {
-                buttonHtml = `<button class="shop-buy-button buy" data-item-id="${item.id}" data-category="${currentShopTab}">Buy (${formatCurrencyShort(item.price)})</button>`;
-            } else {
-                buttonHtml = `<button class="shop-buy-button disabled" disabled>Buy (${formatCurrencyShort(item.price)})</button>`;
-            }
+            // Update: May onclick na ito para direkta na
+            buttonHtml = `<button class="shop-buy-button equip" onclick="playButtonSound(); handleShopAction('${item.id}', '${currentShopTab}')">Equip</button>`;
+        } else {
+            // DITO ANG PAGBABAGO: Dalawang option na (Buy Coin o Watch Ad)
+            buttonHtml = `
+                <div style="display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 5px;">
+                    <button class="shop-buy-button buy" 
+                            onclick="playButtonSound(); handleShopAction('${item.id}', '${currentShopTab}')" 
+                            style="height: 35px; line-height: 35px; font-size: 14px;">
+                        Buy 💰 ${formatCurrencyShort(item.price)}
+                    </button>
+                    
+                    <button class="shop-buy-button" 
+                            style="background: linear-gradient(135deg, #FF4500, #FF8C00); color: white; border: 1px solid #ffcc00; height: 35px; line-height: 35px; font-size: 13px; text-shadow: 1px 1px 0 #000;" 
+                            onclick="watchAdToUnlock('${item.id}', '${currentShopTab}')">
+                        📺 GET FREE (Watch Ad)
+                    </button>
+                </div>
+            `;
         }
 
-        // Buuin ang HTML ng Item Card
+        // 3. GENERATE HTML
         itemDiv.innerHTML = `
             <div class="shop-item-preview" style="background-image: url('${item.imageSrc}'); background-size: contain; background-position: center; background-repeat: no-repeat;"></div>
             <div class="shop-item-name">${item.name}</div>
@@ -11059,16 +11067,8 @@ function renderShopItems() {
         container.appendChild(itemDiv);
     });
 
-    // Re-attach Event Listeners sa mga buttons
-    container.querySelectorAll('.shop-buy-button').forEach(button => {
-        if (!button.disabled) {
-            button.addEventListener('click', () => {
-                playButtonSound();
-                // Ipasa ang category at ID sa handler
-                handleShopAction(button.dataset.itemId, button.dataset.category);
-            });
-        }
-    });
+    // TANGGALIN MO NA YUNG LUMANG 'EVENT LISTENERS' LOOP DITO SA BABA.
+    // Hindi na yun kailangan dahil nilagay na natin yung 'onclick' sa taas.
 }
 
 
