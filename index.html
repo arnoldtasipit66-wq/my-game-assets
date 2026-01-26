@@ -15011,6 +15011,128 @@ function playAdGram() {
         showMessage("Ads not ready yet. Check internet.", 2000);
     }
 }
+
+    // ------------------------------------------------------------
+// 🚀 NAVIGATION & BUTTON SYSTEM ACTIVATOR
+// ------------------------------------------------------------
+
+// 1. Paandarin ang Navigation System (Back Button Support)
+// (Siguraduhing na-paste mo na yung 'setupNavigationSystem' function sa gitna kanina)
+if (typeof setupNavigationSystem === 'function') {
+    setupNavigationSystem();
+}
+
+// 2. I-connect ang mga MENU BUTTONS (Open Modals)
+try {
+    const menuButtons = [
+        { id: 'profile-btn', modal: 'profile-modal' },
+        { id: 'settings-btn', modal: 'settings-modal' },
+        { id: 'shop-btn', modal: 'shop-modal' }
+    ];
+
+    menuButtons.forEach(item => {
+        const btn = document.getElementById(item.id);
+        if (btn) {
+            // Clone para fresh ang listener (iwas doble)
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+
+            newBtn.onclick = (e) => {
+                e.preventDefault();
+                // Tawagin ang Universal Modal Opener
+                if (typeof openUniversalModal === 'function') {
+                    openUniversalModal(item.modal);
+                } else {
+                    console.error("⚠️ Missing function: openUniversalModal");
+                }
+            };
+        }
+    });
+
+} catch (err) {
+    console.log("Button setup error:", err);
+}
+
+// ============================================================
+// 🚀 NAVIGATION & STATE MANAGEMENT SYSTEM (COMBINED)
+// ============================================================
+
+// 1. PINAGANDANG CLOSE BUTTON LOGIC
+// Ito ang nag-aasikaso sa lahat ng "X" buttons sa iyong Modals
+const closeButtonsList = [
+    'profile-close-btn', 
+    'settings-close-btn', 
+    'shop-close-btn',
+    'daily-reward-close-btn'
+];
+
+closeButtonsList.forEach(btnId => {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+        // Clone trick para malinis ang dating listeners
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+
+        newBtn.onclick = (e) => {
+            e.preventDefault();
+            
+            // Patunugin ang click kung may audio setup ka na
+            if (typeof playButtonSound === 'function') playButtonSound();
+            
+            // Instant UI Response: Isara agad ang modal visually
+            const modal = newBtn.closest('.modal-overlay');
+            if (modal) modal.classList.remove('show');
+
+            // I-sync ang browser history (Back Button support)
+            window.history.back();
+
+            // Tawagin ang restorer para hindi mag-freeze ang laro
+            setTimeout(() => {
+                restoreGameState();
+            }, 50);
+        };
+    }
+});
+
+// 2. CENTRALIZED STATE RESTORER
+// Ito ang "utak" na nagdedesisyon kung anong state ang dapat ipakita
+function restoreGameState() {
+    // A. Hanapin kung may natitira pang modal na nakabukas (stacked modals)
+    const activeModal = document.querySelector('.modal-overlay.show');
+    
+    if (activeModal) {
+        gameState = 'modal_open'; 
+        return;
+    }
+
+    // B. Kung wala nang modal, tignan kung nasaan ang player
+    if (window.isInGame) {
+        // Balik sa loob ng match (Bilyaran Mode)
+        if (canMoveCueBall) {
+            gameState = 'moving';
+            if (dragGuideText) dragGuideText.style.display = 'block';
+        } else if (chipsMoving) {
+            gameState = 'shooting';
+        } else {
+            gameState = 'aiming';
+            // Siguraduhing lumitaw ang tako at asinta
+            cueStick.visible = true;
+            if (typeof cueStickElement !== 'undefined' && cueStickElement) {
+                cueStickElement.style.display = 'block';
+            }
+        }
+    } else {
+        // Balik sa main display ng Lobby
+        gameState = 'lobby';
+        if (typeof showLobbyUI === 'function') showLobbyUI();
+    }
+    
+    console.log("Game state successfully restored to:", gameState);
+    
+    // Refresh ang visuals (Dapat tawagin ang main draw function mo)
+    if (typeof draw === 'function') draw(); 
+}
+
    
 
 </script>
