@@ -15214,7 +15214,7 @@ function restoreGameState() {
 console.log("✅ ALL SYSTEMS GO: Navigation & Buttons Ready!");
 
 // --- ADSGRAM REWARD SYSTEM (BLOCK ID: 21752) ---
-// --- ADSGRAM REWARD SYSTEM (FIXED: AUTO-REFRESH UI) ---
+// --- FIXED ADSGRAM REWARD SYSTEM ---
 window.watchAdForItem = function(itemId, category, required) {
     if (typeof playButtonSound === 'function') playButtonSound();
     
@@ -15223,50 +15223,47 @@ window.watchAdForItem = function(itemId, category, required) {
         return;
     }
 
-    // Siguraduhing tama ang blockId base sa iyong screenshot
     const AdController = window.Adsgram.init({ blockId: "21752" });
 
     AdController.show().then((result) => {
-        // I-verify kung natapos ang panonood (result.done)
         if (result.done) {
-            // 1. Kumuha ng fresh progress mula sa localStorage
+            // 1. Load current progress
             let progress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
             if (!progress[itemId]) progress[itemId] = 0;
             
-            // 2. Dagdagan ang count at i-save agad
+            // 2. Increment progress
             progress[itemId]++;
             localStorage.setItem('pinoyPoolAdProgress', JSON.stringify(progress));
             
-            // 3. I-update ang variable sa laro para alam ng Shop ang bagong count
+            // Update global variable
             if (typeof adWatchProgress !== 'undefined') {
                 adWatchProgress = progress;
             }
 
-            // 4. *** ITO ANG FIX: I-REFRESH ANG SHOP DISPLAY AGAD ***
+            // 3. CHECK UNLOCK CONDITION (Ito ang inuna natin!)
+            let justUnlocked = false;
+            if (progress[itemId] >= required) {
+                // Check kung wala pa sa inventory
+                if (!playerInventory[category].includes(itemId)) {
+                    playerInventory[category].push(itemId);
+                    saveInventory(); // Save agad para sure
+                    
+                    justUnlocked = true;
+                    showMessage(`🎉 UNLOCKED: ${itemId.toUpperCase()}!`, 4000);
+                    
+                    if (typeof triggerFireworks === 'function') triggerFireworks();
+                }
+            } else {
+                const remaining = required - progress[itemId];
+                showMessage(`Ad complete! ${remaining} more to go.`, 3000);
+            }
+
+            // 4. REFRESH UI (Ngayon tatawagin natin ito PAGKATAPOS ma-update ang inventory)
             if (typeof renderShopItems === 'function') {
                 renderShopItems(); 
             }
 
-            // 5. Unlock logic: Kung naabot na ang quota
-            if (progress[itemId] >= required) {
-                if (!playerInventory[category].includes(itemId)) {
-                    playerInventory[category].push(itemId);
-                    saveInventory(); // I-save ang bagong gamit
-                    showMessage(`🎉 UNLOCKED: ${itemId.toUpperCase()}!`, 4000);
-                    
-                    // Fireworks effect para mas masaya
-                    if (typeof triggerFireworks === 'function') triggerFireworks();
-                    
-                    // Refresh ulit para maging "Equip" ang button
-                    renderShopItems();
-                }
-            } else {
-                // Ipaalam sa player kung ilan na lang ang kulang
-                const remaining = required - progress[itemId];
-                showMessage(`Ad complete! ${remaining} more to go.`, 3000);
-            }
         } else {
-            // Kapag hindi tinapos ang video
             showMessage("Ad skipped. No reward given.", 3000);
         }
 
