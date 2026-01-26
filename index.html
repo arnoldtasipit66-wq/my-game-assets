@@ -15145,7 +15145,12 @@ try {
     console.log("Button setup error:", err);
 }
 
-// 3. I-connect ang mga CLOSE BUTTONS (X)
+// ============================================================
+// 🚀 NAVIGATION & STATE MANAGEMENT SYSTEM (COMBINED)
+// ============================================================
+
+// 1. PINAGANDANG CLOSE BUTTON LOGIC
+// Ito ang nag-aasikaso sa lahat ng "X" buttons sa iyong Modals
 const closeButtonsList = [
     'profile-close-btn', 
     'settings-close-btn', 
@@ -15156,16 +15161,73 @@ const closeButtonsList = [
 closeButtonsList.forEach(btnId => {
     const btn = document.getElementById(btnId);
     if (btn) {
+        // Clone trick para malinis ang dating listeners
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
 
         newBtn.onclick = (e) => {
             e.preventDefault();
+            
+            // Patunugin ang click kung may audio setup ka na
             if (typeof playButtonSound === 'function') playButtonSound();
-            window.history.back(); // Ito ang magsasara ng modal
+            
+            // Instant UI Response: Isara agad ang modal visually
+            const modal = newBtn.closest('.modal-overlay');
+            if (modal) modal.classList.remove('show');
+
+            // I-sync ang browser history (Back Button support)
+            window.history.back();
+
+            // Tawagin ang restorer para hindi mag-freeze ang laro
+            setTimeout(() => {
+                restoreGameState();
+            }, 50);
         };
     }
 });
+
+// 2. CENTRALIZED STATE RESTORER
+// Ito ang "utak" na nagdedesisyon kung anong state ang dapat ipakita
+function restoreGameState() {
+    // A. Hanapin kung may natitira pang modal na nakabukas (stacked modals)
+    const activeModal = document.querySelector('.modal-overlay.show');
+    
+    if (activeModal) {
+        gameState = 'modal_open'; 
+        return;
+    }
+
+    // B. Kung wala nang modal, tignan kung nasaan ang player
+    if (window.isInGame) {
+        // Balik sa loob ng match (Bilyaran Mode)
+        if (canMoveCueBall) {
+            gameState = 'moving';
+            if (dragGuideText) dragGuideText.style.display = 'block';
+        } else if (chipsMoving) {
+            gameState = 'shooting';
+        } else {
+            gameState = 'aiming';
+            // Siguraduhing lumitaw ang tako at asinta
+            cueStick.visible = true;
+            if (typeof cueStickElement !== 'undefined' && cueStickElement) {
+                cueStickElement.style.display = 'block';
+            }
+        }
+    } else {
+        // Balik sa main display ng Lobby
+        gameState = 'lobby';
+        if (typeof showLobbyUI === 'function') showLobbyUI();
+    }
+    
+    console.log("Game state successfully restored to:", gameState);
+    
+    // Refresh ang visuals (Dapat tawagin ang main draw function mo)
+    if (typeof draw === 'function') draw(); 
+}
+
+// ============================================================
+// 🛑 END OF NAVIGATION SYSTEM
+// ============================================================
 
 console.log("✅ ALL SYSTEMS GO: Navigation & Buttons Ready!");
 
