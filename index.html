@@ -15201,43 +15201,51 @@ console.log("✅ ALL SYSTEMS GO: Navigation & Buttons Ready!");
 window.watchAdForItem = function(itemId, category, required) {
     if (typeof playButtonSound === 'function') playButtonSound();
     
+    // I-verify kung ang Adsgram ay loaded na
     if (!window.Adsgram) {
-        showMessage("Adsgram is still loading...", 3000);
+        showMessage("Adsgram is still loading... Please try again.", 3000);
         return;
     }
 
     const AdController = window.Adsgram.init({ blockId: "21752" });
 
     AdController.show().then((result) => {
-        // 1. Siguraduhing existing ang tracker
-        if (!adWatchProgress) adWatchProgress = {};
-        if (!adWatchProgress[itemId]) adWatchProgress[itemId] = 0;
+        // Ang 'result' object ay naglalaman ng status kung natapos ang ad
+        // Result status: { done: true, description: "Reward assigned" }
         
-        // 2. Dagdagan ang count
-        adWatchProgress[itemId]++;
+        if (result.done) {
+            // DITO LANG DAPAT MAGDAGDAG NG COUNT
+            if (!adWatchProgress) adWatchProgress = {};
+            if (!adWatchProgress[itemId]) adWatchProgress[itemId] = 0;
+            
+            adWatchProgress[itemId]++;
+            localStorage.setItem('pinoyPoolAdProgress', JSON.stringify(adWatchProgress));
 
-        // 3. I-save agad sa memory
-        localStorage.setItem('pinoyPoolAdProgress', JSON.stringify(adWatchProgress));
-
-        // 4. Unlock logic
-        if (adWatchProgress[itemId] >= required) {
-            if (!playerInventory[category].includes(itemId)) {
-                playerInventory[category].push(itemId);
-                saveInventory();
-                showMessage(`🎉 Unlocked: ${itemId.toUpperCase()}!`, 4000);
-                if (typeof triggerFireworks === 'function') triggerFireworks();
+            if (adWatchProgress[itemId] >= required) {
+                if (!playerInventory[category].includes(itemId)) {
+                    playerInventory[category].push(itemId);
+                    saveInventory();
+                    showMessage(`🎉 UNLOCKED: ${itemId.toUpperCase()}!`, 5000);
+                    if (typeof triggerFireworks === 'function') triggerFireworks();
+                }
+            } else {
+                const remaining = required - adWatchProgress[itemId];
+                showMessage(`Ad complete! ${remaining} more to unlock.`, 3000);
             }
+            
+            if (typeof renderShopItems === 'function') renderShopItems();
         } else {
-            const remaining = required - adWatchProgress[itemId];
-            showMessage(`Ad watched! ${remaining} more to go.`, 3000);
+            // Kapag ni-close ng user ang ad nang hindi tapos
+            showMessage("Ad skipped. No reward given.", 3000);
         }
-        
-        // 5. Refresh Shop UI
-        if (typeof renderShopItems === 'function') renderShopItems();
-
     }).catch((error) => {
         console.error("Adsgram Error:", error);
-        showMessage("Ad failed or skipped.", 3000);
+        // Error codes: 'error', 'timeout', 'no_fill'
+        if (error.error === 'no_fill') {
+            showMessage("No ads available right now. Try again later.", 3000);
+        } else {
+            showMessage("Ad failed to load.", 3000);
+        }
     });
 };
     
