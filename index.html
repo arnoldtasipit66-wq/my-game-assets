@@ -15326,62 +15326,43 @@ window.watchAdForItem = function(itemId, category, required) {
     });
 };
 
-// ==========================================
-// 🎁 REWARD & UNLOCK SYSTEM (FINAL)
-// ==========================================
-
-// ==========================================
-// 🎁 REWARD & UNLOCK SYSTEM (FIXED)
-// ==========================================
 window.claimAdItem = function(itemId, category) {
-    // 1. Haptic Feedback (Success Pattern)
-    if (window.Telegram?.WebApp?.HapticFeedback) {
-        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-    }
-
     if (typeof playButtonSound === 'function') playButtonSound();
     
-    // 2. Gamitin ang window reference para sigurado
-    let itemsSource = window.SHOP_ITEMS || SHOP_ITEMS;
-    let progress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
-    let item = itemsSource[category].find(i => i.id === itemId);
-    
-    if (!item) {
-        console.error("Item not found in shop:", itemId);
-        return;
-    }
+    // Kunin lahat sa window para iwas ReferenceError
+    const items = window.SHOP_ITEMS;
+    const inventory = window.playerInventory;
+    const equipped = window.equippedItems;
 
-    // 3. Siguraduhing sapat na ang ads
+    let progress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
+    let item = items[category].find(i => i.id === itemId);
+    
+    if (!item) return;
+
     if ((progress[itemId] || 0) >= item.adRequired) {
-        if (!playerInventory[category].includes(itemId)) {
+        if (!inventory[category].includes(itemId)) {
+            // 1. I-unlock
+            inventory[category].push(itemId);
             
-            // I-unlock ang item
-            playerInventory[category].push(itemId);
+            // 2. Isuot agad
+            if (category === 'cues') equipped.cue = itemId;
+            if (category === 'frames') equipped.frame = itemId;
+            if (category === 'felts') equipped.felt = itemId;
             
-            // AUTO-EQUIP
-            if (category === 'cues') equippedItems.cue = itemId;
-            if (category === 'frames') equippedItems.frame = itemId;
-            if (category === 'felts') equippedItems.felt = itemId;
+            // 3. Save at Apply (Gamit ang window bridge)
+            window.saveInventory(); 
+            window.applyEquippedItems();
             
-            saveInventory(); 
-            if (typeof applyEquippedItems === 'function') applyEquippedItems();
-            
-            showMessage(`🎉 SUCCESS! ${item.name.toUpperCase()} UNLOCKED!`, 5000);
+            showMessage("🎉 SUCCESS UNLOCKED!", 5000);
             if (typeof triggerFireworks === 'function') triggerFireworks();
             
-            // Refresh Shop display
-            renderShopItems();
-            
-            // I-sync ang stats sa database
-            if (typeof updatePlayerData === 'function') {
-                updatePlayerData(localPlayerUid); 
-            }
+            renderShopItems(); // Refresh para maging "Equipped"
+            window.updatePlayerData(window.localPlayerUid); 
         } else {
             showMessage("Nakuha mo na ito.", 2000);
         }
     } else {
-        const kulang = item.adRequired - (progress[itemId] || 0);
-        showMessage(`Kulang pa ng ${kulang} ads!`, 3000);
+        showMessage("Manood muna ng ads!", 3000);
     }
 };
     
