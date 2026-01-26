@@ -15214,6 +15214,7 @@ function restoreGameState() {
 console.log("✅ ALL SYSTEMS GO: Navigation & Buttons Ready!");
 
 // --- ADSGRAM REWARD SYSTEM (BLOCK ID: 21752) ---
+// --- ADSGRAM REWARD SYSTEM (FIXED: AUTO-REFRESH UI) ---
 window.watchAdForItem = function(itemId, category, required) {
     if (typeof playButtonSound === 'function') playButtonSound();
     
@@ -15222,51 +15223,59 @@ window.watchAdForItem = function(itemId, category, required) {
         return;
     }
 
+    // Siguraduhing tama ang blockId base sa iyong screenshot
     const AdController = window.Adsgram.init({ blockId: "21752" });
 
     AdController.show().then((result) => {
-        // I-check kung natapos ang video
+        // I-verify kung natapos ang panonood (result.done)
         if (result.done) {
-            // Kunin ang latest record mula sa storage
+            // 1. Kumuha ng fresh progress mula sa localStorage
             let progress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
             if (!progress[itemId]) progress[itemId] = 0;
             
-            // Dagdagan ang count
+            // 2. Dagdagan ang count at i-save agad
             progress[itemId]++;
-
-            // I-save pabalik sa localStorage
             localStorage.setItem('pinoyPoolAdProgress', JSON.stringify(progress));
             
-            // I-update ang global variable para synchronized ang shop
-            adWatchProgress = progress;
+            // 3. I-update ang variable sa laro para alam ng Shop ang bagong count
+            if (typeof adWatchProgress !== 'undefined') {
+                adWatchProgress = progress;
+            }
 
-            // Unlock logic: Kung naabot na ang required ads
+            // 4. *** ITO ANG FIX: I-REFRESH ANG SHOP DISPLAY AGAD ***
+            if (typeof renderShopItems === 'function') {
+                renderShopItems(); 
+            }
+
+            // 5. Unlock logic: Kung naabot na ang quota
             if (progress[itemId] >= required) {
                 if (!playerInventory[category].includes(itemId)) {
                     playerInventory[category].push(itemId);
-                    saveInventory();
-                    showMessage(`🎉 Unlocked: ${itemId.toUpperCase()}!`, 4000);
+                    saveInventory(); // I-save ang bagong gamit
+                    showMessage(`🎉 UNLOCKED: ${itemId.toUpperCase()}!`, 4000);
+                    
+                    // Fireworks effect para mas masaya
                     if (typeof triggerFireworks === 'function') triggerFireworks();
+                    
+                    // Refresh ulit para maging "Equip" ang button
+                    renderShopItems();
                 }
             } else {
+                // Ipaalam sa player kung ilan na lang ang kulang
                 const remaining = required - progress[itemId];
                 showMessage(`Ad complete! ${remaining} more to go.`, 3000);
             }
-            
-            // IMPORTANTE: I-refresh ang itsura ng shop para maging 1/2
-            renderShopItems();
-
         } else {
-            // Kapag ini-skip ang ads
-            showMessage("Ad skipped. Manood hanggang dulo para sa reward.", 3000);
+            // Kapag hindi tinapos ang video
+            showMessage("Ad skipped. No reward given.", 3000);
         }
 
     }).catch((error) => {
         console.error("Adsgram Error:", error);
         if (error.error === 'no_fill') {
-            showMessage("Walang available na ads sa ngayon. Try again later.", 3000);
+            showMessage("Walang available na ads sa ngayon. Subukan muli.", 3000);
         } else {
-            showMessage("Ad failed or skipped.", 3000);
+            showMessage("Ad failed to load. Check internet.", 3000);
         }
     });
 };
