@@ -5742,21 +5742,27 @@ function handleExitRequest() {
         });
     }
 }
-// --- 2. ANG TAGABANTAY NG BACK BUTTON ---
+// --- 2. ANG PINAKAMALUPIT NA TAGABANTAY NG BACK BUTTON ---
 tg.BackButton.onClick(() => {
-    // Check muna kung may nakabukas na modal (Shop, Leaderboard, etc.)
-    const activeModal = document.querySelector('.modal-overlay.show') || document.querySelector('.modal.show');
+    const activeModal = document.querySelector('.modal-overlay.show');
     
     if (activeModal) {
-        // KUNG MAY MODAL: Isara lang ang modal (WALANG confirmation para hindi nakakairita)
-        activeModal.classList.remove('show'); 
-        tg.BackButton.hide(); // Itago ang back arrow
+        activeModal.classList.remove('show');
+        window.isClosingModal = true;
         
-        if (window) window.isClosingModal = true;
-        history.back(); 
+        // Tawagin ang popstate logic nang manual para mag-sync ang history
+        history.back();
+        
+        // Pagkatapos ng back, i-check ang state
+        setTimeout(() => {
+            restoreGameState();
+            // Itago ang BackButton kung wala na talagang modals
+            if (!document.querySelector('.modal-overlay.show')) {
+                tg.BackButton.hide();
+            }
+        }, 50);
     } else {
-        // KUNG WALANG MODAL (Nasa Main Menu): Tawagin ang confirmation window
-        handleExitRequest(); 
+        handleExitRequest();
     }
 });      
                let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
