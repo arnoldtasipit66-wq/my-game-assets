@@ -15373,6 +15373,36 @@ window.claimAdItem = function(itemId, category) {
         showMessage(`Manood muna ng ads! Kulang pa ng ${remaining}.`, 3000);
     }
 };
+
+    // ============================================================
+// 🔥 GLOBAL EXPORTS (PARA GUMANA ANG CLAIM BUTTON) 🔥
+// ============================================================
+
+// 1. Mga Variables
+window.SHOP_ITEMS = SHOP_ITEMS;
+window.playerInventory = playerInventory;
+window.equippedItems = equippedItems;
+
+// 2. Mga Helper Functions
+window.showMessage = showMessage;
+window.saveInventory = saveInventory;
+window.applyEquippedItems = applyEquippedItems;
+window.renderShopItems = renderShopItems;
+window.updateCurrencyDisplay = updateCurrencyDisplay;
+
+// 3. Fireworks & Saving
+if (typeof triggerFireworks !== 'undefined') {
+    window.triggerFireworks = triggerFireworks;
+} else {
+    // Fallback kung wala ang fireworks para hindi mag-error
+    window.triggerFireworks = function() { console.log("Boom!"); };
+}
+
+if (typeof updatePlayerData !== 'undefined') {
+    window.updatePlayerData = updatePlayerData;
+}
+
+console.log("✅ All Global Functions Exported successfully!");
     
 </script>
 </body>
