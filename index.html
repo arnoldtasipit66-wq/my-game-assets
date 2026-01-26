@@ -10991,7 +10991,7 @@ function renderShopItems() {
     const container = document.getElementById('shop-items-container');
     if (!container) return;
 
-    // 1. FRESH DATA SYNC: Siguraduhing updated ang ads progress mula storage
+    // A. FRESH DATA SYNC: Siguraduhing updated ang ads progress mula storage
     adWatchProgress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
     
     container.innerHTML = ''; 
@@ -11000,7 +11000,7 @@ function renderShopItems() {
     if (!itemsToDisplay) return;
 
     itemsToDisplay.forEach(item => {
-        // 2. CHECK STATUS
+        // B. CHECK STATUS NG ITEM
         const isOwned = playerInventory[currentShopTab].includes(item.id);
         const isEquipped = (equippedItems.cue === item.id || equippedItems.frame === item.id || equippedItems.felt === item.id);
         
@@ -11014,10 +11014,10 @@ function renderShopItems() {
         } else if (isOwned) {
             buttonHtml = `<button class="shop-buy-button equip" onclick="handleShopAction('${item.id}', '${currentShopTab}')">Equip</button>`;
         } else {
-            // 3. MONETIZATION LOGIC (Coins or Ads)
+            // C. ADS O COINS LOGIC
             const canClaim = adsNeeded > 0 && currentAds >= adsNeeded;
             
-            // Layout para sa ADS button
+            // Dito natin ididirekta ang action: Watch o Claim?
             const btnLabel = canClaim ? '✅ CLAIM REWARD' : `WATCH (${currentAds}/${adsNeeded})`;
             const btnAction = canClaim 
                 ? `window.claimAdItem('${item.id}', '${currentShopTab}')` 
@@ -11043,7 +11043,7 @@ function renderShopItems() {
             `;
         }
 
-        // 4. STATS (Cues only)
+        // D. STATS (Para sa Cues)
         let statsHtml = '';
         if (currentShopTab === 'cues' && item.stats) {
             statsHtml = `
@@ -11060,7 +11060,7 @@ function renderShopItems() {
             `;
         }
 
-        // 5. FINAL RENDER
+        // E. FINAL CARD RENDER
         const itemDiv = document.createElement('div');
         itemDiv.className = 'shop-item';
         itemDiv.innerHTML = `
@@ -11072,7 +11072,6 @@ function renderShopItems() {
         container.appendChild(itemDiv);
     });
 }
-
 // Ginawa nating 'window.handleShopAction' para mabasa ng onclick sa shop HTML
 window.handleShopAction = async function(itemId, category) {
     const item = SHOP_ITEMS[category].find(i => i.id === itemId);
