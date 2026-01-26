@@ -13533,15 +13533,26 @@ function closeDailyRewardModal() {
 }
 
 async function saveCurrency() {
-    if (!db || !localPlayerUid) return;
-    // Tatawagin ang updatePlayerData pero 'false' sa didWin dahil currency update lang ito
-    await updatePlayerData(localPlayerUid, false);
-}
-// ▼▼▼ UPDATED LOBBY LOGIC (WITH RANK CARD) ▼▼▼
+    // 1. Save sa Local Storage AGAD (Instant Backup)
+    // Ito ang solusyon para hindi mag-zero coins pag refresh
+    if (typeof playerTotalCurrency !== 'undefined') {
+        localStorage.setItem('pinoyPoolCoins', playerTotalCurrency.toString());
+    }
 
-/**
- * Ito ang function na nag-cacalculate kung gaano kalayo ka na sa next rank.
- */
+    // 2. I-save din ang Inventory at Equipped Items (Para sure)
+    if (typeof saveInventory === 'function') {
+        saveInventory();
+    }
+
+    // 3. Save sa Online Database (Kung may internet at nakalogin)
+    if (typeof db !== 'undefined' && typeof localPlayerUid !== 'undefined' && localPlayerUid) {
+        // Siguraduhing existing ang updatePlayerData bago tawagin
+        if (typeof updatePlayerData === 'function') {
+            // false = hindi ito "Win", update lang ng balance sa server
+            await updatePlayerData(localPlayerUid, false); 
+        }
+    }
+}
 function updateLobbyRankDisplay() {
     const card = document.getElementById('lobby-rank-card');
     const iconEl = document.getElementById('lobby-rank-icon');
