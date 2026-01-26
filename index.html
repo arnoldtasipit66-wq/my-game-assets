@@ -5771,8 +5771,12 @@ tg.BackButton.onClick(() => {
 });      
                // Gawin nating window properties para ma-access kahit saan
 let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
-window.localPlayerUid = null; // Idagdag ito
-window.db = null;             // Idagdag ito
+window.localPlayerUid = null; 
+window.db = null;
+
+// --- DITO MO ISINGIT YUNG BAGONG FLAG ---
+let isCurrencyLoaded = false; 
+// ----------------------------------------
 
 let tempInviteFriendUid = null;
 let tempInviteFriendName = null;
@@ -9061,15 +9065,20 @@ async function handleRematchRequest() {
 }
 
 async function updatePlayerData(uid, didWin = false) {
-    if (!uid || !db) return;
+    // --- 🛡️ THE SAFETY LOCK ---
+    // Kung hindi pa loaded ang coins mula sa server, BAWAL mag-save.
+    if (!uid || !db || !isCurrencyLoaded) {
+        console.warn("🚫 UpdatePlayerData blocked: Currency not yet loaded or UID missing.");
+        return; 
+    }
    
     const playerDocRef = doc(db, "players", uid);
    
     try {
-        const playerDoc = await getDoc(playerDocRef);
+        // Hindi na natin kailangan ang getDoc dito dahil gagamit tayo ng merge: true
         const displayName = localStorage.getItem('pinoyPoolPlayerName') || "Anonymous";
         
-        // Kunin ang data mula sa Telegram
+        // Kunin ang data mula sa Telegram (Safe access)
         const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
         
         // Kunin ang Wallet Address mula sa TON Connect UI
@@ -9081,9 +9090,9 @@ async function updatePlayerData(uid, didWin = false) {
             trophies: playerTrophies,
             level: playerLevel,
             xp: playerXP,
-            balance: playerTotalCurrency, // <--- Ngayon nase-save na rin ang Coins dito
-            tgId: tgUser ? tgUser.id.toString() : (playerDoc.exists() ? (playerDoc.data().tgId || null) : null),
-            walletAddress: currentWalletAddress || (playerDoc.exists() ? (playerDoc.data().walletAddress || null) : null),
+            balance: playerTotalCurrency, // <--- Ngayon, sigurado na tayong HINDI ito 0 (maliban kung 0 talaga pera mo)
+            tgId: tgUser ? tgUser.id.toString() : null,
+            walletAddress: currentWalletAddress,
             lastPlayed: serverTimestamp()
         };
 
@@ -9091,11 +9100,11 @@ async function updatePlayerData(uid, didWin = false) {
             dataToSave.wins = increment(1);
         }
        
-        // Gamitin ang setDoc na may { merge: true } para hindi mabura ang ibang fields
+        // I-save sa Firestore
         await setDoc(playerDocRef, dataToSave, { merge: true });
        
-        console.log("✅ All stats synced to Firestore (Coins, Trophies, Wallet, etc.)");
-        updateCurrencyDisplay(); // I-refresh ang UI
+        console.log("✅ Stats & Coins synced to Firestore successfully!");
+        updateCurrencyDisplay(); 
        
     } catch (error) {
         console.error("❌ Error updating player data:", error);
@@ -10106,23 +10115,23 @@ function updateInfoBox() {
 // Idagdag itong 3 bagong functions
 // ✅ BAGONG LOAD FUNCTION (Galing Firebase)
 async function loadCurrency() {
-    if (!db || !localPlayerUid) return; // Wait for connection
+    if (!db || !localPlayerUid) return;
     try {
         const docRef = doc(db, "players", localPlayerUid);
         const snap = await getDoc(docRef);
         
         if (snap.exists()) {
-            // Kunin ang laman ng wallet sa server
             playerTotalCurrency = snap.data().balance || 0;
-            console.log("PPM Loaded:", playerTotalCurrency);
         } else {
-            // New Player? Bigyan ng 100 PPM panimula
             playerTotalCurrency = 100;
-            updatePlayerData(localPlayerUid); // Save agad
         }
+
+        // ITO ANG MAGBUBUKAS NG LOCK:
+        isCurrencyLoaded = true; 
+
         updateCurrencyDisplay();
     } catch (e) {
-        console.error("Error loading PPM:", e);
+        console.error(e);
     }
 }
 function loadPlayerName() {
@@ -11011,15 +11020,20 @@ let isEquipped = (equippedItems.cue === item.id || equippedItems.frame === item.
                         💰 ${formatCurrencyShort(item.price)}
                     </button>
                     
-                    ${adsNeeded > 0 ? `
-<button class="shop-buy-button" 
-    style="background: linear-gradient(90deg, #FF8C00 ${(currentAds/adsNeeded)*100}%, #222 ${(currentAds/adsNeeded)*100}%); color: white; font-weight: 800; border: 2px solid #FFD700;" 
-    onclick="window.watchAdForItem('${item.id}', '${currentShopTab}', ${adsNeeded})">
-    📺 ${currentAds >= adsNeeded ? 'GET REWARD' : `WATCH (${currentAds}/${adsNeeded})`}
-</button>` : ''}
-                </div>
-            `;
-        }
+                    // BAGONG CODE (FIXED):
+${adsNeeded > 0 ? (() => {
+    const canClaim = currentAds >= adsNeeded;
+    const action = canClaim ? `window.claimAdItem('${item.id}', '${currentShopTab}')` : `window.watchAdForItem('${item.id}', '${currentShopTab}', ${adsNeeded})`;
+    const label = canClaim ? '✅ CLAIM REWARD' : `WATCH (${currentAds}/${adsNeeded})`;
+    const btnColor = canClaim ? 'linear-gradient(135deg, #00FF00, #008000)' : `linear-gradient(90deg, #FF8C00 ${(currentAds/adsNeeded)*100}%, #222 ${(currentAds/adsNeeded)*100}%)`;
+
+    return `
+    <button class="shop-buy-button" 
+        style="background: ${btnColor}; color: white; font-weight: 800; border: 2px solid #FFD700;" 
+        onclick="${action}">
+        📺 ${label}
+    </button>`;
+})() : ''}
 
         // 4. I-render ang Stats (para sa Cues)
         let statsHtml = '';
@@ -11452,52 +11466,59 @@ function showColorAssignmentPopup(message, color) {
 }
 // ▲▲▲ HANGGANG DITO ANG BAGONG FUNCTION ▲▲▲
      function signInPlayer() { 
-    onAuthStateChanged(auth, (user) => { 
+    onAuthStateChanged(auth, async (user) => { 
         if (user) { 
-            // Gawin nating 'window' property para mabasa ng Adsgram
+            // 1. I-sync ang UID sa parehong local at window variable
+            localPlayerUid = user.uid;
             window.localPlayerUid = user.uid; 
             
-            // I-assign din ang 'db' sa window para sa wallet function
+            // I-assign ang db sa window para sa ibang functions
             window.db = db; 
 
             isAuthReady = true; 
             onlineButton.disabled = false;
-        
-        // --- 1. Load Currency ---
-        if (typeof loadCurrency === 'function') {
-            loadCurrency(); 
-        }
 
-        // --- 2. 👇 DAGDAG: CHECK PENDING WALLET 👇 ---
-        // I-check kung may naka-store na wallet address sa localStorage
-        const pendingWallet = localStorage.getItem('pendingWalletAddress');
-        if (pendingWallet) {
-            console.log("Saving pending wallet for logged-in user...");
-            // Siguraduhin na ang saveWalletToFirestore function ay defined sa script mo
-            if (typeof saveWalletToFirestore === 'function') {
+            // --- CRITICAL SEQUENCE (ANG FIX) ---
+            
+            // A. LOAD: Kunin muna ang pera sa database
+            if (typeof loadCurrency === 'function') {
+                await loadCurrency(); // Mag-antay hanggang matapos ang load
+            }
+
+            // B. INITIALIZE: Tsaka i-setup ang player document (ngayong may pera na tayo)
+            if (typeof createPlayerDocument === 'function') {
+                await createPlayerDocument(); 
+            }
+            
+            // C. WALLET: Check pending wallet
+            const pendingWallet = localStorage.getItem('pendingWalletAddress');
+            if (pendingWallet && typeof saveWalletToFirestore === 'function') {
+                console.log("Saving pending wallet...");
                 saveWalletToFirestore(localPlayerUid, pendingWallet);
             }
-        }
-        // ----------------------------------------------
-        
-        // Update UI (Subtitle lang)
-        const sub = document.querySelector('#online-button .card-subtitle');
-        if(sub) {
-            sub.textContent = "Ranked Match • Online";
-            sub.style.color = "#00FF00"; 
-        }
 
-        createPlayerDocument(); 
-        startInviteListener(); 
-        setupOnlineStatus(); 
-    } else { 
-        signInAnonymously(auth).catch((error) => { 
-            console.error("Sign-in failed:", error); 
-            isAuthReady = false; 
-            onlineButton.disabled = true; 
-        }); 
-    } 
-}); 
+            // D. LISTENERS: Simulan ang real-time updates
+            startInviteListener(); 
+            setupOnlineStatus(); 
+
+            // E. UI UPDATE: Ipakita ang status
+            const sub = document.querySelector('#online-button .card-subtitle');
+            if(sub) {
+                sub.textContent = "Ranked Match • Online";
+                sub.style.color = "#00FF00"; 
+            }
+            
+            console.log("✅ Sign-in and Data Sync Complete.");
+
+        } else { 
+            // Anonymous login kung walang user
+            signInAnonymously(auth).catch((error) => { 
+                console.error("Sign-in failed:", error); 
+                isAuthReady = false; 
+                onlineButton.disabled = true; 
+            }); 
+        } 
+    }); 
 }
 // Dito ise-save ang "unsubscribe" function para sa invite listener
 let unsubscribeFromInvites = null;
@@ -11611,11 +11632,10 @@ function showInvitePopup(fromName, gameType, inviteId, inviteData) { // Note: Ad
  * Ito ang titiyak na lahat ng player ay may 'searchableName' agad.
  */
 async function createPlayerDocument() {
-    // Siguraduhin na may UID, database, AT pangalan na bago sumubok magsulat
-    if (!localPlayerUid || !db || !localPlayerName || localPlayerName === "Guest") {
-        // Kung wala pa ang isa sa mga 'to, huwag munang ituloy.
-        // Tatawagin ulit 'to mamaya kapag kumpleto na.
-        console.log("Waiting for UID and Name before creating player document...");
+    // --- DAGDAG NA BANTAY (ANG FIX) ---
+    // Ngayon, kasama na sa check si 'isCurrencyLoaded'
+    if (!localPlayerUid || !db || !localPlayerName || localPlayerName === "Guest" || !isCurrencyLoaded) {
+        console.log("Waiting for data sync (UID/Name/Currency) before proceeding...");
         return; 
     }
 
@@ -11626,29 +11646,34 @@ async function createPlayerDocument() {
 
         if (!playerDoc.exists()) {
             // --- BAGO PA LANG ANG PLAYER ---
-            // Gagawa tayo ng bagong document para sa kanila
             console.log("Creating new player document for:", localPlayerName);
             await setDoc(playerDocRef, {
                 displayName: localPlayerName,
-                searchableName: localPlayerName.toLowerCase(), // ETO NA YUN!
+                searchableName: localPlayerName.toLowerCase(),
                 wins: 0,
-                level: 1, // Kunin natin sa global variable
-                xp: 0,    // Kunin natin sa global variable
+                level: 1,
+                xp: 0,
+                balance: 100, // <--- BIGYAN NG STARTING GIFT ANG NEW PLAYER
                 equippedCueId: 'default',
                 lastPlayed: serverTimestamp()
             });
+            
+            // I-sync din ang local variable para sa bagong player
+            playerTotalCurrency = 100;
+            updateCurrencyDisplay();
+
         } else {
             // --- BUMALIK NA PLAYER ---
-            // I-update lang natin ang pangalan at searchableName
-            // para kung nag-iba man, updated pa rin.
-            console.log("Player document exists. Updating name...");
+            // DITO MO SIGURADUHIN NA WALA ANG 'balance' FIELD
+            console.log("Updating returning player's name info...");
             await updateDoc(playerDocRef, {
                 displayName: localPlayerName,
-                searchableName: localPlayerName.toLowerCase() // ETO NA YUN!
+                searchableName: localPlayerName.toLowerCase()
+                // Dito ay bawal ilagay ang balance para hindi ma-overwrite ng 0 ang ipon mo
             });
         }
     } catch (error) {
-        console.error("Error creating or updating player document:", error);
+        console.error("Error in createPlayerDocument:", error);
     }
 }
 
@@ -15278,6 +15303,55 @@ window.watchAdForItem = function(itemId, category, required) {
             showMessage("Ad failed to load. Check internet.", 3000);
         }
     });
+};
+
+// ==========================================
+// 🎁 REWARD & UNLOCK SYSTEM (FINAL)
+// ==========================================
+
+window.claimAdItem = function(itemId, category) {
+    // 1. Haptic Feedback (Success Pattern)
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+    }
+
+    if (typeof playButtonSound === 'function') playButtonSound();
+    
+    // 2. Basahin ang latest progress
+    let progress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
+    let item = SHOP_ITEMS[category].find(i => i.id === itemId);
+    
+    if (!item) return;
+
+    // 3. Siguraduhing sapat na ang ads
+    if ((progress[itemId] || 0) >= item.adRequired) {
+        if (!playerInventory[category].includes(itemId)) {
+            
+            // I-unlock ang item
+            playerInventory[category].push(itemId);
+            
+            // AUTO-EQUIP
+            if (category === 'cues') equippedItems.cue = itemId;
+            if (category === 'frames') equippedItems.frame = itemId;
+            if (category === 'felts') equippedItems.felt = itemId;
+            
+            saveInventory(); 
+            if (typeof applyEquippedItems === 'function') applyEquippedItems();
+            
+            showMessage(`🎉 SUCCESS! ${item.name.toUpperCase()} UNLOCKED!`, 5000);
+            if (typeof triggerFireworks === 'function') triggerFireworks();
+            
+            // Refresh Shop para maging "Equipped" ang button
+            renderShopItems();
+            
+            // I-save ang stats sa database (para alam ng server na nakuha mo na)
+            updatePlayerData(localPlayerUid); 
+        } else {
+            showMessage("Nakuha mo na ito.", 2000);
+        }
+    } else {
+        showMessage("Kulang pa ang napanood na ads!", 3000);
+    }
 };
     
 </script>
