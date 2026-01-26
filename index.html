@@ -15168,8 +15168,59 @@ closeButtonsList.forEach(btnId => {
 console.log("✅ ALL SYSTEMS GO: Navigation & Buttons Ready!");
 
 // ============================================================
-// 🛑 DITO NA MAGTATAPOS ANG SCRIPT MO
+// 📺 ADSGRAM REWARD FUNCTION (Last Part)
 // ============================================================
-</script>
+window.watchAdToUnlock = async function(itemId, category) {
+    // 1. Play Click Sound
+    if (typeof playButtonSound === 'function') playButtonSound();
+    
+    try {
+        // 2. Ipakita ang Ad
+        // (Siguraduhin na nailagay mo na sa taas yung: const AdController = window.Adsgram.init...)
+        const result = await AdController.show();
+        
+        // 3. Check kung tinapos ang ad (result.done is true)
+        if (result.done) {
+            
+            // Check kung nasa inventory na (iwas doble)
+            if (!playerInventory[category].includes(itemId)) {
+                
+                // A. Ibigay ang Item
+                playerInventory[category].push(itemId);
+                
+                // B. I-save sa Database / LocalStorage
+                if (typeof saveInventory === 'function') saveInventory();
+                
+                // Update sa Firebase (kung meron man)
+                if (typeof updatePlayerData === 'function' && typeof localPlayerUid !== 'undefined') {
+                    updatePlayerData(localPlayerUid, false);
+                }
+                
+                // C. Refresh ang Shop (Para maging "Equip" na ang button)
+                if (typeof renderShopItems === 'function') renderShopItems(); 
+                
+                // D. Show Success Message
+                if (typeof showMessage === 'function') {
+                    showMessage("🎉 Success! Item Unlocked!", 3000);
+                } else {
+                    alert("Item Unlocked!");
+                }
+            }
+            
+        } else {
+            // Kapag ini-skip ang ad
+            if (typeof showMessage === 'function') {
+                showMessage("⚠️ Ad skipped. You didn't get the item.", 3000);
+            }
+        }
+    } catch (error) {
+        // Kapag walang ads o may error
+        console.error("Adsgram Error:", error);
+        if (typeof showMessage === 'function') {
+            showMessage("❌ No ads available right now. Try later.", 3000);
+        }
+    }
+};
+// ============================================================</script>
 </body>
 </html>
