@@ -10990,52 +10990,60 @@ window.switchShopTab = function(tabName) {
 function renderShopItems() {
     const container = document.getElementById('shop-items-container');
     if (!container) return;
+
+    // 1. FRESH DATA SYNC: Siguraduhing updated ang ads progress mula storage
+    adWatchProgress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
+    
     container.innerHTML = ''; 
 
     const itemsToDisplay = SHOP_ITEMS[currentShopTab]; 
     if (!itemsToDisplay) return;
 
     itemsToDisplay.forEach(item => {
-        // 1. Check status (Owned o Equipped)
-        let isOwned = playerInventory[currentShopTab].includes(item.id);
-        // Hanapin ito sa loob ng renderShopItems loop:
-let isEquipped = (equippedItems.cue === item.id || equippedItems.frame === item.id || equippedItems.felt === item.id);
+        // 2. CHECK STATUS
+        const isOwned = playerInventory[currentShopTab].includes(item.id);
+        const isEquipped = (equippedItems.cue === item.id || equippedItems.frame === item.id || equippedItems.felt === item.id);
         
-        // 2. Kunin ang progress ng ads (hal. 1/3)
-        let currentAds = adWatchProgress[item.id] || 0;
-        let adsNeeded = item.adRequired || 0;
+        const currentAds = adWatchProgress[item.id] || 0;
+        const adsNeeded = item.adRequired || 0;
 
         let buttonHtml = '';
 
         if (isEquipped) {
             buttonHtml = `<button class="shop-buy-button equipped" disabled>Equipped</button>`;
         } else if (isOwned) {
-            // Kung nabili na o na-unlock na via ads, "Equip" na lang ang button
             buttonHtml = `<button class="shop-buy-button equip" onclick="handleShopAction('${item.id}', '${currentShopTab}')">Equip</button>`;
         } else {
-            // 3. DITO ANG MONETIZATION: Coins o Ads?
+            // 3. MONETIZATION LOGIC (Coins or Ads)
+            const canClaim = adsNeeded > 0 && currentAds >= adsNeeded;
+            
+            // Layout para sa ADS button
+            const btnLabel = canClaim ? '✅ CLAIM REWARD' : `WATCH (${currentAds}/${adsNeeded})`;
+            const btnAction = canClaim 
+                ? `window.claimAdItem('${item.id}', '${currentShopTab}')` 
+                : `window.watchAdForItem('${item.id}', '${currentShopTab}', ${adsNeeded})`;
+            
+            const progressPercent = adsNeeded > 0 ? (currentAds / adsNeeded) * 100 : 0;
+            const btnColor = canClaim 
+                ? 'linear-gradient(135deg, #00FF00, #008000)' 
+                : `linear-gradient(90deg, #FF8C00 ${progressPercent}%, #222 ${progressPercent}%)`;
+
             buttonHtml = `
                 <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
                     <button class="shop-buy-button buy" onclick="handleShopAction('${item.id}', '${currentShopTab}')">
                         💰 ${formatCurrencyShort(item.price)}
                     </button>
-                    
-                    // BAGONG CODE (FIXED):
-${adsNeeded > 0 ? (() => {
-    const canClaim = currentAds >= adsNeeded;
-    const action = canClaim ? `window.claimAdItem('${item.id}', '${currentShopTab}')` : `window.watchAdForItem('${item.id}', '${currentShopTab}', ${adsNeeded})`;
-    const label = canClaim ? '✅ CLAIM REWARD' : `WATCH (${currentAds}/${adsNeeded})`;
-    const btnColor = canClaim ? 'linear-gradient(135deg, #00FF00, #008000)' : `linear-gradient(90deg, #FF8C00 ${(currentAds/adsNeeded)*100}%, #222 ${(currentAds/adsNeeded)*100}%)`;
+                    ${adsNeeded > 0 ? `
+                    <button class="shop-buy-button" 
+                        style="background: ${btnColor}; color: white; font-weight: 800; border: 2px solid #FFD700;" 
+                        onclick="${btnAction}">
+                        ${btnLabel}
+                    </button>` : ''}
+                </div>
+            `;
+        }
 
-    return `
-    <button class="shop-buy-button" 
-        style="background: ${btnColor}; color: white; font-weight: 800; border: 2px solid #FFD700;" 
-        onclick="${action}">
-        📺 ${label}
-    </button>`;
-})() : ''}
-
-        // 4. I-render ang Stats (para sa Cues)
+        // 4. STATS (Cues only)
         let statsHtml = '';
         if (currentShopTab === 'cues' && item.stats) {
             statsHtml = `
@@ -11052,6 +11060,7 @@ ${adsNeeded > 0 ? (() => {
             `;
         }
 
+        // 5. FINAL RENDER
         const itemDiv = document.createElement('div');
         itemDiv.className = 'shop-item';
         itemDiv.innerHTML = `
