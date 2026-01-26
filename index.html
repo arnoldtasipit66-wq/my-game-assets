@@ -15319,40 +15319,51 @@ window.watchAdForItem = function(itemId, category, required) {
 window.claimAdItem = function(itemId, category) {
     if (typeof playButtonSound === 'function') playButtonSound();
     
-    // Kunin lahat sa window para iwas ReferenceError
-    const items = window.SHOP_ITEMS;
-    const inventory = window.playerInventory;
-    const equipped = window.equippedItems;
+    // --- FIX: TANGGALIN ANG 'window.' SA PAGTAWAG NG VARIABLES ---
+    // Dahil nasa loob naman sila ng iisang module, direct access na lang.
+    const items = SHOP_ITEMS; 
+    const inventory = playerInventory;
+    const equipped = equippedItems;
+    // -------------------------------------------------------------
 
     let progress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
     let item = items[category].find(i => i.id === itemId);
     
     if (!item) return;
 
+    // Check kung sapat na ang napanood na ads
     if ((progress[itemId] || 0) >= item.adRequired) {
         if (!inventory[category].includes(itemId)) {
-            // 1. I-unlock
+            // 1. I-unlock ang item
             inventory[category].push(itemId);
             
-            // 2. Isuot agad
+            // 2. Isuot agad (Optional: Depende kung gusto mo auto-equip)
             if (category === 'cues') equipped.cue = itemId;
             if (category === 'frames') equipped.frame = itemId;
             if (category === 'felts') equipped.felt = itemId;
             
-            // 3. Save at Apply (Gamit ang window bridge)
-            window.saveInventory(); 
-            window.applyEquippedItems();
+            // 3. Save at Apply
+            // Siguraduhing existing ang functions na ito sa scope o window
+            if (typeof saveInventory === 'function') saveInventory();
+            if (typeof applyEquippedItems === 'function') applyEquippedItems();
             
             showMessage("🎉 SUCCESS UNLOCKED!", 5000);
             if (typeof triggerFireworks === 'function') triggerFireworks();
             
-            renderShopItems(); // Refresh para maging "Equipped"
-            window.updatePlayerData(window.localPlayerUid); 
+            // Refresh para maging "Equipped" ang button
+            if (typeof renderShopItems === 'function') renderShopItems(); 
+            
+            // Update sa database kung online
+            if (window.localPlayerUid && typeof updatePlayerData === 'function') {
+                window.updatePlayerData(window.localPlayerUid); 
+            }
         } else {
             showMessage("Nakuha mo na ito.", 2000);
         }
     } else {
-        showMessage("Manood muna ng ads!", 3000);
+        // Compute kung ilan pa kulang
+        let remaining = item.adRequired - (progress[itemId] || 0);
+        showMessage(`Manood muna ng ads! Kulang pa ng ${remaining}.`, 3000);
     }
 };
     
