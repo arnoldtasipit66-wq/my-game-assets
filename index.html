@@ -15234,6 +15234,58 @@ console.log("✅ ALL SYSTEMS GO: Navigation & Buttons Ready!");
 // ============================================================
 // 🛑 DITO NA MAGTATAPOS ANG SCRIPT MO
 // ============================================================
+
+// --- ADSGRAM REWARD SYSTEM (BLOCK ID: 21752) ---
+// Ginawa nating 'window.watchAdForItem' para mabasa siya ng 'onclick' sa HTML
+window.watchAdForItem = function(itemId, category, required) {
+    if (typeof playButtonSound === 'function') playButtonSound();
+    
+    // I-check muna kung naka-load na ang Adsgram SDK
+    if (!window.Adsgram) {
+        showMessage("Adsgram is still loading... Please try again.", 3000);
+        return;
+    }
+
+    // Initialize Adsgram gamit ang iyong Block ID: 21752
+    const AdController = window.Adsgram.init({ blockId: "21752" });
+
+    AdController.show().then((result) => {
+        // SUCCESS: Natapos panoorin ang ad
+        if (!adWatchProgress[itemId]) adWatchProgress[itemId] = 0;
+        adWatchProgress[itemId]++;
+
+        // I-save ang progress sa local storage para hindi mawala
+        localStorage.setItem('pinoyPoolAdProgress', JSON.stringify(adWatchProgress));
+
+        if (adWatchProgress[itemId] >= required) {
+            // UNLOCK! Idagdag sa inventory ng player
+            if (!playerInventory[category].includes(itemId)) {
+                playerInventory[category].push(itemId);
+                saveInventory();
+                showMessage(`🎉 Success! ${itemId.toUpperCase()} is now unlocked!`, 4000);
+                if (typeof triggerFireworks === 'function') triggerFireworks();
+            }
+        } else {
+            // Hindi pa sapat ang napanood na ads
+            const remaining = required - adWatchProgress[itemId];
+            showMessage(`Ad counted! Watch ${remaining} more to unlock.`, 3000);
+        }
+        
+        // I-refresh ang itsura ng shop para mag-update ang buttons
+        if (typeof renderShopItems === 'function') renderShopItems();
+
+    }).catch((error) => {
+        // ERROR o SKIP: Hindi tinapos ang ad o nag-fail mag-load
+        console.error("Adsgram Error:", error);
+        
+        if (error.code === 'USER_CLOSE') {
+            showMessage("You closed the ad early. No reward given.", 3000);
+        } else {
+            showMessage("Ad failed to load. Please check your connection.", 3000);
+        }
+    });
+};
+    
 </script>
 </body>
 </html>
