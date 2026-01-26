@@ -10106,23 +10106,46 @@ function updateInfoBox() {
 // Idagdag itong 3 bagong functions
 // ✅ BAGONG LOAD FUNCTION (Galing Firebase)
 async function loadCurrency() {
-    if (!db || !localPlayerUid) return; // Wait for connection
+    // 1. UNAHING KUNIN ANG SAVE SA CELLPHONE (Local Storage)
+    // Para kahit offline o loading pa ang internet, may makikita agad na coins.
+    const localCoins = localStorage.getItem('pinoyPoolCoins');
+    
+    if (localCoins !== null) {
+        playerTotalCurrency = parseInt(localCoins, 10);
+        console.log("Local Coins Loaded:", playerTotalCurrency);
+        updateCurrencyDisplay(); // Ipakita agad sa UI
+    }
+
+    // 2. SAKA KUNIN ANG SA DATABASE (Sync)
+    if (!db || !localPlayerUid) return; 
+
     try {
         const docRef = doc(db, "players", localPlayerUid);
         const snap = await getDoc(docRef);
         
         if (snap.exists()) {
-            // Kunin ang laman ng wallet sa server
-            playerTotalCurrency = snap.data().balance || 0;
-            console.log("PPM Loaded:", playerTotalCurrency);
+            const serverCoins = snap.data().balance || 0;
+            
+            // Kung mas bago o iba ang nasa server, i-update natin ang local
+            if (serverCoins !== playerTotalCurrency) {
+                console.log("Syncing with Server Coins:", serverCoins);
+                playerTotalCurrency = serverCoins;
+                
+                // I-save agad sa local para sa susunod
+                localStorage.setItem('pinoyPoolCoins', serverCoins.toString());
+                updateCurrencyDisplay();
+            }
         } else {
-            // New Player? Bigyan ng 100 PPM panimula
-            playerTotalCurrency = 100;
-            updatePlayerData(localPlayerUid); // Save agad
+            // New Player Logic
+            if (playerTotalCurrency === 0) { // Kung wala ring laman ang local
+                playerTotalCurrency = 100;
+                updatePlayerData(localPlayerUid); 
+                localStorage.setItem('pinoyPoolCoins', '100'); // Save local
+                updateCurrencyDisplay();
+            }
         }
-        updateCurrencyDisplay();
     } catch (e) {
-        console.error("Error loading PPM:", e);
+        console.error("Error loading online PPM (Using local backup):", e);
     }
 }
 function loadPlayerName() {
