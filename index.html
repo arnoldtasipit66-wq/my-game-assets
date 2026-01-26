@@ -4,15 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script>
-<script>
-  var vConsole = new window.VConsole();
-</script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <title>Pinoy Pool</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
 
-<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<script src="https://adsgram.ai/js/adsgram-ad-controller.js"></script>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5769,10 +5765,9 @@ tg.BackButton.onClick(() => {
         handleExitRequest();
     }
 });      
-               // Gawin nating window properties para ma-access kahit saan
-let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
-window.localPlayerUid = null; // Idagdag ito
-window.db = null;             // Idagdag ito
+               let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
+window.isInGame = false;
+
 
 let tempInviteFriendUid = null;
 let tempInviteFriendName = null;
@@ -11012,11 +11007,11 @@ let isEquipped = (equippedItems.cue === item.id || equippedItems.frame === item.
                     </button>
                     
                     ${adsNeeded > 0 ? `
-<button class="shop-buy-button" 
-    style="background: linear-gradient(90deg, #FF8C00 ${(currentAds/adsNeeded)*100}%, #222 ${(currentAds/adsNeeded)*100}%); color: white; font-weight: 800; border: 2px solid #FFD700;" 
-    onclick="window.watchAdForItem('${item.id}', '${currentShopTab}', ${adsNeeded})">
-    📺 ${currentAds >= adsNeeded ? 'GET REWARD' : `WATCH (${currentAds}/${adsNeeded})`}
-</button>` : ''}
+                    <button class="shop-buy-button" 
+                        style="background: linear-gradient(135deg, #FF8C00, #FFD700); color: black; font-weight: 800; border: 2px solid white;" 
+                        onclick="window.watchAdForItem('${item.id}', '${currentShopTab}', ${adsNeeded})">
+                        📺 ADS (${currentAds}/${adsNeeded})
+                    </button>` : ''}
                 </div>
             `;
         }
@@ -11453,15 +11448,10 @@ function showColorAssignmentPopup(message, color) {
 // ▲▲▲ HANGGANG DITO ANG BAGONG FUNCTION ▲▲▲
      function signInPlayer() { 
     onAuthStateChanged(auth, (user) => { 
-        if (user) { 
-            // Gawin nating 'window' property para mabasa ng Adsgram
-            window.localPlayerUid = user.uid; 
-            
-            // I-assign din ang 'db' sa window para sa wallet function
-            window.db = db; 
-
-            isAuthReady = true; 
-            onlineButton.disabled = false;
+    if (user) { 
+        localPlayerUid = user.uid; 
+        isAuthReady = true; 
+        onlineButton.disabled = false; 
         
         // --- 1. Load Currency ---
         if (typeof loadCurrency === 'function') {
@@ -15048,23 +15038,15 @@ tonConnectUI.onStatusChange(async (wallet) => {
 // ============================================================
 
 async function saveWalletToFirestore(uid, address) {
-    // 1. CHECK: Gamitin ang window.db para ma-access ang database mula sa labas ng module
-    const database = window.db || db; 
-
-    if (!database) {
+    // 1. CHECK: Siguraduhin na ready na ang 'db'
+    if (!db) {
         console.warn("⚠️ Database not initialized yet. Retrying in 1s...");
         setTimeout(() => saveWalletToFirestore(uid, address), 1000);
         return;
     }
 
-    if (!uid) {
-        console.error("❌ Error: Walang UID na nahanap.");
-        return;
-    }
-
     try {
-        // Siguraduhin na ang 'doc' at 'setDoc' ay kasama sa iyong Firebase imports sa taas
-        const playerDocRef = doc(database, "players", uid);
+        const playerDocRef = doc(db, "players", uid);
         
         await setDoc(playerDocRef, {
             walletAddress: address,
@@ -15073,15 +15055,17 @@ async function saveWalletToFirestore(uid, address) {
 
         console.log("✅ Wallet successfully saved to Firestore!");
         
+        // I-clear ang pending status
         localStorage.removeItem('pendingWalletAddress');
         
+        // Visual feedback
         if (typeof tg !== 'undefined' && tg.showAlert) {
             tg.showAlert("Wallet Linked Successfully!");
         }
     } catch (error) {
-        console.error("❌ Firestore Save Error:", error);
+        console.error("❌ Error saving wallet to Firestore:", error);
         if (error.code === 'permission-denied') {
-            console.error("👉 Permissions Error: I-check ang Firestore Rules mo.");
+            console.error("👉 PAKIAYOS ANG FIRESTORE RULES SA FIREBASE CONSOLE!");
         }
     }
 }
@@ -15214,7 +15198,6 @@ function restoreGameState() {
 console.log("✅ ALL SYSTEMS GO: Navigation & Buttons Ready!");
 
 // --- ADSGRAM REWARD SYSTEM (BLOCK ID: 21752) ---
-// --- ADSGRAM REWARD SYSTEM (FIXED: AUTO-REFRESH UI) ---
 window.watchAdForItem = function(itemId, category, required) {
     if (typeof playButtonSound === 'function') playButtonSound();
     
@@ -15223,60 +15206,38 @@ window.watchAdForItem = function(itemId, category, required) {
         return;
     }
 
-    // Siguraduhing tama ang blockId base sa iyong screenshot
     const AdController = window.Adsgram.init({ blockId: "21752" });
 
     AdController.show().then((result) => {
-        // I-verify kung natapos ang panonood (result.done)
-        if (result.done) {
-            // 1. Kumuha ng fresh progress mula sa localStorage
-            let progress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
-            if (!progress[itemId]) progress[itemId] = 0;
-            
-            // 2. Dagdagan ang count at i-save agad
-            progress[itemId]++;
-            localStorage.setItem('pinoyPoolAdProgress', JSON.stringify(progress));
-            
-            // 3. I-update ang variable sa laro para alam ng Shop ang bagong count
-            if (typeof adWatchProgress !== 'undefined') {
-                adWatchProgress = progress;
-            }
+        // 1. Siguraduhing existing ang tracker
+        if (!adWatchProgress) adWatchProgress = {};
+        if (!adWatchProgress[itemId]) adWatchProgress[itemId] = 0;
+        
+        // 2. Dagdagan ang count
+        adWatchProgress[itemId]++;
 
-            // 4. *** ITO ANG FIX: I-REFRESH ANG SHOP DISPLAY AGAD ***
-            if (typeof renderShopItems === 'function') {
-                renderShopItems(); 
-            }
+        // 3. I-save agad sa memory
+        localStorage.setItem('pinoyPoolAdProgress', JSON.stringify(adWatchProgress));
 
-            // 5. Unlock logic: Kung naabot na ang quota
-            if (progress[itemId] >= required) {
-                if (!playerInventory[category].includes(itemId)) {
-                    playerInventory[category].push(itemId);
-                    saveInventory(); // I-save ang bagong gamit
-                    showMessage(`🎉 UNLOCKED: ${itemId.toUpperCase()}!`, 4000);
-                    
-                    // Fireworks effect para mas masaya
-                    if (typeof triggerFireworks === 'function') triggerFireworks();
-                    
-                    // Refresh ulit para maging "Equip" ang button
-                    renderShopItems();
-                }
-            } else {
-                // Ipaalam sa player kung ilan na lang ang kulang
-                const remaining = required - progress[itemId];
-                showMessage(`Ad complete! ${remaining} more to go.`, 3000);
+        // 4. Unlock logic
+        if (adWatchProgress[itemId] >= required) {
+            if (!playerInventory[category].includes(itemId)) {
+                playerInventory[category].push(itemId);
+                saveInventory();
+                showMessage(`🎉 Unlocked: ${itemId.toUpperCase()}!`, 4000);
+                if (typeof triggerFireworks === 'function') triggerFireworks();
             }
         } else {
-            // Kapag hindi tinapos ang video
-            showMessage("Ad skipped. No reward given.", 3000);
+            const remaining = required - adWatchProgress[itemId];
+            showMessage(`Ad watched! ${remaining} more to go.`, 3000);
         }
+        
+        // 5. Refresh Shop UI
+        if (typeof renderShopItems === 'function') renderShopItems();
 
     }).catch((error) => {
         console.error("Adsgram Error:", error);
-        if (error.error === 'no_fill') {
-            showMessage("Walang available na ads sa ngayon. Subukan muli.", 3000);
-        } else {
-            showMessage("Ad failed to load. Check internet.", 3000);
-        }
+        showMessage("Ad failed or skipped.", 3000);
     });
 };
     
