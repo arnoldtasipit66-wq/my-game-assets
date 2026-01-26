@@ -6006,6 +6006,7 @@ const SHOP_ITEMS = {
         }
     ]
 };
+        window.SHOP_ITEMS = SHOP_ITEMS;
 
         
 
@@ -6042,11 +6043,13 @@ let opponentEquippedCueId = 'default';
 let playerInventory = {
     cues: ['default'] // Default na pagmamay-ari
 };
+        window.playerInventory = playerInventory;
 
 // Dito ise-save ang gamit
 let equippedItems = {
     cue: 'default'
 };
+        window.equippedItems = equippedItems;
 
 let currentShopTab = 'cues'; 
         let currentTrackIndex = Math.floor(Math.random() * backgroundPlaylist.length), musicHasStarted = false;     
