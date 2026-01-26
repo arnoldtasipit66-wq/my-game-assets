@@ -11007,11 +11007,11 @@ let isEquipped = (equippedItems.cue === item.id || equippedItems.frame === item.
                     </button>
                     
                     ${adsNeeded > 0 ? `
-                    <button class="shop-buy-button" 
-                        style="background: linear-gradient(135deg, #FF8C00, #FFD700); color: black; font-weight: 800; border: 2px solid white;" 
-                        onclick="window.watchAdForItem('${item.id}', '${currentShopTab}', ${adsNeeded})">
-                        📺 ADS (${currentAds}/${adsNeeded})
-                    </button>` : ''}
+<button class="shop-buy-button" 
+    style="background: linear-gradient(90deg, #FF8C00 ${(currentAds/adsNeeded)*100}%, #222 ${(currentAds/adsNeeded)*100}%); color: white; font-weight: 800; border: 2px solid #FFD700;" 
+    onclick="window.watchAdForItem('${item.id}', '${currentShopTab}', ${adsNeeded})">
+    📺 ${currentAds >= adsNeeded ? 'GET REWARD' : `WATCH (${currentAds}/${adsNeeded})`}
+</button>` : ''}
                 </div>
             `;
         }
