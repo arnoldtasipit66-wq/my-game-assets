@@ -15212,21 +15212,24 @@ window.watchAdForItem = function(itemId, category, required) {
 
     const AdController = window.Adsgram.init({ blockId: "21752" });
 
-    // DITO ANG PAGBABAGO: Hihintayin natin ang result ng ad
     AdController.show().then((result) => {
-        // I-verify kung natapos ang video (done)
+        // I-check kung natapos ang video
         if (result.done) {
-            // 1. Dito pa lang natin dadagdagan ang count
-            if (!adWatchProgress) adWatchProgress = {};
-            if (!adWatchProgress[itemId]) adWatchProgress[itemId] = 0;
+            // Kunin ang latest record mula sa storage
+            let progress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
+            if (!progress[itemId]) progress[itemId] = 0;
             
-            adWatchProgress[itemId]++;
+            // Dagdagan ang count
+            progress[itemId]++;
 
-            // 2. I-save sa localStorage
-            localStorage.setItem('pinoyPoolAdProgress', JSON.stringify(adWatchProgress));
+            // I-save pabalik sa localStorage
+            localStorage.setItem('pinoyPoolAdProgress', JSON.stringify(progress));
+            
+            // I-update ang global variable para synchronized ang shop
+            adWatchProgress = progress;
 
-            // 3. Unlock logic
-            if (adWatchProgress[itemId] >= required) {
+            // Unlock logic: Kung naabot na ang required ads
+            if (progress[itemId] >= required) {
                 if (!playerInventory[category].includes(itemId)) {
                     playerInventory[category].push(itemId);
                     saveInventory();
@@ -15234,21 +15237,22 @@ window.watchAdForItem = function(itemId, category, required) {
                     if (typeof triggerFireworks === 'function') triggerFireworks();
                 }
             } else {
-                const remaining = required - adWatchProgress[itemId];
+                const remaining = required - progress[itemId];
                 showMessage(`Ad complete! ${remaining} more to go.`, 3000);
             }
             
-            // 4. I-refresh ang Shop UI para makita ang 1/2
-            if (typeof renderShopItems === 'function') renderShopItems();
+            // IMPORTANTE: I-refresh ang itsura ng shop para maging 1/2
+            renderShopItems();
+
         } else {
-            // Kung ni-close ang ad nang hindi tinatapos
+            // Kapag ini-skip ang ads
             showMessage("Ad skipped. Manood hanggang dulo para sa reward.", 3000);
         }
 
     }).catch((error) => {
         console.error("Adsgram Error:", error);
         if (error.error === 'no_fill') {
-            showMessage("Walang available na ads sa ngayon.", 3000);
+            showMessage("Walang available na ads sa ngayon. Try again later.", 3000);
         } else {
             showMessage("Ad failed or skipped.", 3000);
         }
