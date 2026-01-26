@@ -5769,9 +5769,10 @@ tg.BackButton.onClick(() => {
         handleExitRequest();
     }
 });      
-               let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
-window.isInGame = false;
-
+               // Gawin nating window properties para ma-access kahit saan
+let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
+window.localPlayerUid = null; // Idagdag ito
+window.db = null;             // Idagdag ito
 
 let tempInviteFriendUid = null;
 let tempInviteFriendName = null;
