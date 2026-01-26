@@ -15322,12 +15322,17 @@ window.watchAdForItem = function(itemId, category, required) {
 window.claimAdItem = function(itemId, category) {
     if (typeof playButtonSound === 'function') playButtonSound();
     
-    // --- FIX: TANGGALIN ANG 'window.' SA PAGTAWAG NG VARIABLES ---
-    // Dahil nasa loob naman sila ng iisang module, direct access na lang.
-    const items = SHOP_ITEMS; 
-    const inventory = playerInventory;
-    const equipped = equippedItems;
+    // --- FIX: Gagamitin na natin ang GLOBAL window variables ---
+    const items = window.SHOP_ITEMS; 
+    const inventory = window.playerInventory;
+    const equipped = window.equippedItems;
     // -------------------------------------------------------------
+
+    // Safety check kung hindi pa na-load ang items
+    if (!items || !inventory || !equipped) {
+        console.error("Shop Items not loaded correctly.");
+        return;
+    }
 
     let progress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
     let item = items[category].find(i => i.id === itemId);
@@ -15340,15 +15345,14 @@ window.claimAdItem = function(itemId, category) {
             // 1. I-unlock ang item
             inventory[category].push(itemId);
             
-            // 2. Isuot agad (Optional: Depende kung gusto mo auto-equip)
+            // 2. Isuot agad
             if (category === 'cues') equipped.cue = itemId;
             if (category === 'frames') equipped.frame = itemId;
             if (category === 'felts') equipped.felt = itemId;
             
             // 3. Save at Apply
-            // Siguraduhing existing ang functions na ito sa scope o window
-            if (typeof saveInventory === 'function') saveInventory();
-            if (typeof applyEquippedItems === 'function') applyEquippedItems();
+            if (typeof saveInventory === 'function') window.saveInventory(); // window bridge
+            if (typeof applyEquippedItems === 'function') window.applyEquippedItems(); // window bridge
             
             showMessage("🎉 SUCCESS UNLOCKED!", 5000);
             if (typeof triggerFireworks === 'function') triggerFireworks();
