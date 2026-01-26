@@ -11453,10 +11453,15 @@ function showColorAssignmentPopup(message, color) {
 // ▲▲▲ HANGGANG DITO ANG BAGONG FUNCTION ▲▲▲
      function signInPlayer() { 
     onAuthStateChanged(auth, (user) => { 
-    if (user) { 
-        localPlayerUid = user.uid; 
-        isAuthReady = true; 
-        onlineButton.disabled = false; 
+        if (user) { 
+            // Gawin nating 'window' property para mabasa ng Adsgram
+            window.localPlayerUid = user.uid; 
+            
+            // I-assign din ang 'db' sa window para sa wallet function
+            window.db = db; 
+
+            isAuthReady = true; 
+            onlineButton.disabled = false;
         
         // --- 1. Load Currency ---
         if (typeof loadCurrency === 'function') {
