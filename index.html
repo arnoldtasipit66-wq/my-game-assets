@@ -15048,15 +15048,23 @@ tonConnectUI.onStatusChange(async (wallet) => {
 // ============================================================
 
 async function saveWalletToFirestore(uid, address) {
-    // 1. CHECK: Siguraduhin na ready na ang 'db'
-    if (!db) {
+    // 1. CHECK: Gamitin ang window.db para ma-access ang database mula sa labas ng module
+    const database = window.db || db; 
+
+    if (!database) {
         console.warn("⚠️ Database not initialized yet. Retrying in 1s...");
         setTimeout(() => saveWalletToFirestore(uid, address), 1000);
         return;
     }
 
+    if (!uid) {
+        console.error("❌ Error: Walang UID na nahanap.");
+        return;
+    }
+
     try {
-        const playerDocRef = doc(db, "players", uid);
+        // Siguraduhin na ang 'doc' at 'setDoc' ay kasama sa iyong Firebase imports sa taas
+        const playerDocRef = doc(database, "players", uid);
         
         await setDoc(playerDocRef, {
             walletAddress: address,
@@ -15065,17 +15073,15 @@ async function saveWalletToFirestore(uid, address) {
 
         console.log("✅ Wallet successfully saved to Firestore!");
         
-        // I-clear ang pending status
         localStorage.removeItem('pendingWalletAddress');
         
-        // Visual feedback
         if (typeof tg !== 'undefined' && tg.showAlert) {
             tg.showAlert("Wallet Linked Successfully!");
         }
     } catch (error) {
-        console.error("❌ Error saving wallet to Firestore:", error);
+        console.error("❌ Firestore Save Error:", error);
         if (error.code === 'permission-denied') {
-            console.error("👉 PAKIAYOS ANG FIRESTORE RULES SA FIREBASE CONSOLE!");
+            console.error("👉 Permissions Error: I-check ang Firestore Rules mo.");
         }
     }
 }
