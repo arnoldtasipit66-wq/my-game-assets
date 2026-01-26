@@ -10184,32 +10184,38 @@ function loadInventory() {
     const savedEquipped = localStorage.getItem('pinoyPoolEquipped');
 
     if (savedInventory) {
-        playerInventory = JSON.parse(savedInventory);
-        // SAFETY CHECK: Kung luma ang save file, dagdagan ng arrays para sa frames/felts
-        if (!playerInventory.frames) playerInventory.frames = ['default'];
-        if (!playerInventory.felts) playerInventory.felts = ['default'];
-    } else {
-        // Default Inventory
-        playerInventory = { 
-            cues: ['default'],
-            frames: ['default'],
-            felts: ['default']
-        };
+        try {
+            playerInventory = JSON.parse(savedInventory);
+        } catch (e) {
+            console.error("Corrupted inventory, resetting.");
+            playerInventory = null;
+        }
     }
 
-    if (savedEquipped) {
-        equippedItems = JSON.parse(savedEquipped);
-        // SAFETY CHECK: Dagdagan kung kulang
-        if (!equippedItems.frame) equippedItems.frame = 'default';
-        if (!equippedItems.felt) equippedItems.felt = 'default';
-    } else {
-        // Default Equipped
-        equippedItems = { 
-            cue: 'default',
-            frame: 'default',
-            felt: 'default'
-        };
+    // SAFETY CHECK: Siguraduhing kumpleto ang arrays kahit luma ang save
+    if (!playerInventory) {
+        playerInventory = { cues: ['default'], frames: ['default'], felts: ['default'] };
     }
+    if (!playerInventory.cues) playerInventory.cues = ['default'];
+    if (!playerInventory.frames) playerInventory.frames = ['default'];
+    if (!playerInventory.felts) playerInventory.felts = ['default'];
+
+    if (savedEquipped) {
+        try {
+            equippedItems = JSON.parse(savedEquipped);
+        } catch (e) {
+            equippedItems = null;
+        }
+    }
+
+    // SAFETY CHECK: Siguraduhing may default values
+    if (!equippedItems) {
+        equippedItems = { cue: 'default', frame: 'default', felt: 'default' };
+    }
+    if (!equippedItems.frame) equippedItems.frame = 'default';
+    if (!equippedItems.felt) equippedItems.felt = 'default';
+
+    // I-save ulit para ma-fix ang format kung may kulang
     saveInventory();
 }
 
