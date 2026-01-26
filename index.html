@@ -10981,7 +10981,13 @@ window.switchShopTab = function(tabName) {
 function renderShopItems() {
     const container = document.getElementById('shop-items-container');
     if (!container) return;
-    container.innerHTML = ''; 
+
+    // --- ITO ANG DAGDAG (FORCE SYNC) ---
+    // Binabasa nito ulit ang listahan mula sa memory ng phone bago mag-drawing
+    adWatchProgress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
+    // -----------------------------------
+
+    container.innerHTML = '';
 
     const itemsToDisplay = SHOP_ITEMS[currentShopTab]; 
     if (!itemsToDisplay) return;
