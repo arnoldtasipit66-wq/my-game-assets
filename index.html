@@ -15318,41 +15318,40 @@ window.watchAdForItem = function(itemId, category, required) {
 // ==========================================
 
 window.claimAdItem = function(itemId, category) {
-    // 1. Haptic Feedback (Success Pattern)
-    if (window.Telegram?.WebApp?.HapticFeedback) {
-        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-    }
-
     if (typeof playButtonSound === 'function') playButtonSound();
     
-    // 2. Basahin ang latest progress
+    // I-double check ang record
     let progress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
     let item = SHOP_ITEMS[category].find(i => i.id === itemId);
     
     if (!item) return;
 
-    // 3. Siguraduhing sapat na ang ads
     if ((progress[itemId] || 0) >= item.adRequired) {
         if (!playerInventory[category].includes(itemId)) {
             
-            // I-unlock ang item
+            // 1. I-unlock ang item
             playerInventory[category].push(itemId);
             
-            // AUTO-EQUIP
+            // 2. Isuot agad (Auto-Equip)
             if (category === 'cues') equippedItems.cue = itemId;
             if (category === 'frames') equippedItems.frame = itemId;
             if (category === 'felts') equippedItems.felt = itemId;
             
+            // 3. I-save sa storage
             saveInventory(); 
             if (typeof applyEquippedItems === 'function') applyEquippedItems();
             
+            // 4. Effects
             showMessage(`🎉 SUCCESS! ${item.name.toUpperCase()} UNLOCKED!`, 5000);
             if (typeof triggerFireworks === 'function') triggerFireworks();
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            }
             
-            // Refresh Shop para maging "Equipped" ang button
+            // 5. I-refresh ang Shop UI para maging "Equipped" na ang button
             renderShopItems();
             
-            // I-save ang stats sa database (para alam ng server na nakuha mo na)
+            // 6. I-sync sa server (para hindi mawala coins/items)
             updatePlayerData(localPlayerUid); 
         } else {
             showMessage("Nakuha mo na ito.", 2000);
