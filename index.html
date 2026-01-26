@@ -10839,11 +10839,10 @@ window.switchShopTab = function(tabName) {
 
 function renderShopItems() {
     const container = document.getElementById('shop-items-container');
-    container.innerHTML = ''; 
+    container.innerHTML = '';
 
     // Kunin ang tamang listahan base sa currentShopTab (cues, frames, o felts)
-    const itemsToDisplay = SHOP_ITEMS[currentShopTab]; 
-
+    const itemsToDisplay = SHOP_ITEMS[currentShopTab];
     if (!itemsToDisplay) return;
 
     itemsToDisplay.forEach(item => {
@@ -10862,49 +10861,48 @@ function renderShopItems() {
             isEquipped = (equippedItems.felt === item.id);
         }
 
-        // ✨ BAGONG DAGDAG: Level Lock Check ✨
-        // Kung walang nakalagay na minLevel sa item, default ay Level 1 (Open for all)
-        let requiredLevel = item.minLevel || 1; 
-        let isLevelLocked = playerLevel < requiredLevel;
+        // ✨ UPDATED: TINANGGAL ANG LEVEL LOCK ✨
+        // Kahit may 'minLevel' sa data, ignorbahin natin para makabili agad.
+        let requiredLevel = 1; 
+        let isLevelLocked = false; // <--- ETO ANG SUSI: Laging false
 
         const itemDiv = document.createElement('div');
         itemDiv.className = 'shop-item';
 
-        // ▼▼▼ FIX SA STATS (Kopya mula sa code mo) ▼▼▼
+        // --- STATS DISPLAY (Cues Only) ---
         let statsHtml = '';
         if (currentShopTab === 'cues' && item.stats) {
             statsHtml = `
-                <div class="shop-item-stats">
-                    <div class="stat-entry">
-                        <span class="stat-label">POW</span>
-                        <div class="stat-bar-background"><div class="stat-bar-fill power" style="width: ${item.stats.Power * 10}%"></div></div>
-                    </div>
-                    <div class="stat-entry">
-                        <span class="stat-label">AIM</span>
-                        <div class="stat-bar-background"><div class="stat-bar-fill aim" style="width: ${item.stats.Aim * 10}%"></div></div>
-                    </div>
-                    <div class="stat-entry">
-                        <span class="stat-label">SPIN</span>
-                        <div class="stat-bar-background"><div class="stat-bar-fill spin" style="width: ${item.stats.Spin * 10}%"></div></div>
-                    </div>
+            <div class="shop-item-stats">
+                <div class="stat-entry">
+                    <span class="stat-label">POW</span>
+                    <div class="stat-bar-background"><div class="stat-bar-fill power" style="width: ${item.stats.Power * 10}%"></div></div>
                 </div>
-            `;
+                <div class="stat-entry">
+                    <span class="stat-label">AIM</span>
+                    <div class="stat-bar-background"><div class="stat-bar-fill aim" style="width: ${item.stats.Aim * 10}%"></div></div>
+                </div>
+                <div class="stat-entry">
+                    <span class="stat-label">SPIN</span>
+                    <div class="stat-bar-background"><div class="stat-bar-fill spin" style="width: ${item.stats.Spin * 10}%"></div></div>
+                </div>
+            </div>`;
         }
 
-        // ▼▼▼ DITO ANG PAGBABAGO SA BUTTONS ▼▼▼
+        // --- BUTTON LOGIC ---
         let buttonHtml = '';
-        
+
         if (isEquipped) {
             buttonHtml = `<button class="shop-buy-button equipped" disabled>Equipped</button>`;
         } else if (isOwned) {
             buttonHtml = `<button class="shop-buy-button equip" data-item-id="${item.id}" data-category="${currentShopTab}">Equip</button>`;
         } 
-        // 🔒 LOCK LOGIC: Kung mababa pa ang level, ipakita ang Lock button
+        // 🔒 LOCK LOGIC: (DISABLED NA, HINDI NA PAPASOK DITO)
         else if (isLevelLocked) {
             buttonHtml = `<button class="shop-buy-button disabled" disabled>🔒 Unlocks at Lv. ${requiredLevel}</button>`;
         } 
         else {
-            // Normal Buy Logic (Kung may pera o wala)
+            // BUY LOGIC: Che-check na lang kung may sapat na Coins
             if (playerTotalCurrency >= item.price) {
                 buttonHtml = `<button class="shop-buy-button buy" data-item-id="${item.id}" data-category="${currentShopTab}">Buy (${formatCurrencyShort(item.price)})</button>`;
             } else {
@@ -10919,6 +10917,7 @@ function renderShopItems() {
             ${statsHtml}
             ${buttonHtml}
         `;
+
         container.appendChild(itemDiv);
     });
 
