@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-    <title>Pinoy Pool</title>
-    <!-- Tone.js for audio synthesis -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
-    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script>
+<script>
+  var vConsole = new window.VConsole();
+</script>
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+<title>Pinoy Pool</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
 
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1884,8 +1887,8 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
 
 
 @media (max-height: 500px) and (orientation: landscape) {
-    #player-info { left: 130px !important; top: 10px !important; }
-    #opponent-info { right: 130px !important; top: 10px !important; }
+    #player-info { left: 180px !important; top: 10px !important; }
+    #opponent-info { right: 190px !important; top: 10px !important; }
 }
 .flying-coin-particle {
     position: fixed;
@@ -5349,10 +5352,6 @@ div#opponent-info.hud-active {
     </div>
 
     <div class="lobby-dock">
-        <div id="ad-reward-button" class="dock-item" onclick="playAdGram()">
-    <div class="dock-icon">📺</div>
-    <div class="dock-label">Free Coins</div>
-        </div>
         <div id="shop-button" class="dock-item">
             <div class="dock-icon">🛒</div>
             <div class="dock-label">Shop</div>
@@ -5726,7 +5725,7 @@ div#opponent-info.hud-active {
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, serverTimestamp, increment, collection, query, orderBy, limit, getDocs, addDoc, runTransaction, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-const SERVER_URL = "https://70b11688-6910-4031-aef0-f32f14b103a4-00-2pgkc6r631kqx.sisko.replit.dev";
+const SERVER_URL = "https://pinoypooldugz-pldf60qvz-arnoldtasipit66-wqs-projects.vercel.app";
 // --- DITO MAGSISIMULA ANG TELEGRAM SETUP ---
 const tg = window.Telegram.WebApp; // Ngayon, kilala na ng code mo si 'tg'
 tg.ready(); // Sinasabi nito sa Telegram na handa na ang game
@@ -5747,26 +5746,33 @@ function handleExitRequest() {
         });
     }
 }
-// --- 2. ANG TAGABANTAY NG BACK BUTTON ---
+// --- 2. ANG PINAKAMALUPIT NA TAGABANTAY NG BACK BUTTON ---
 tg.BackButton.onClick(() => {
-    // Check muna kung may nakabukas na modal (Shop, Leaderboard, etc.)
-    const activeModal = document.querySelector('.modal-overlay.show') || document.querySelector('.modal.show');
+    const activeModal = document.querySelector('.modal-overlay.show');
     
     if (activeModal) {
-        // KUNG MAY MODAL: Isara lang ang modal (WALANG confirmation para hindi nakakairita)
-        activeModal.classList.remove('show'); 
-        tg.BackButton.hide(); // Itago ang back arrow
+        activeModal.classList.remove('show');
+        window.isClosingModal = true;
         
-        if (window) window.isClosingModal = true;
-        history.back(); 
+        // Tawagin ang popstate logic nang manual para mag-sync ang history
+        history.back();
+        
+        // Pagkatapos ng back, i-check ang state
+        setTimeout(() => {
+            restoreGameState();
+            // Itago ang BackButton kung wala na talagang modals
+            if (!document.querySelector('.modal-overlay.show')) {
+                tg.BackButton.hide();
+            }
+        }, 50);
     } else {
-        // KUNG WALANG MODAL (Nasa Main Menu): Tawagin ang confirmation window
-        handleExitRequest(); 
+        handleExitRequest();
     }
 });      
-               let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
-window.isInGame = false;
-
+               // Gawin nating window properties para ma-access kahit saan
+let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
+window.localPlayerUid = null; // Idagdag ito
+window.db = null;             // Idagdag ito
 
 let tempInviteFriendUid = null;
 let tempInviteFriendName = null;
@@ -5828,83 +5834,80 @@ const RANKS = [
 ];
 
 let playerLevel = 1;
-let currentCombo = 0;  
+let currentCombo = 0; 
 let isFriendsListLoaded = false;
 let playerXP = 0;
 let playerTrophies = 0; 
 let xpToNextLevel = 100;
 
+// --- DITO MO ILAGAY ---
+let adWatchProgress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
+// ----------------------
+
 const SHOP_ITEMS = {
     cues: [
-        // --- TIER 1: STARTER (Pang-masa) ---
         {
             id: 'default',
             name: 'Kawayan (Default)',
             price: 0,
+            adRequired: 0,
             imageSrc: 'https://i.imgur.com/dKur0qc.png',
             displayWidth: 450, displayHeight: 150,
-            stats: { Power: 2, Aim: 2, Spin: 2 },
-            minLevel: 1
+            stats: { Power: 2, Aim: 2, Spin: 2 }
         },
         {
             id: 'makabayan',
             name: 'Makabayan',
-            price: 2500, // Madaling mabili
+            price: 2500,
+            adRequired: 1, // Madaling makuha!
             imageSrc: 'https://i.imgur.com/LylPqwJ.png',
             displayWidth: 450, displayHeight: 150,
-            stats: { Power: 4, Aim: 4, Spin: 3 },
-            minLevel: 3
+            stats: { Power: 4, Aim: 4, Spin: 3 }
         },
-
-        // --- TIER 2: MID-GAME (Serious Player) ---
         {
             id: 'watawat_special',
             name: 'Watawat Special',
-            price: 12000, // Need na mag-ipon
+            price: 12000,
+            adRequired: 2,
             imageSrc: 'https://i.imgur.com/hBVzIDy.png',
             displayWidth: 450, displayHeight: 150,
-            stats: { Power: 6, Aim: 5, Spin: 5 },
-            minLevel: 10
+            stats: { Power: 6, Aim: 5, Spin: 5 }
         },
         {
             id: 'mandirigma',
             name: 'Mandirigma',
             price: 35000,
+            adRequired: 5,
             imageSrc: 'https://i.imgur.com/syLWSqJ.png',
             displayWidth: 450, displayHeight: 150,
-            stats: { Power: 7, Aim: 6, Spin: 8 },
-            minLevel: 18
+            stats: { Power: 7, Aim: 6, Spin: 8 }
         },
-
-        // --- TIER 3: HIGH TIER (Veterans) ---
         {
             id: 'datu_tribal',
             name: 'Datu Chieftain',
-            price: 85000, // Mahal na!
+            price: 85000,
+            adRequired: 7,
             imageSrc: 'https://i.imgur.com/MjILiWq.png',
             displayWidth: 450, displayHeight: 150,
-            stats: { Power: 8, Aim: 8, Spin: 7 },
-            minLevel: 28
+            stats: { Power: 8, Aim: 8, Spin: 7 }
         },
-
-        // --- TIER 4: LEGENDARY / GOD TIER (Whales/Grinders) ---
         {
             id: 'perlas_legend',
             name: 'Perlas ng Silangan',
-            price: 200000, // Pang-mayaman
+            price: 200000,
+            adRequired: 12,
             imageSrc: 'https://i.imgur.com/GrDaD6o.png',
             displayWidth: 450, displayHeight: 150,
-            stats: { Power: 10, Aim: 9, Spin: 10 },
-            minLevel: 45
+            stats: { Power: 10, Aim: 9, Spin: 10 }
         },
         {
             id: 'alien_neon',
             name: 'Galactic Neon',
-            price: 500000, // Ultimate Goal
+            price: 500000,
+            adRequired: 20, // Final boss item
             imageSrc: 'https://i.imgur.com/VghHWbE.png',
             displayWidth: 450, displayHeight: 150,
-            stats: { Power: 10, Aim: 10, Spin: 10 }, // Max Stats
-            minLevel: 60
+            stats: { Power: 10, Aim: 10, Spin: 10 }
         }
     ],
 
@@ -5913,93 +5916,92 @@ const SHOP_ITEMS = {
             id: 'default', 
             name: 'Honey Wood (Default)', 
             price: 0, 
+            adRequired: 0,
             imageSrc: 'https://i.imgur.com/T9ft7vz.jpeg', 
-            type: 'frame', 
-            minLevel: 1 
+            type: 'frame'
         },
         { 
             id: 'frame_kamagong', 
             name: 'Kamagong (Ironwood)', 
             price: 15000, 
+            adRequired: 3,
             imageSrc: 'https://i.imgur.com/qmFsG79.jpeg', 
-            type: 'frame', 
-            minLevel: 8 
+            type: 'frame'
         },
         { 
             id: 'frame_black_marble', 
             name: 'Black Marble', 
             price: 40000, 
+            adRequired: 6,
             imageSrc: 'https://i.imgur.com/DvdePuB.jpeg', 
-            type: 'frame', 
-            minLevel: 20 
+            type: 'frame'
         },
         { 
             id: 'frame_chrome', 
             name: 'Cyber Chrome', 
             price: 100000, 
+            adRequired: 10,
             imageSrc: 'https://i.imgur.com/xHckgRf.jpeg', 
-            type: 'frame', 
-            minLevel: 35 
+            type: 'frame'
         },
         { 
             id: 'frame_gold', 
             name: 'Solid Gold Bullion', 
             price: 350000, 
+            adRequired: 17,
             imageSrc: 'https://i.imgur.com/tgSGXgj.jpeg', 
-            type: 'frame', 
-            minLevel: 55 
+            type: 'frame'
         }
     ],
 
     felts: [
-    { 
-        id: 'default', 
-        name: 'Custom Felt', 
-        price: 0, 
-        imageSrc: 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my-game-assets/refs/heads/main/Gemini_Generated_Image_qtberbqtberbqtbe.png', 
-        tint: null, // Ginawang null para hindi mag-iba ang kulay
-        type: 'felt', 
-        minLevel: 1 
-    },
+        { 
+            id: 'default', 
+            name: 'Custom Felt', 
+            price: 0, 
+            adRequired: 0,
+            imageSrc: 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my-game-assets/refs/heads/main/Gemini_Generated_Image_qtberbqtberbqtbe.png', 
+            tint: null,
+            type: 'felt'
+        },
         { 
             id: 'felt_royal_blue', 
             name: 'Lime Wood', 
             price: 5000, 
+            adRequired: 1,
             imageSrc: 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my-game-assets/refs/heads/main/1768026422319.jpg', 
             tint: null, 
-            type: 'felt', 
-            minLevel: 5 
+            type: 'felt'
         },
         { 
             id: 'felt_emerald', 
             name: 'Choco Wood', 
             price: 12000, 
+            adRequired: 4,
             imageSrc: 'https://raw.githubusercontent.com/arnoldtasipit66-wq/Arnold-mondina-/refs/heads/main/Gemini_Generated_Image_g5swlng5swlng5sw.png', 
             tint: null, 
-            type: 'felt', 
-            minLevel: 12 
+            type: 'felt'
         },
         { 
             id: 'felt_casino_red', 
             name: 'Emerald Green', 
             price: 25000, 
+            adRequired: 7,
             imageSrc: 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my-game-assets/refs/heads/main/Gemini_Generated_Image_nbbmfhnbbmfhnbbm.png', 
             tint: null, 
-            type: 'felt', 
-            minLevel: 22 
+            type: 'felt'
         },
         { 
             id: 'felt_midnight_black', 
             name: 'Ocean Wood', 
             price: 60000, 
+            adRequired: 12,
             imageSrc: 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my-game-assets/refs/heads/main/Gemini_Generated_Image_653i2m653i2m653i.png', 
             tint: null, 
-            type: 'felt', 
-            minLevel: 40 
+            type: 'felt'
         }
     ]
 };
-
 
 // --- 💰 PUSTAHAN SETTINGS (BETTING SYSTEM) 💰 ---
 const BET_TIERS = [
@@ -6049,14 +6051,69 @@ const canvas = document.getElementById('game-canvas'), ctx = canvas.getContext('
             aiMenu = document.getElementById('ai-menu'), aiStraightBallButton = document.getElementById('ai-straight-ball-button'), aiPokerButton = document.getElementById('ai-poker-button'), ai61Button = document.getElementById('ai-61-button'),  straightBallInstructions = document.getElementById('straight-ball-instructions'), pokerInstructions = document.getElementById('poker-instructions'), sixtyOneInstructions = document.getElementById('61-ball-instructions'), playStraightBallButton = document.getElementById('play-straight-ball-button'), playPokerButton = document.getElementById('play-poker-button'), play61BallButton = document.getElementById('play-61-ball-button'), cueBallGuide = document.getElementById('cue-ball-guide'), waitingRoom = document.getElementById('waiting-room'), gameIdDisplay = document.getElementById('game-id-display'),  onlineGameSelect = document.getElementById('online-game-select'), onlinePokerButton = document.getElementById('online-poker-button'), onlineStraightBallButton = document.getElementById('online-straight-ball-button'), online61Button = document.getElementById('online-61-button'),  confirmExitModal = document.getElementById('confirm-exit-modal'), confirmExitYes = document.getElementById('confirm-exit-yes'), confirmExitCancel = document.getElementById('confirm-exit-cancel'), pektusControl = document.getElementById('pektus-control'), pektusDot = document.getElementById('pektus-dot'), leftArrow = document.getElementById('left-arrow'), rightArrow = document.getElementById('right-arrow'), fullscreenButton = document.getElementById('fullscreen-button'), pokerFoulCardPickModal = document.getElementById('poker-foul-card-pick-modal'), pokerFoulCardsContainer = document.getElementById('poker-foul-cards'), leaderboardModal = document.getElementById('leaderboard-modal'), leaderboardButton = document.getElementById('leaderboard-button'),  leaderboardBody = document.getElementById('leaderboard-body'), 
 shopModal = document.getElementById('shop-modal'),
 dailyRewardModal = document.getElementById('daily-reward-modal'),
-ghostHand = document.getElementById('ghost-hand'),
-            
-            // === START PLAYER NAME UPDATE ===
-            playerNameInput = document.getElementById('player-name-input'),
-            // === END PLAYER NAME UPDATE ===
+    ghostHand = document.getElementById('ghost-hand'); 
 
-            dragGuideText = document.getElementById('drag-guide-text'), findMatchButton = document.getElementById('find-match-button'), matchmakingWaitModal = document.getElementById('matchmaking-wait-modal'),  chatContainer = document.getElementById('chat-container'), chatMessages = document.getElementById('chat-messages'), chatInput = document.getElementById('chat-input'), chatSendBtn = document.getElementById('chat-send-btn'), cueStickElement = document.getElementById('cue-stick-element'); 
+    // ==========================================
+    // 🆕 NAVIGATION SYSTEM (ISINGIT DITO)
+    // ==========================================
+
+    let currentOpenModal = null; 
+
+    function setupNavigationSystem() {
+        console.log("Navigation System Activated");
         
+        window.addEventListener('popstate', (event) => {
+            if (currentOpenModal) {
+                closeModalUI(currentOpenModal);
+            } else {
+                 if (typeof tg !== 'undefined' && tg.BackButton) tg.BackButton.hide();
+            }
+        });
+    }
+
+    function openUniversalModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        if (typeof playButtonSound === 'function') playButtonSound();
+        modal.classList.add('show');
+        currentOpenModal = modalId;
+        history.pushState({ modal: modalId }, null, `#${modalId}`);
+        if (typeof tg !== 'undefined' && tg.BackButton) tg.BackButton.show();
+        if (typeof gameState !== 'undefined') gameState = 'modal_open';
+    }
+
+    function closeModalUI(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.classList.remove('show');
+        currentOpenModal = null;
+        if (typeof tg !== 'undefined' && tg.BackButton) tg.BackButton.hide();
+        if (typeof gameState !== 'undefined') {
+            if (typeof gameMode !== 'undefined' && (gameMode === 'online' || gameMode === 'practice')) {
+                gameState = 'playing';
+            } else {
+                gameState = 'menu';
+            }
+        }
+    }
+    // ==========================================
+    // ⬆️ END OF NAVIGATION SYSTEM ⬆️
+    // ==========================================
+
+
+    // 2. DITO NATIN I-RERESTART ANG 'CONST' CHAIN (Importante ito!)
+    const playerNameInput = document.getElementById('player-name-input'), 
+          
+          // Ituloy ang listahan ng iba pang elements...
+          dragGuideText = document.getElementById('drag-guide-text'), 
+          findMatchButton = document.getElementById('find-match-button'), 
+          matchmakingWaitModal = document.getElementById('matchmaking-wait-modal'),  
+          chatContainer = document.getElementById('chat-container'), 
+          chatMessages = document.getElementById('chat-messages'), 
+          chatInput = document.getElementById('chat-input'), 
+          chatSendBtn = document.getElementById('chat-send-btn'), 
+          cueStickElement = document.getElementById('cue-stick-element'); // <--- Dulo ng batch na ito
+    
+    
         // START: Tutorial variables
         const tutorialOverlay = document.getElementById('tutorial-overlay');
         const tutorialHighlight = document.getElementById('tutorial-highlight');
@@ -6112,7 +6169,7 @@ let fireworks = [];
 const feltTextureImage = new Image();
 const tableSurfaceImage = new Image();
 tableSurfaceImage.crossOrigin = "Anonymous";
-tableSurfaceImage.src = 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my-game-assets/refs/heads/main/Gemini_Generated_Image_qtberbqtberbqtbe.pngng';
+tableSurfaceImage.src = 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my-game-assets/refs/heads/main/Gemini_Generated_Image_qtberbqtberbqtbe.png';
         let unsubscribeFromChat, isInitialChatLoad = true;
         let legalTargetChipIds = new Set(); // <-- BAGONG DAGDAG para sa ring light
 
@@ -6124,6 +6181,7 @@ tableSurfaceImage.src = 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my
         // === END PLAYER NAME UPDATE ===
 
         function init() {
+    
     // 1. Sabihin sa Telegram na ready na ang app
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.ready();
@@ -6253,7 +6311,7 @@ window.addEventListener('touchend', finishPektusDrag);
 // (Dati meron ditong closePektusBtn listener, burado na)
         
                 function startGame(mode, difficultyLevel = 'pro') {
-            // ITO ANG IPALIT MO:
+           // ITO ANG IPALIT MO:
 
 showGameUI();
 window.isInGame = true;
@@ -6315,49 +6373,89 @@ setCueForCurrentTurn();
             } 
         }
         
-        // === NEW FUNCTION FOR AI REMATCH ===
-        function restartAiGame() {
-            playButtonSound();
-            winnerModal.classList.remove('show');
-            // Reuse existing gameMode and difficulty
-            resizeCanvas(); 
-            playerTurn = Math.random() < 0.5; 
-            canMoveCueBall = false; 
-            chipsMoving = false; 
-            colorsAssigned = false; 
-            playerChipsType = null; 
-            opponentChipsType = null; 
-            setupChips(); 
-            isBreakShot = true; 
-            canMoveCueBall = true; 
-            gameState = 'moving'; 
-            cueStick.visible = true; 
-            if (playerTurn) { 
-                showMessage("Rematch! Your turn to break.", 4000); 
-                dragGuideText.style.display = 'block'; 
-            } else { 
-                showMessage("Rematch! Opponent will break.", 4000); 
-                placeCueChipForAI(); 
-            } 
-            resetPektus(); 
-            if (gameMode.includes('poker')) { 
-                createDeck(); 
-                dealCards(); 
-                updateCardDisplay(); 
-            } else if (gameMode.includes('61-ball')) { 
-                player61Score = 0; 
-                opponent61Score = 0; 
-                lowestChipNumber = 1; 
-            }
-            updateInfoBox(); // Will call updateLegalTargetChips()
-            history.pushState({ modal: 'game' }, 'Game', '#game');
-setCueForCurrentTurn(); // Update history state
-             if (gameMode.startsWith('ai')) { 
-                setTimeout(() => { aiDisplayMessage(getAiChatMessage('start')); }, 1500); 
-            } 
-        }
-        // === END NEW FUNCTION ===
+        // --- 🤖 AI REMATCH FUNCTION (SUREBALL BAWAS) 🤖 ---
+async function restartAiGame() {
+    playButtonSound();
+    
+    // Check sa console kung magkano ang naaalala niyang taya
+    console.log("Attempting Rematch. Saved Bet:", window.lastAiBetAmount);
 
+    // 1. PAYMENT CHECK
+    if (window.lastAiBetAmount > 0) {
+        
+        // MANINGIL ULIT!
+        const isPaid = await processBet(window.lastAiBetAmount);
+        
+        if (!isPaid) {
+            return; // Walang pera, hinto.
+        }
+
+        // Pagkabayad, I-SET AGAD ang currentMatchBet
+        currentMatchBet = window.lastAiBetAmount;
+        
+        showMessage(`Rematch Started! <br><span style="color:#FFD700">Bet Active: ${formatCurrencyShort(currentMatchBet)}</span>`, 2000);
+        
+    } else {
+        // Free Play logic
+        currentMatchBet = 0;
+        showMessage("Rematch Started! (Practice)", 2000);
+    }
+
+    // 2. RESET GAME (Standard)
+    winnerModal.classList.remove('show');
+    resizeCanvas();
+    
+    playerTurn = Math.random() < 0.5;
+    canMoveCueBall = false;
+    chipsMoving = false;
+    colorsAssigned = false;
+    playerChipsType = null;
+    opponentChipsType = null;
+    
+    setupChips();
+    isBreakShot = true;
+    canMoveCueBall = true;
+    gameState = 'moving';
+    cueStick.visible = true;
+    
+    if (playerTurn) {
+        dragGuideText.style.display = 'block';
+    } else {
+        placeCueChipForAI();
+    }
+    
+    resetPektus();
+    
+    if (gameMode.includes('poker')) {
+        createDeck();
+        dealCards();
+        updateCardDisplay();
+    } else if (gameMode.includes('61-ball')) {
+        player61Score = 0;
+        opponent61Score = 0;
+        lowestChipNumber = 1;
+    }
+    
+    updateInfoBox(); 
+    history.pushState({ modal: 'game' }, 'Game', '#game');
+    setCueForCurrentTurn(); 
+
+    // 3. HUD UPDATE (Siguraduhing kita ang Pot)
+    setTimeout(() => {
+        const sub = document.querySelector('#opponent-info .hud-sub');
+        if (sub) {
+            if (currentMatchBet > 0) {
+                sub.innerHTML = `<span style="color:#FFD700">Pot: ${formatCurrencyShort(currentMatchBet * 2)}</span>`;
+            } else {
+                sub.innerHTML = '<span style="color:#aaa">Practice Bot</span>';
+            }
+        }
+    }, 500);
+
+    if (gameMode.startsWith('ai')) {
+        setTimeout(() => { aiDisplayMessage(getAiChatMessage('start')); }, 1500);
+    }
+}
 
         function waitForCardPick() { return new Promise(resolve => { pokerFoulCardPickModal.classList.add('show'); pokerFoulCardsContainer.innerHTML = ''; const cardsToDraw = []; for (let i = 0; i < 5; i++) if (deck.length > 0) cardsToDraw.push(deck.splice(Math.floor(Math.random() * deck.length), 1)[0]); if (cardsToDraw.length === 0) { pokerFoulCardPickModal.classList.remove('show'); resolve(null); return; } cardsToDraw.forEach(card => { const cardDiv = document.createElement('div'); cardDiv.className = 'card face-down'; cardDiv.onclick = () => { playButtonSound(); cardDiv.classList.remove('face-down'); const color = (card.suit === '♥' || card.suit === '♦') ? '#ff0000' : '#212121'; cardDiv.innerHTML = `<span class="card-rank" style="color: ${color};">${card.rank}</span><span class="card-suit" style="color: ${color};">${card.suit}</span>`; pokerFoulCardsContainer.querySelectorAll('.card').forEach(c => { c.onclick = null; c.style.cursor = 'default'; }); setTimeout(() => { pokerFoulCardPickModal.classList.remove('show'); cardsToDraw.forEach(c => { if (c !== card) deck.push(c); }); resolve(card); }, 1500); }; pokerFoulCardsContainer.appendChild(cardDiv); }); }); }
         
@@ -7394,47 +7492,27 @@ function playCoinSound() {
         // ▼▼▼ PALITAN MO ANG BUONG draw FUNCTION NITO ▼▼▼
 
 function draw() { 
-    // 1. I-drawing ang "master copy" (litrato) ng mesa. Sobrang bilis nito.
-    // (Pinalitan nito ang dating ctx.clearRect at drawTable)
+    // 1. I-drawing ang background (Mabilis ito)
     ctx.drawImage(backgroundCanvas, 0, 0);
 
-        // --- VIGNETTE EFFECT (UNIVERSAL FIX) ---
-    // Gamitin ang canvas dimensions para laging sentro sa game world
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
+    // ❌ WALA NA DAPAT DITO YUNG VIGNETTE CODE ❌
 
-    // TRICK: Sa landscape, gusto natin na ang liwanag ay hindi sobrang laki.
-    // Kaya ibabase natin ang "Inner Light" sa Height (mas maikli) para focused sa gitna.
-    // Ang "Outer Shadow" naman ay ibabase sa Width (mas mahaba) para umabot sa kanto.
-    
-    // Radius ng Liwanag (Center)
-    const rInner = canvas.height * 0.0; 
-    
-    // Radius ng Shadow (Edges) - Gumamit ng Math.max para safe sa portrait/landscape
-    const rOuter = Math.max(canvas.width, canvas.height) * 0.8;
-
-    const vignette = ctx.createRadialGradient(cx, cy, rInner, cx, cy, rOuter);
-
-    // Color Steps
-    vignette.addColorStop(0, "rgba(255, 255, 255, 0.1)");  // Kintab sa gitna (Dagdagan mo kung gusto mo mas shiny)
-    vignette.addColorStop(0.5, "rgba(0, 0, 0, 0)");       // Transition (Clear part)
-    vignette.addColorStop(1, "rgba(0, 0, 0, 0.9)");        // Shadow sa gilid
-
-    // Drawing
-    ctx.fillStyle = vignette;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // --- END VIGNETTE ---
-    // 2. I-drawing ang mga bagay na gumagalaw (Walang babaguhin dito)
+    // 2. I-drawing ang mga chips
     drawChips(); 
     
+    // 3. Guidelines
     const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn; 
     if (isMyTurn && gameState === 'aiming' && !isTutorialActive) { 
         drawGuidelines(); 
     } 
+
+    // 4. Tako / Cue Stick
     if ((gameState === 'aiming' || gameState === 'shooting_animation' || (isOnlineGame && !isMyTurnOnline)) && cueStick.visible) { 
         drawCueStick(); 
     } 
-updateAndDrawFireworks();
+
+    // 5. Fireworks
+    updateAndDrawFireworks();
 }
 
 function toggleMusic() { const isMuted = backgroundPlaylist[0].muted; backgroundPlaylist.forEach(player => { player.muted = !isMuted; }); muteButton.textContent = isMuted ? "🎵" : "🔇"; }
@@ -8935,25 +9013,46 @@ function applyShot(shotData) {
         lastTurnControllerUid = shotData.uid;
     }
 }
+// --- 🤝 ONLINE REMATCH REQUEST (SECURED) 🤝 ---
 async function handleRematchRequest() { 
     if (!isOnlineGame || !gameId) return; 
     
-    // 1. Check muna kung may pambayad sa Rematch
-    // Gamitin ang naka-save na currentMatchBet
-    
-    if (currentMatchBet > 0 && playerTotalCurrency < currentMatchBet) {
-        showMessage(`Cannot Rematch! Not enough coins. Need: ${formatCurrencyShort(currentMatchBet)}`, 3000);
-        return; // Bawal mag-proceed pag walang pera
-    }
-
     const rematchButton = document.getElementById('rematch-button'); 
+    
+    // Disable button muna para hindi spam
     rematchButton.disabled = true; 
-    rematchButton.textContent = 'Waiting for Opponent...'; 
-    
-    const gameDocRef = doc(db, "games", gameId); 
-    
-    try { 
+    rematchButton.textContent = 'Checking funds...'; 
+
+    try {
+        // 1. KUNIN ANG TOTOONG BET AMOUNT SA DATABASE
+        // (Kasi na-reset na sa 0 ang local variable natin after game)
+        const gameDocRef = doc(db, "games", gameId); 
+        const docSnap = await getDoc(gameDocRef);
+        
+        if (!docSnap.exists()) {
+            showMessage("Game error. Cannot rematch.", 2000);
+            return;
+        }
+
+        const gameData = docSnap.data();
+        const betForRematch = gameData.betAmount || 0;
+
+        // 2. CHECK BALANCE (Meron ka bang pambayad?)
+        if (betForRematch > 0 && playerTotalCurrency < betForRematch) {
+            showMessage(`Cannot Rematch! Not enough coins. Need: ${formatCurrencyShort(betForRematch)}`, 3000);
+            rematchButton.textContent = 'Request Rematch';
+            rematchButton.disabled = false;
+            return; // STOP! Bawal ituloy.
+        }
+
+        // 3. KUNG MAY PERA, SEND REQUEST
+        rematchButton.textContent = 'Waiting for Opponent...'; 
+        
+        // I-flag sa database na gusto mo ng rematch
         await updateDoc(gameDocRef, { [`rematchRequest.${localPlayerUid}`]: true }); 
+        
+        console.log(`Rematch requested. Bet needed: ${betForRematch}`);
+
     } catch (error) { 
         console.error("Error sending rematch request:", error); 
         rematchButton.textContent = 'Error! Try Again'; 
@@ -9005,55 +9104,89 @@ async function updatePlayerData(uid, didWin = false) {
 // ▲▲▲ DULO NG STEP 5 ▲▲▲
         async function cleanupMatchmakingEntry() { if (unsubscribeFromQueue) { unsubscribeFromQueue(); unsubscribeFromQueue = null; } const queueCollection = collection(db, "matchmakingQueue"); const q = query(queueCollection, where("uid", "==", localPlayerUid)); const snapshot = await getDocs(q); if (!snapshot.empty) { const myDocRef = snapshot.docs[0].ref; await deleteDoc(myDocRef); } }
         
-// --- 🤖 STEP 2: START BOT MATCH FUNCTION (CORRECTED VERSION) 🤖 ---
+
+        
+        // --- 🤖 STEP 2: START BOT MATCH (HIGH STAKES AI - NO REFUND) 🤖 ---
+// --- 🤖 STEP 2: START BOT MATCH (MEMORY FIX) 🤖 ---
 async function startBotMatch() {
-    // 1. Linisin ang Queue
     await cleanupMatchmakingEntry();
-    
-    // 2. Itago ang "Searching..." modal
     matchmakingWaitModal.classList.remove('show');
 
-    // 3. Gumawa ng Fake Opponent Name
     const botName = BotGenerator.generateName();
-    
-    // 4. I-set ang pangalan ng kalaban (Global Variable)
     opponentPlayerName = botName;
 
-    // 5. Ipakita ang "MATCH FOUND!" effect
-    showMessage(`Match Found! Opponent: ${botName}`, 3000);
-    playButtonSound(); 
+    // ▼▼▼ DITO ANG FIX: SAVE & LOCK ▼▼▼
+    if (currentMatchBet > 0) {
+        // 1. I-save sa Global Variable para hindi makalimutan ng Rematch
+        window.lastAiBetAmount = currentMatchBet; 
 
-    // 6. REFUND LOGIC (VIA SERVER) 
-    // Ibabalik natin ang pera gamit ang Server API para tanggapin ng database.
-    if (selectedBetAmount > 0) {
-        // Visual update agad para sa player (para di nila halata na nag-refund)
-        playerTotalCurrency += selectedBetAmount;
-        updateCurrencyDisplay();
+        // 2. Ipakita na ACTIVE ang taya (Wag i-refund, wag i-reset sa 0)
+        showMessage(`No human found. Playing vs AI.<br><span style="color:#FFD700">Bet Active: ${formatCurrencyShort(currentMatchBet)}</span>`, 3000);
+        
+        console.log("AI Match Started. Bet Locked:", currentMatchBet); // Debugging
 
-        // SILENT SERVER REFUND:
-        // Hindi natin hihintayin (no 'await') para tuloy-tuloy ang laro.
-        // Bahala na ang server mag-update sa background.
-        fetch(`${SERVER_URL}/api/refund`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                uid: localPlayerUid,
-                amount: selectedBetAmount
-            })
-        }).catch(err => console.error("Background refund failed:", err));
+    } else {
+        // Kung Free Play, siguraduhing 0 din ang memory
+        window.lastAiBetAmount = 0;
+        showMessage(`Match Found! Opponent: ${botName}`, 3000);
     }
+    // ▲▲▲ ▲▲▲
 
-    // 7. Start Game logic (AI Mode)
+    playButtonSound(); 
     startGame(`ai-${selectedOnlineGameType}`, 'pro'); 
     
-    // 8. FORCE UPDATE: Siguraduhin na ang pangalan sa taas ay Bot Name
     setTimeout(() => {
         opponentPlayerName = botName; 
         updateInfoBox(); 
+        
+        // Update HUD
+        const sub = document.querySelector('#opponent-info .hud-sub');
+        if(sub) {
+            // Check kung may laman ang currentMatchBet
+            if (currentMatchBet > 0) {
+                sub.innerHTML = `<span style="color:#FFD700">Pot: ${formatCurrencyShort(currentMatchBet * 2)}</span>`;
+            } else {
+                sub.innerHTML = '<span style="color:#aaa">Practice Bot</span>';
+            }
+        }
     }, 500); 
-}
+}async function processBet(amount) {
+    // 1. Kung libre, lusot agad
+    if (amount <= 0) return true; 
 
-    // ---------------------------------------------  
+    // 2. Check kung may sapat na coins (Visual check)
+    if (playerTotalCurrency < amount) {
+        showMessage(`Kulang ang coins! Need: ${formatCurrencyShort(amount)}`, 3000);
+        return false;
+    }
+
+    // 3. Ipakita ang loading message
+    showMessage(`Processing payment: -${formatCurrencyShort(amount)}...`, 1000);
+
+    // --- DITO ANG PAGBABAGO: MANUAL DEDUCTION (WALANG SERVER FETCH) ---
+    try {
+        // Bawasan ang local variable
+        playerTotalCurrency -= amount;
+        
+        // I-save agad sa Firebase para hindi daya
+        await updatePlayerData(localPlayerUid, false); 
+        
+        // Update display
+        updateCurrencyDisplay();
+        
+        console.log("Payment successful (Local Mode)!");
+        return true; // Success!
+
+    } catch (error) {
+        console.error("Payment Error:", error);
+        // Ibalik ang pera kung nag-error ang save
+        playerTotalCurrency += amount; 
+        updateCurrencyDisplay();
+        showMessage("Error saving transaction. Try again.", 3000);
+        return false;
+    }
+}
+// ----------------------------------------
 async function findMatch() {
     const displayName = localPlayerName || "Guest";
     
@@ -9096,29 +9229,32 @@ async function findMatch() {
         
         console.log("Time's up. Switching to Bot Match.");
 
-        // ▼▼▼ REFUND LOGIC (IBALIK ANG PERA) ▼▼▼
-        if (selectedBetAmount > 0) {
-            showMessage("No opponent found. Refunded entry fee.", 2000);
-            try {
-                // Ibalik ang pera sa Server
-                await fetch(`${SERVER_URL}/api/refund`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        uid: localPlayerUid,
-                        amount: selectedBetAmount
-                    })
-                });
-                
-                // Ibalik ang pera sa Visual Display
-                playerTotalCurrency += selectedBetAmount; 
-                updateCurrencyDisplay();
-            } catch(e) {
-                console.error("Refund failed:", e);
-                // (Sa totoong buhay, dapat may retry mechanism dito)
-            }
-        }
-        // ▲▲▲ END REFUND ▲▲▲
+        // ▼▼▼ REFUND LOGIC (CORRECTED: SAFE & CLIENT-SIDE) ▼▼▼
+    
+    // 1. STRICT CHECK: Gamitin ang 'currentMatchBet'. 
+    // Ito ay nagiging > 0 LAMANG kung success ang bawas sa taas.
+    if (currentMatchBet > 0) {
+        
+        // 2. Ibalik ang pera sa Local Variable
+        playerTotalCurrency += currentMatchBet; 
+        
+        // 3. I-save agad sa Firebase at Update UI
+        saveCurrency(); 
+        updateCurrencyDisplay();
+
+        // 4. Ipakita ang message
+        showMessage(`No opponent found.<br><span style="color:#00FF00">Bet Refunded: +${formatCurrencyShort(currentMatchBet)}</span>`, 3000);
+        
+        // 5. RESET: Importanteng ibalik sa 0 para di na maulit
+        currentMatchBet = 0; 
+        selectedBetAmount = 0; 
+
+    } else {
+        // Kung walang nabawas (o Free Play), walang refund message.
+        // Hahayaan lang natin tumuloy sa Bot Match.
+        console.log("No active bet to refund.");
+    }
+    // ▲▲▲ END REFUND ▲▲▲
 
         // Start Bot Match (Practice Mode na lang ito)
         startBotMatch(); 
@@ -10844,102 +10980,78 @@ window.switchShopTab = function(tabName) {
 
 function renderShopItems() {
     const container = document.getElementById('shop-items-container');
-    container.innerHTML = '';
+    if (!container) return;
+    container.innerHTML = ''; 
 
-    // Kunin ang tamang listahan base sa currentShopTab (cues, frames, o felts)
-    const itemsToDisplay = SHOP_ITEMS[currentShopTab];
+    const itemsToDisplay = SHOP_ITEMS[currentShopTab]; 
     if (!itemsToDisplay) return;
 
     itemsToDisplay.forEach(item => {
-        // Check kung owned at equipped base sa category
-        let isOwned = false;
-        let isEquipped = false;
+        // 1. Check status (Owned o Equipped)
+        let isOwned = playerInventory[currentShopTab].includes(item.id);
+        // Hanapin ito sa loob ng renderShopItems loop:
+let isEquipped = (equippedItems.cue === item.id || equippedItems.frame === item.id || equippedItems.felt === item.id);
+        
+        // 2. Kunin ang progress ng ads (hal. 1/3)
+        let currentAds = adWatchProgress[item.id] || 0;
+        let adsNeeded = item.adRequired || 0;
 
-        if (currentShopTab === 'cues') {
-            isOwned = playerInventory.cues.includes(item.id);
-            isEquipped = (equippedItems.cue === item.id);
-        } else if (currentShopTab === 'frames') {
-            isOwned = playerInventory.frames.includes(item.id);
-            isEquipped = (equippedItems.frame === item.id);
-        } else if (currentShopTab === 'felts') {
-            isOwned = playerInventory.felts.includes(item.id);
-            isEquipped = (equippedItems.felt === item.id);
-        }
-
-        // ✨ UPDATED: TINANGGAL ANG LEVEL LOCK ✨
-        // Kahit may 'minLevel' sa data, ignorbahin natin para makabili agad.
-        let requiredLevel = 1; 
-        let isLevelLocked = false; // <--- ETO ANG SUSI: Laging false
-
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'shop-item';
-
-        // --- STATS DISPLAY (Cues Only) ---
-        let statsHtml = '';
-        if (currentShopTab === 'cues' && item.stats) {
-            statsHtml = `
-            <div class="shop-item-stats">
-                <div class="stat-entry">
-                    <span class="stat-label">POW</span>
-                    <div class="stat-bar-background"><div class="stat-bar-fill power" style="width: ${item.stats.Power * 10}%"></div></div>
-                </div>
-                <div class="stat-entry">
-                    <span class="stat-label">AIM</span>
-                    <div class="stat-bar-background"><div class="stat-bar-fill aim" style="width: ${item.stats.Aim * 10}%"></div></div>
-                </div>
-                <div class="stat-entry">
-                    <span class="stat-label">SPIN</span>
-                    <div class="stat-bar-background"><div class="stat-bar-fill spin" style="width: ${item.stats.Spin * 10}%"></div></div>
-                </div>
-            </div>`;
-        }
-
-        // --- BUTTON LOGIC ---
         let buttonHtml = '';
 
         if (isEquipped) {
             buttonHtml = `<button class="shop-buy-button equipped" disabled>Equipped</button>`;
         } else if (isOwned) {
-            buttonHtml = `<button class="shop-buy-button equip" data-item-id="${item.id}" data-category="${currentShopTab}">Equip</button>`;
-        } 
-        // 🔒 LOCK LOGIC: (DISABLED NA, HINDI NA PAPASOK DITO)
-        else if (isLevelLocked) {
-            buttonHtml = `<button class="shop-buy-button disabled" disabled>🔒 Unlocks at Lv. ${requiredLevel}</button>`;
-        } 
-        else {
-            // BUY LOGIC: Che-check na lang kung may sapat na Coins
-            if (playerTotalCurrency >= item.price) {
-                buttonHtml = `<button class="shop-buy-button buy" data-item-id="${item.id}" data-category="${currentShopTab}">Buy (${formatCurrencyShort(item.price)})</button>`;
-            } else {
-                buttonHtml = `<button class="shop-buy-button disabled" disabled>Buy (${formatCurrencyShort(item.price)})</button>`;
-            }
+            // Kung nabili na o na-unlock na via ads, "Equip" na lang ang button
+            buttonHtml = `<button class="shop-buy-button equip" onclick="handleShopAction('${item.id}', '${currentShopTab}')">Equip</button>`;
+        } else {
+            // 3. DITO ANG MONETIZATION: Coins o Ads?
+            buttonHtml = `
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                    <button class="shop-buy-button buy" onclick="handleShopAction('${item.id}', '${currentShopTab}')">
+                        💰 ${formatCurrencyShort(item.price)}
+                    </button>
+                    
+                    ${adsNeeded > 0 ? `
+<button class="shop-buy-button" 
+    style="background: linear-gradient(90deg, #FF8C00 ${(currentAds/adsNeeded)*100}%, #222 ${(currentAds/adsNeeded)*100}%); color: white; font-weight: 800; border: 2px solid #FFD700;" 
+    onclick="window.watchAdForItem('${item.id}', '${currentShopTab}', ${adsNeeded})">
+    📺 ${currentAds >= adsNeeded ? 'GET REWARD' : `WATCH (${currentAds}/${adsNeeded})`}
+</button>` : ''}
+                </div>
+            `;
         }
 
-        // Buuin ang HTML ng Item Card
+        // 4. I-render ang Stats (para sa Cues)
+        let statsHtml = '';
+        if (currentShopTab === 'cues' && item.stats) {
+            statsHtml = `
+                <div class="shop-item-stats">
+                    <div class="stat-entry">
+                        <span class="stat-label">POW</span>
+                        <div class="stat-bar-background"><div class="stat-bar-fill power" style="width: ${item.stats.Power * 10}%"></div></div>
+                    </div>
+                    <div class="stat-entry">
+                        <span class="stat-label">AIM</span>
+                        <div class="stat-bar-background"><div class="stat-bar-fill aim" style="width: ${item.stats.Aim * 10}%"></div></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'shop-item';
         itemDiv.innerHTML = `
-            <div class="shop-item-preview" style="background-image: url('${item.imageSrc}'); background-size: contain; background-position: center; background-repeat: no-repeat;"></div>
+            <div class="shop-item-preview" style="background-image: url('${item.imageSrc}');"></div>
             <div class="shop-item-name">${item.name}</div>
             ${statsHtml}
             ${buttonHtml}
         `;
-
         container.appendChild(itemDiv);
-    });
-
-    // Re-attach Event Listeners sa mga buttons
-    container.querySelectorAll('.shop-buy-button').forEach(button => {
-        if (!button.disabled) {
-            button.addEventListener('click', () => {
-                playButtonSound();
-                // Ipasa ang category at ID sa handler
-                handleShopAction(button.dataset.itemId, button.dataset.category);
-            });
-        }
     });
 }
 
-
-async function handleShopAction(itemId, category) {
+// Ginawa nating 'window.handleShopAction' para mabasa ng onclick sa shop HTML
+window.handleShopAction = async function(itemId, category) {
     const item = SHOP_ITEMS[category].find(i => i.id === itemId);
     if (!item) return;
 
@@ -10956,20 +11068,16 @@ async function handleShopAction(itemId, category) {
         renderShopItems(); 
         showMessage(`Equipped: ${item.name}!`, 2000);
         
-        // ▼▼▼ DITO ANG DAGDAG (ONLINE SYNC) ▼▼▼
-        // Kapag nasa online game, sabihan ang server na nagpalit ka
+        // Online Sync
         if (isOnlineGame && gameId && localPlayerId && category === 'cues') {
             try {
-                // I-update sa database para makita ng kalaban
                 await updateDoc(doc(db, "games", gameId), {
                     [`players.${localPlayerId}.equippedCueId`]: itemId
                 });
-                console.log("Cue synced to server:", itemId);
             } catch (error) {
                 console.error("Error syncing cue change:", error);
             }
         }
-        // ▲▲▲ END NG DAGDAG ▲▲▲
 
     } else {
         // --- BUY LOGIC ---
@@ -10986,8 +11094,7 @@ async function handleShopAction(itemId, category) {
             showMessage("Not enough coins!", 2000);
         }
     }
-}
-
+};
 
 function applyEquippedItems() {
     // 1. Apply Cue to Game Stick (Yung ginagamit sa mesa)
@@ -11346,10 +11453,15 @@ function showColorAssignmentPopup(message, color) {
 // ▲▲▲ HANGGANG DITO ANG BAGONG FUNCTION ▲▲▲
      function signInPlayer() { 
     onAuthStateChanged(auth, (user) => { 
-    if (user) { 
-        localPlayerUid = user.uid; 
-        isAuthReady = true; 
-        onlineButton.disabled = false; 
+        if (user) { 
+            // Gawin nating 'window' property para mabasa ng Adsgram
+            window.localPlayerUid = user.uid; 
+            
+            // I-assign din ang 'db' sa window para sa wallet function
+            window.db = db; 
+
+            isAuthReady = true; 
+            onlineButton.disabled = false;
         
         // --- 1. Load Currency ---
         if (typeof loadCurrency === 'function') {
@@ -14308,20 +14420,25 @@ function attachSafeCloseListener(btnId, modalId) {
         newBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            playButtonSound();
+            
+            // Check kung may sound function bago tawagin para iwas error
+            if (typeof playButtonSound === 'function') playButtonSound();
 
-            // 1. ITAAS ANG FLAG! (Ito ang nagsasabing "Safe ito!")
+            // 1. ITAAS ANG FLAG! (Safe ito!)
             window.isClosingModal = true; 
 
-            // 2. Set State
-            gameState = 'modal_open'; 
+            // 2. SET STATE (ITO ANG FIX) ✅
+            // Check natin kung nasa laro ka ba o nasa menu
+            if (typeof gameMode !== 'undefined' && (gameMode === 'online' || gameMode === 'practice')) {
+                gameState = 'playing'; // Kung naglalaro, resume game
+            } else {
+                gameState = 'menu';    // Kung nasa labas, balik sa menu
+            }
 
             // 3. Hide Modal
             if (modal) modal.classList.remove('show');
 
             // 4. Trigger Back
-            // Kahit ano pa ang nasa history, dahil naka-true ang isClosingModal,
-            // tatanggapin ito ng onpopstate bilang "Safe".
             history.back();
         });
     }
@@ -14443,7 +14560,27 @@ startBtn.addEventListener('click', async () => {
 });
 
 // Simulan ang proseso
+// --- 🛡️ SAFETY TIMER (FIX SA 76% STUCK) ---
+// Kapag lumampas ng 7 seconds at naglo-load pa rin, pilitin nang tapusin.
+setTimeout(() => {
+    const loadingDiv = document.getElementById('preloader-overlay');
+    // Check kung nakaharang pa rin ang loading screen
+    if (loadingDiv && !loadingDiv.classList.contains('hidden')) {
+        console.warn("Loading too slow! Forcing start...");
+        
+        // I-update ang text para alam ng user
+        const loadText = document.getElementById('loading-text');
+        if(loadText) loadText.textContent = "Taking too long... Force Starting!";
+        
+        // Pilitin tapusin ang loading
+        loadedCount = totalAssets; 
+        onLoadingComplete();
+    }
+}, 7000); // 7000ms = 7 seconds waiting time
+
+// Simulan ang proseso (Normal Start)
 startPreloading();
+
 
  // --- PROFILE PICTURE UPLOAD LOGIC ---
 
@@ -14906,21 +15043,28 @@ tonConnectUI.onStatusChange(async (wallet) => {
     }
 });
 
-// Gawa tayo ng hiwalay na function para malinis
-// Gawa tayo ng hiwalay na function para malinis
+// ============================================================
+// ⬇️ START NG CLEAN CODE (Paste mo ito sa dulo) ⬇️
+// ============================================================
+
 async function saveWalletToFirestore(uid, address) {
-    // 1. CHECK: Siguraduhin na ready na ang 'db' bago gamitin
-    if (!db) {
+    // 1. CHECK: Gamitin ang window.db para ma-access ang database mula sa labas ng module
+    const database = window.db || db; 
+
+    if (!database) {
         console.warn("⚠️ Database not initialized yet. Retrying in 1s...");
         setTimeout(() => saveWalletToFirestore(uid, address), 1000);
         return;
     }
 
+    if (!uid) {
+        console.error("❌ Error: Walang UID na nahanap.");
+        return;
+    }
+
     try {
-        // 2. Hindi mo na kailangan ang 'await import' dito kung naka-import na sila sa taas ng script
-        // Gagamitin natin ang global 'db' at ang mga imported functions (doc, setDoc, serverTimestamp)
-        
-        const playerDocRef = doc(db, "players", uid);
+        // Siguraduhin na ang 'doc' at 'setDoc' ay kasama sa iyong Firebase imports sa taas
+        const playerDocRef = doc(database, "players", uid);
         
         await setDoc(playerDocRef, {
             walletAddress: address,
@@ -14929,90 +15073,20 @@ async function saveWalletToFirestore(uid, address) {
 
         console.log("✅ Wallet successfully saved to Firestore!");
         
-        // I-clear ang pending status sa phone
         localStorage.removeItem('pendingWalletAddress');
         
-        // Visual feedback sa Telegram
         if (typeof tg !== 'undefined' && tg.showAlert) {
             tg.showAlert("Wallet Linked Successfully!");
         }
     } catch (error) {
-        // Dito papasok yung 'permission-denied' kung hindi mo pa naaayos ang Rules
-        console.error("❌ Error saving wallet to Firestore:", error);
-        
+        console.error("❌ Firestore Save Error:", error);
         if (error.code === 'permission-denied') {
-            console.error("👉 PAKIAYOS ANG FIRESTORE RULES SA FIREBASE CONSOLE!");
+            console.error("👉 Permissions Error: I-check ang Firestore Rules mo.");
         }
     }
 }
-    // --- 3. SAFE CLOSE LISTENER (Back Button Fix) ---
-    function attachSafeCloseListener(btnId, modalId) {
-        const btn = document.getElementById(btnId);
-        const modal = document.getElementById(modalId);
 
-        if (btn) {
-            // Tanggalin ang lumang listener para iwas conflict
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
-
-            newBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Play sound kung available
-                if (typeof playButtonSound === 'function') playButtonSound();
-
-                // Itaas ang Flag para alam ng system na safe ito
-                if (window) window.isClosingModal = true; 
-                if (typeof gameState !== 'undefined') gameState = 'modal_open'; 
-
-                if (modal) modal.classList.remove('show');
-                
-                tg.BackButton.hide();
-                history.back();
-            });
-        }
-    }
-
- // ==========================================
-// 📺 ADGRAM INTEGRATION (Block ID: 21752)
-// ==========================================
-let adController;
-
-function playAdGram() {
-    // Check kung loaded na ang AdGram script
-    if (window.Adsgram) {
-        // Initialize gamit ang iyong Block ID
-        adController = window.Adsgram.init({ blockId: "21752" });
-
-        // Ipakita ang Ad
-        adController.show().then((result) => {
-            // ✅ SUCCESS: Tinapos panoorin ang Ad
-            console.log('Ad watched:', result);
-            
-            // --- REWARD LOGIC ---
-            const rewardAmount = 500; // Baguhin kung ilang coins ang ibibigay
-            playerTotalCurrency += rewardAmount;
-            saveCurrency();         // Save sa local/database
-            updateCurrencyDisplay(); // Update sa screen
-            
-            // Visual Effects (Sound & Message)
-            if(typeof playCoinSound === 'function') playCoinSound();
-            if(typeof triggerFireworks === 'function') triggerFireworks();
-            showMessage(`Reward: +${rewardAmount} Coins! 💰`, 3000);
-
-        }).catch((result) => {
-            // ❌ ERROR/SKIPPED: Hindi tinapos o may error
-            console.log('Ad skipped or error:', result);
-            showMessage("Ad skipped. No reward. 😢", 2000);
-        });
-    } else {
-        console.error("AdGram script not loaded yet.");
-        showMessage("Ads not ready yet. Check internet.", 2000);
-    }
-}
-
-    // ------------------------------------------------------------
+// ------------------------------------------------------------
 // 🚀 NAVIGATION & BUTTON SYSTEM ACTIVATOR
 // ------------------------------------------------------------
 
@@ -15133,9 +15207,79 @@ function restoreGameState() {
     if (typeof draw === 'function') draw(); 
 }
 
-   
+// ============================================================
+// 🛑 END OF NAVIGATION SYSTEM
+// ============================================================
 
+console.log("✅ ALL SYSTEMS GO: Navigation & Buttons Ready!");
+
+// --- ADSGRAM REWARD SYSTEM (BLOCK ID: 21752) ---
+// --- ADSGRAM REWARD SYSTEM (FIXED: AUTO-REFRESH UI) ---
+window.watchAdForItem = function(itemId, category, required) {
+    if (typeof playButtonSound === 'function') playButtonSound();
+    
+    if (!window.Adsgram) {
+        showMessage("Adsgram is still loading...", 3000);
+        return;
+    }
+
+    // Siguraduhing tama ang blockId base sa iyong screenshot
+    const AdController = window.Adsgram.init({ blockId: "21752" });
+
+    AdController.show().then((result) => {
+        // I-verify kung natapos ang panonood (result.done)
+        if (result.done) {
+            // 1. Kumuha ng fresh progress mula sa localStorage
+            let progress = JSON.parse(localStorage.getItem('pinoyPoolAdProgress')) || {};
+            if (!progress[itemId]) progress[itemId] = 0;
+            
+            // 2. Dagdagan ang count at i-save agad
+            progress[itemId]++;
+            localStorage.setItem('pinoyPoolAdProgress', JSON.stringify(progress));
+            
+            // 3. I-update ang variable sa laro para alam ng Shop ang bagong count
+            if (typeof adWatchProgress !== 'undefined') {
+                adWatchProgress = progress;
+            }
+
+            // 4. *** ITO ANG FIX: I-REFRESH ANG SHOP DISPLAY AGAD ***
+            if (typeof renderShopItems === 'function') {
+                renderShopItems(); 
+            }
+
+            // 5. Unlock logic: Kung naabot na ang quota
+            if (progress[itemId] >= required) {
+                if (!playerInventory[category].includes(itemId)) {
+                    playerInventory[category].push(itemId);
+                    saveInventory(); // I-save ang bagong gamit
+                    showMessage(`🎉 UNLOCKED: ${itemId.toUpperCase()}!`, 4000);
+                    
+                    // Fireworks effect para mas masaya
+                    if (typeof triggerFireworks === 'function') triggerFireworks();
+                    
+                    // Refresh ulit para maging "Equip" ang button
+                    renderShopItems();
+                }
+            } else {
+                // Ipaalam sa player kung ilan na lang ang kulang
+                const remaining = required - progress[itemId];
+                showMessage(`Ad complete! ${remaining} more to go.`, 3000);
+            }
+        } else {
+            // Kapag hindi tinapos ang video
+            showMessage("Ad skipped. No reward given.", 3000);
+        }
+
+    }).catch((error) => {
+        console.error("Adsgram Error:", error);
+        if (error.error === 'no_fill') {
+            showMessage("Walang available na ads sa ngayon. Subukan muli.", 3000);
+        } else {
+            showMessage("Ad failed to load. Check internet.", 3000);
+        }
+    });
+};
+    
 </script>
-
 </body>
 </html>
