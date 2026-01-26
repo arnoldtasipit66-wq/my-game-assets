@@ -15320,15 +15320,17 @@ window.watchAdForItem = function(itemId, category, required) {
 };
 
 window.claimAdItem = function(itemId, category) {
+window.claimAdItem = function(itemId, category) {
     if (typeof playButtonSound === 'function') playButtonSound();
     
-    // Kunin ang latest data mula sa window scope
+    // Kunin ang latest data mula sa window
     const items = window.SHOP_ITEMS; 
     const inventory = window.playerInventory;
     const equipped = window.equippedItems;
 
+    // Safety check
     if (!items || !inventory || !equipped) {
-        console.error("❌ Error: Shop systems not initialized in window scope.");
+        console.error("Shop systems not loaded correctly.");
         return;
     }
 
@@ -15337,68 +15339,62 @@ window.claimAdItem = function(itemId, category) {
     
     if (!itemData) return;
 
-    // Check kung tapos na ang ads requirement
+    // Check kung sapat na ang ads
     if ((progress[itemId] || 0) >= itemData.adRequired) {
-        
-        // 1. I-unlock ang item kung wala pa sa inventory
         if (!inventory[category].includes(itemId)) {
+            // 1. I-unlock ang item
             inventory[category].push(itemId);
+            
+            // 2. AUTO-EQUIP: Isuot agad base sa category
+            if (category === 'cues') equipped.cue = itemId;
+            if (category === 'frames') equipped.frame = itemId;
+            if (category === 'felts') equipped.felt = itemId;
+            
+            // 3. Save at Apply (Dapat naka-export ang mga ito sa window)
+            if (typeof window.saveInventory === 'function') window.saveInventory();
+            if (typeof window.applyEquippedItems === 'function') window.applyEquippedItems();
+            
+            // 4. Feedback sa User
+            if (typeof window.showMessage === 'function') {
+                window.showMessage(`🎉 UNLOCKED & EQUIPPED: ${itemData.name}!`, 5000);
+            }
+            
+            if (typeof window.triggerFireworks === 'function') window.triggerFireworks();
+            
+            // 5. Refresh ang Shop UI para maging "Equipped" ang button
+            if (typeof window.renderShopItems === 'function') window.renderShopItems(); 
+            
+            // 6. I-sync sa database kung online
+            if (window.localPlayerUid && typeof window.updatePlayerData === 'function') {
+                window.updatePlayerData(window.localPlayerUid); 
+            }
+        } else {
+            if (typeof window.showMessage === 'function') window.showMessage("Nakuha mo na ito.", 2000);
         }
-        
-        // 2. AUTO-EQUIP LOGIC (Isuot agad!)
-        if (category === 'cues') equipped.cue = itemId;
-        if (category === 'frames') equipped.frame = itemId;
-        if (category === 'felts') equipped.felt = itemId;
-        
-        // 3. SAVE & APPLY (Ginagamit ang window calls para sure)
-        if (typeof window.saveInventory === 'function') window.saveInventory();
-        if (typeof window.applyEquippedItems === 'function') window.applyEquippedItems();
-        
-        // 4. VISUAL FEEDBACK
-        window.showMessage(`🎉 UNLOCKED & EQUIPPED: ${itemData.name.toUpperCase()}!`, 5000);
-        
-        if (typeof window.triggerFireworks === 'function') {
-            window.triggerFireworks();
-        }
-        
-        // 5. RE-RENDER SHOP (Para maging "Equipped" status na siya)
-        if (typeof window.renderShopItems === 'function') {
-            window.renderShopItems(); 
-        }
-        
-        // 6. SYNC SA DATABASE (Kung online)
-        if (window.localPlayerUid && typeof window.updatePlayerData === 'function') {
-            window.updatePlayerData(window.localPlayerUid, false); 
-        }
-
     } else {
-        let lack = itemData.adRequired - (progress[itemId] || 0);
-        window.showMessage(`Kulang pa ng ${lack} ads para ma-claim!`, 3000);
+        let remaining = itemData.adRequired - (progress[itemId] || 0);
+        if (typeof window.showMessage === 'function') window.showMessage(`Kulang pa ng ${remaining} ads!`, 3000);
     }
 };
 
-// ============================================================
+    // ============================================================
 // 🔥 GLOBAL EXPORTS (PARA GUMANA ANG CLAIM AT AUTO-EQUIP) 🔥
 // ============================================================
 
-// 1. Variables
+// 1. Mga Variables
 window.SHOP_ITEMS = SHOP_ITEMS;
 window.playerInventory = playerInventory;
 window.equippedItems = equippedItems;
 
-// 2. Core Functions (Ang mga 'to ang tinatawag ng Claim button)
+// 2. Mga Core Functions (Dito ka nagkulang kanina)
 window.saveInventory = saveInventory;
 window.applyEquippedItems = applyEquippedItems;
 window.renderShopItems = renderShopItems;
 window.showMessage = showMessage;
+window.triggerFireworks = triggerFireworks;
 window.updatePlayerData = updatePlayerData;
 
-// 3. Visual Effects
-if (typeof triggerFireworks !== 'undefined') {
-    window.triggerFireworks = triggerFireworks;
-}
-
-console.log("✅ Shop System: All Global Bridges Linked!");
+console.log("✅ All Global Bridges Linked successfully!");
     
 </script>
 </body>
