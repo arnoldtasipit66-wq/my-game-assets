@@ -6361,7 +6361,138 @@ setCueForCurrentTurn(); // Update history state
 
         function waitForCardPick() { return new Promise(resolve => { pokerFoulCardPickModal.classList.add('show'); pokerFoulCardsContainer.innerHTML = ''; const cardsToDraw = []; for (let i = 0; i < 5; i++) if (deck.length > 0) cardsToDraw.push(deck.splice(Math.floor(Math.random() * deck.length), 1)[0]); if (cardsToDraw.length === 0) { pokerFoulCardPickModal.classList.remove('show'); resolve(null); return; } cardsToDraw.forEach(card => { const cardDiv = document.createElement('div'); cardDiv.className = 'card face-down'; cardDiv.onclick = () => { playButtonSound(); cardDiv.classList.remove('face-down'); const color = (card.suit === '♥' || card.suit === '♦') ? '#ff0000' : '#212121'; cardDiv.innerHTML = `<span class="card-rank" style="color: ${color};">${card.rank}</span><span class="card-suit" style="color: ${color};">${card.suit}</span>`; pokerFoulCardsContainer.querySelectorAll('.card').forEach(c => { c.onclick = null; c.style.cursor = 'default'; }); setTimeout(() => { pokerFoulCardPickModal.classList.remove('show'); cardsToDraw.forEach(c => { if (c !== card) deck.push(c); }); resolve(card); }, 1500); }; pokerFoulCardsContainer.appendChild(cardDiv); }); }); }
         
-       
+  async function endGame(winnerTextMessage, finalGameData = null) {
+    if (gameState === 'gameover') return;
+    gameState = 'gameover'; // I-lock agad ang laro
+
+    // --- 🔊 SOUND EFFECT LOGIC (Visuals/Audio) ---
+    const winSound = document.getElementById('win-sfx');
+    const loseSound = document.getElementById('lose-sfx');
+    
+    if (winSound) { winSound.pause(); winSound.currentTime = 0; }
+    if (loseSound) { loseSound.pause(); loseSound.currentTime = 0; }
+
+    if (winnerTextMessage.includes("You Win")) {
+        if (winSound) { winSound.volume = 0.8; winSound.play().catch(e => {}); }
+        triggerFireworks(); 
+    } else if (winnerTextMessage.includes("You Lose") || winnerTextMessage.includes("Forfeited")) {
+        if (loseSound) { loseSound.volume = 0.8; loseSound.play().catch(e => {}); }
+    }
+
+    // --- 🛡️ SECURED LOGIC (Vercel Integration) ---
+    if (isOnlineGame && gameId) {
+        console.log("Validating match result with Vercel...");
+        try {
+            const response = await fetch(`${SERVER_URL}/api/validate-win`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    gameId: gameId,
+                    uid: localPlayerUid
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                console.log("Server validated:", result.isWinner ? "Win" : "Loss");
+                // I-reload ang stats (Level/XP/Trophies) mula sa Database para mag-sync ang display
+                loadPlayerStats(); 
+                
+                // Payout Logic: Kung may taya, tawagin ang payout API (Optional kung nasa validate na)
+                if (result.isWinner && currentMatchBet > 0) {
+                    await fetch(`${SERVER_URL}/api/match-payout`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ uid: localPlayerUid, betAmount: currentMatchBet })
+                    });
+                    updateCurrencyDisplay();
+                }
+            }
+        } catch (error) {
+            console.error("Critical: Could not connect to Vercel for validation.", error);
+        }
+    } else {
+        // AI GAME LOGIC: Gamitin ang simpleng record-win (Para sa barya at XP sa practice)
+        const didWin = winnerTextMessage.includes("You Win");
+        updatePlayerData(localPlayerUid, didWin); 
+    }
+
+    // --- 🎨 VISUALS & MODALS ---
+    currentMatchBet = 0; 
+    updateCurrencyDisplay();
+    updateLegalTargetChips();
+
+    let finalWinnerText = winnerTextMessage;
+    winnerText.style.color = "#FFFFFF"; 
+    winnerText.style.textShadow = "4px 4px 0 #000";
+
+    if (winnerTextMessage.includes("You Win") || winnerTextMessage.includes("Forfeited")) {
+        winnerText.style.color = "#FFD700"; 
+        winnerText.style.textShadow = "4px 4px 0 #000, 0 0 20px gold";
+        if (winnerTextMessage.includes("Opponent Forfeited")) finalWinnerText = "OPPONENT<br>FORFEITED";
+    } else if (winnerTextMessage.includes("You Lose") || winnerTextMessage.includes("You Forfeited")) {
+        winnerText.style.color = "#FF4444"; 
+        winnerText.style.textShadow = "4px 4px 0 #000, 0 0 20px red";
+        if (winnerTextMessage.includes("You Forfeited")) finalWinnerText = "YOU<br>FORFEITED";
+    }
+
+    if (gameMode.includes('61-ball')) {
+        winnerText.innerHTML = `${finalWinnerText}<br><div style="font-size: 0.4em; margin-top: 10px; color: #eee;">${player61Score} - ${opponent61Score}</div>`;
+    } else {
+        winnerText.innerHTML = finalWinnerText;
+    }
+    
+    // --- BUTTON VISIBILITY ---
+    const onlineRematchBtn = document.getElementById('rematch-button');
+    if (isOnlineGame) {
+        aiRematchButton.style.display = 'none';
+        backToMenuButton.style.display = 'block';
+        onlineRematchBtn.style.display = 'block';
+    } else {
+        aiRematchButton.style.display = 'block';
+        backToMenuButton.style.display = 'block';
+        onlineRematchBtn.style.display = 'none';
+    }
+    
+    // --- CARD REVEAL (Poker/61 Ball logic preserved) ---
+    if (gameMode.includes('poker')) {
+        opponentHandReveal.innerHTML = `<h4>${opponentPlayerName}'s Hand:</h4>`;
+        let opponentsOriginalHand, opponentsFinalHand;
+        if (isOnlineGame) {
+            const gameData = finalGameData || (gameId ? (await getDoc(doc(db, "games", gameId))).data() : null);
+            if (gameData) {
+                opponentsOriginalHand = localPlayerId === 'player1' ? gameData.originalPlayer2Hand : gameData.originalPlayer1Hand;
+                opponentsFinalHand = localPlayerId === 'player1' ? gameData.player2Hand : gameData.player1Hand;
+            }
+        } else {
+            opponentsOriginalHand = originalOpponentHand; 
+            opponentsFinalHand = opponentHand;
+        }
+
+        if(opponentsOriginalHand && opponentsFinalHand) {
+            const createCard = (card) => {
+                const div = document.createElement('div'); div.className = 'card';
+                const col = (card.suit === '♥' || card.suit === '♦') ? '#D32F2F' : '#212121';
+                div.innerHTML = `<span class="card-rank" style="color:${col}">${card.rank}</span><span class="card-suit" style="color:${col}">${card.suit}</span>`;
+                return div;
+            };
+            const remainingCardsDiv = document.createElement('div');
+            remainingCardsDiv.style.cssText = 'display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;';
+            opponentsFinalHand.forEach(c => remainingCardsDiv.appendChild(createCard(c)));
+            opponentHandReveal.appendChild(remainingCardsDiv);
+            opponentHandReveal.style.display = 'flex';
+        }
+    } else if (gameMode.includes('61-ball')) {
+        opponentHandReveal.innerHTML = `<div style="text-align:center"><h4>Final Score</h4><p>${localPlayerName}: ${player61Score}</p><p>${opponentPlayerName}: ${opponent61Score}</p></div>`;
+        opponentHandReveal.style.display = 'flex';
+    }
+
+    setTimeout(() => { 
+        winnerModal.classList.add('show'); 
+        history.pushState({ modal: 'winner' }, 'Winner', '#winner'); 
+    }, 1000);
+}     
 
 async function resetToMenu() {
     playButtonSound();
