@@ -10067,23 +10067,25 @@ function updateInfoBox() {
 // Idagdag itong 3 bagong functions
 // ✅ BAGONG LOAD FUNCTION (Galing Firebase)
 async function loadCurrency() {
-    if (!db || !localPlayerUid) return; // Wait for connection
+    // Check kung may valid na UID na
+    if (!db || !localPlayerUid || localPlayerUid === 'anon_guest') return;
+
     try {
         const docRef = doc(db, "players", localPlayerUid);
         const snap = await getDoc(docRef);
         
         if (snap.exists()) {
-            // Kunin ang laman ng wallet sa server
+            // Kunin ang balanse mula sa server
             playerTotalCurrency = snap.data().balance || 0;
-            console.log("PPM Loaded:", playerTotalCurrency);
+            console.log("💰 Database Balance Loaded:", playerTotalCurrency);
         } else {
-            // New Player? Bigyan ng 100 PPM panimula
-            playerTotalCurrency = 100;
-            updatePlayerData(localPlayerUid); // Save agad
+            // New user setting
+            playerTotalCurrency = 0;
+            console.log("🆕 New player detected, balance is 0.");
         }
         updateCurrencyDisplay();
     } catch (e) {
-        console.error("Error loading PPM:", e);
+        console.error("❌ Failed to load currency:", e);
     }
 }
 function loadPlayerName() {
