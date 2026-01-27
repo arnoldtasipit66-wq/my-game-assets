@@ -11415,50 +11415,51 @@ function showColorAssignmentPopup(message, color) {
      function signInPlayer() { 
     onAuthStateChanged(auth, (user) => { 
         if (user) { 
-            // Gawin nating 'window' property para mabasa ng Adsgram
-            window.localPlayerUid = user.uid; 
+            // --- CRITICAL FIX: I-set ang UID sa parehong variables ---
+            localPlayerUid = user.uid;        // Para sa mga local functions
+            window.localPlayerUid = user.uid; // Para sa Adsgram/External scripts
             
-            // I-assign din ang 'db' sa window para sa wallet function
             window.db = db; 
-
             isAuthReady = true; 
             onlineButton.disabled = false;
-        
-        // --- 1. Load Currency ---
-        if (typeof loadCurrency === 'function') {
-            loadCurrency(); 
-        }
 
-        // --- 2. 👇 DAGDAG: CHECK PENDING WALLET 👇 ---
-        // I-check kung may naka-store na wallet address sa localStorage
-        const pendingWallet = localStorage.getItem('pendingWalletAddress');
-        if (pendingWallet) {
-            console.log("Saving pending wallet for logged-in user...");
-            // Siguraduhin na ang saveWalletToFirestore function ay defined sa script mo
-            if (typeof saveWalletToFirestore === 'function') {
-                saveWalletToFirestore(localPlayerUid, pendingWallet);
+            console.log("✅ Logged in successfully. UID:", user.uid);
+
+            // --- 1. Load Currency (UID is now guaranteed) ---
+            if (typeof loadCurrency === 'function') {
+                loadCurrency(); 
             }
-        }
-        // ----------------------------------------------
-        
-        // Update UI (Subtitle lang)
-        const sub = document.querySelector('#online-button .card-subtitle');
-        if(sub) {
-            sub.textContent = "Ranked Match • Online";
-            sub.style.color = "#00FF00"; 
-        }
 
-        createPlayerDocument(); 
-        startInviteListener(); 
-        setupOnlineStatus(); 
-    } else { 
-        signInAnonymously(auth).catch((error) => { 
-            console.error("Sign-in failed:", error); 
-            isAuthReady = false; 
-            onlineButton.disabled = true; 
-        }); 
-    } 
-}); 
+            // --- 2. Save Pending Wallet ---
+            const pendingWallet = localStorage.getItem('pendingWalletAddress');
+            if (pendingWallet) {
+                console.log("Saving pending wallet for:", user.uid);
+                if (typeof saveWalletToFirestore === 'function') {
+                    // I-pass natin ang user.uid nang direkta para iwas error
+                    saveWalletToFirestore(user.uid, pendingWallet);
+                }
+            }
+            
+            // --- 3. Update UI & Listeners ---
+            const sub = document.querySelector('#online-button .card-subtitle');
+            if(sub) {
+                sub.textContent = "Ranked Match • Online";
+                sub.style.color = "#00FF00"; 
+            }
+
+            createPlayerDocument(); 
+            startInviteListener(); 
+            setupOnlineStatus(); 
+
+        } else { 
+            console.log("Logging in anonymously...");
+            signInAnonymously(auth).catch((error) => { 
+                console.error("Sign-in failed:", error); 
+                isAuthReady = false; 
+                onlineButton.disabled = true; 
+            }); 
+        } 
+    }); 
 }
 // Dito ise-save ang "unsubscribe" function para sa invite listener
 let unsubscribeFromInvites = null;
