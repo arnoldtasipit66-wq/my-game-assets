@@ -14921,41 +14921,58 @@ async function saveWalletToFirestore(uid, address) {
         }
     }
 
- // ==========================================
-// 📺 ADGRAM INTEGRATION (Block ID: 21752)
-// ==========================================
-let adController;
-
-function playAdGram() {
+ function playAdGram() {
     // Check kung loaded na ang AdGram script
     if (window.Adsgram) {
         // Initialize gamit ang iyong Block ID
         adController = window.Adsgram.init({ blockId: "21752" });
 
         // Ipakita ang Ad
-        adController.show().then((result) => {
+        adController.show().then(async (result) => {
             // ✅ SUCCESS: Tinapos panoorin ang Ad
             console.log('Ad watched:', result);
             
-            // --- REWARD LOGIC ---
-            const rewardAmount = 500; // Baguhin kung ilang coins ang ibibigay
-            playerTotalCurrency += rewardAmount;
-            saveCurrency();         // Save sa local/database
-            updateCurrencyDisplay(); // Update sa screen
-            
-            // Visual Effects (Sound & Message)
-            if(typeof playCoinSound === 'function') playCoinSound();
-            if(typeof triggerFireworks === 'function') triggerFireworks();
-            showMessage(`Reward: +${rewardAmount} Coins! 💰`, 3000);
+            const rewardAmount = 500; 
+
+            // --- 🚀 ITO ANG FIX: TAWAG SA VERCEL SERVER ---
+            try {
+                const response = await fetch(`${SERVER_URL}/api/ad-reward`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        uid: localPlayerUid,
+                        amount: rewardAmount
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Kunin ang TOTOONG balance mula sa server para siguradong sync
+                    playerTotalCurrency = data.newBalance; 
+                    updateCurrencyDisplay();
+                    
+                    // Visual Effects
+                    if(typeof playCoinSound === 'function') playCoinSound();
+                    if(typeof triggerFireworks === 'function') triggerFireworks();
+                    showMessage(`Reward: +${rewardAmount} Coins! 💰`, 3000);
+                } else {
+                    showMessage("Reward error. Try again.", 2000);
+                }
+            } catch (err) {
+                console.error("Server update failed:", err);
+                showMessage("Connection error.", 2000);
+            }
+            // ----------------------------------------------
 
         }).catch((result) => {
-            // ❌ ERROR/SKIPPED: Hindi tinapos o may error
+            // ❌ ERROR/SKIPPED
             console.log('Ad skipped or error:', result);
             showMessage("Ad skipped. No reward. 😢", 2000);
         });
     } else {
         console.error("AdGram script not loaded yet.");
-        showMessage("Ads not ready yet. Check internet.", 2000);
+        showMessage("Ads not ready. Check internet.", 2000);
     }
 }
 
