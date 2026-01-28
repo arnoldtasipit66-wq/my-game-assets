@@ -9019,24 +9019,19 @@ async function startBotMatch() {
     showMessage(`Match Found! Opponent: ${botName}`, 3000);
     playButtonSound(); 
 
-    // 6. REFUND LOGIC (VIA SERVER) 
-    // Ibabalik natin ang pera gamit ang Server API para tanggapin ng database.
+    // 6. REFUND LOGIC (CLIENT SIDE FIX)
+    // Ibabalik natin ang pera manual dahil wala nang server API.
     if (selectedBetAmount > 0) {
-        // Visual update agad para sa player (para di nila halata na nag-refund)
+        // 1. Ibalik ang pera sa local variable
         playerTotalCurrency += selectedBetAmount;
+        
+        // 2. Update ang display sa screen
         updateCurrencyDisplay();
 
-        // SILENT SERVER REFUND:
-        // Hindi natin hihintayin (no 'await') para tuloy-tuloy ang laro.
-        // Bahala na ang server mag-update sa background.
-        fetch(`${SERVER_URL}/api/refund`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                uid: localPlayerUid,
-                amount: selectedBetAmount
-            })
-        }).catch(err => console.error("Background refund failed:", err));
+        // 3. I-save sa Firebase (Ito ang kapalit ng fetch)
+        saveCurrency();
+        
+        console.log("Refund processed locally:", selectedBetAmount);
     }
 
     // 7. Start Game logic (AI Mode)
@@ -9092,27 +9087,20 @@ async function findMatch() {
         
         console.log("Time's up. Switching to Bot Match.");
 
-        // ▼▼▼ REFUND LOGIC (IBALIK ANG PERA) ▼▼▼
+        // ▼▼▼ REFUND LOGIC (CLIENT SIDE FIX) ▼▼▼
         if (selectedBetAmount > 0) {
             showMessage("No opponent found. Refunded entry fee.", 2000);
-            try {
-                // Ibalik ang pera sa Server
-                await fetch(`${SERVER_URL}/api/refund`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        uid: localPlayerUid,
-                        amount: selectedBetAmount
-                    })
-                });
-                
-                // Ibalik ang pera sa Visual Display
-                playerTotalCurrency += selectedBetAmount; 
-                updateCurrencyDisplay();
-            } catch(e) {
-                console.error("Refund failed:", e);
-                // (Sa totoong buhay, dapat may retry mechanism dito)
-            }
+            
+            // 1. Ibalik ang pera sa local variable
+            playerTotalCurrency += selectedBetAmount;
+            
+            // 2. Update ang display sa screen
+            updateCurrencyDisplay();
+
+            // 3. I-save sa Firebase (Ito ang kapalit ng fetch)
+            saveCurrency();
+            
+            console.log("Refund processed locally (No Opponent):", selectedBetAmount);
         }
         // ▲▲▲ END REFUND ▲▲▲
 
