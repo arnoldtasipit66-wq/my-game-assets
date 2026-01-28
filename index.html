@@ -8331,36 +8331,35 @@ async function handle61BallTurnEnd() {
             
             // Combo & Rewards
             if (isMyTurn) {
-                if(typeof currentCombo !== 'undefined') { currentCombo++; showComboPopup(currentCombo); }
-                
-                const reward = pocketedObjectChips.length * REWARD_PER_BALL;
-// --- BAGONG SERVER CODE (61 Ball) ---
-// Visual muna (Optimistic UI)
-playerTotalCurrency += reward;
-showRewardPopup(reward);
-updateCurrencyDisplay();
-
-// Request sa Server
-if (localPlayerUid) {
-    fetch(`${SERVER_URL}/api/record-win`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            uid: localPlayerUid,
-            ballsPocketed: pocketedObjectChips.length, // Bilang ng bola
-            gameMode: '61-ball'
-        })
-    }).catch(e => console.error(e));
-}
-// ------------------------------------
-gainXP(pocketedObjectChips.length * XP_PER_BALL); // XP logic (pwede iwan dito o ilipat sa server next time)
+            // 1. Combo Logic
+            if(typeof currentCombo !== 'undefined') { 
+                currentCombo++; 
+                showComboPopup(currentCombo); 
             }
+            
+            // 2. Calculate Reward
+            const reward = pocketedObjectChips.length * REWARD_PER_BALL;
 
-        } else {
-            // Walang pumasok -> Lipat turn
-            switchTurn = true;
-            if(typeof currentCombo !== 'undefined') currentCombo = 0;
+            // --- CLIENT-SIDE UPDATE (No Server) ---
+            
+            // A. Update Visuals & Variable
+            playerTotalCurrency += reward;
+            showRewardPopup(reward);
+            updateCurrencyDisplay();
+
+            // B. Save to Firebase (Ito ang pinalit sa fetch)
+            saveCurrency();
+
+            // C. Gain XP
+            gainXP(pocketedObjectChips.length * XP_PER_BALL); 
+            // ------------------------------------
         }
+
+    } else {
+        // Walang pumasok -> Lipat turn
+        switchTurn = true;
+        if(typeof currentCombo !== 'undefined') currentCombo = 0;
+    }
     }
 
     // Update Lowest Chip (Para sa susunod na tira)
