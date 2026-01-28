@@ -1882,8 +1882,8 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
 
 
 @media (max-height: 500px) and (orientation: landscape) {
-    #player-info { left: 150px !important; top: 10px !important; }
-    #opponent-info { right: 190px !important; top: 10px !important; }
+    #player-info { left: 130px !important; top: 10px !important; }
+    #opponent-info { right: 130px !important; top: 10px !important; }
 }
 .flying-coin-particle {
     position: fixed;
@@ -5129,68 +5129,7 @@ div#opponent-info.hud-active {
     border-radius: 25px !important;
     background: rgba(0, 0, 0, 0.5) !important;
 }
-
-        /* =======================================
-   LANDSCAPE MODE (Console Layout)
-   ======================================= */
-@media only screen and (orientation: landscape) {
-    
-    /* 1. GLOBAL ZOOM (Para magkasya lahat) */
-    body { zoom: 0.85; }
-
-    /* 2. GAME MODES (Practice & Online) -> ILAGAY SA TAAS */
-    .game-modes-wrapper {
-        position: absolute;
-        top: 10% !important;        /* Hatakin pataas */
-        left: 50% !important;
-        transform: translateX(-50%); /* I-gitna horizontal */
         
-        display: flex;              /* I-hilera sila */
-        gap: 40px;                  /* Distansya sa pagitan nila */
-        width: 100%;
-        justify-content: center;
-        z-index: 50;
-    }
-
-    /* Siguraduhing hindi sobrang laki ng cards sa landscape */
-    .game-card {
-        width: 200px !important;    /* Liitan konti */
-        height: auto !important;
-    }
-
-    /* 3. WALLET BUTTON -> ILAGAY SA BABA KALIWA */
-    #ton-connect-wrapper {
-        position: absolute;
-        top: auto !important;       /* Bitawan ang taas */
-        bottom: 20px !important;    /* Idikit sa sahig */
-        left: 40px !important;      /* Idikit sa kaliwa */
-        
-        display: flex;
-        flex-direction: column-reverse; /* Badge sa taas */
-        align-items: center;
-        transform: scale(0.9);
-        z-index: 100;
-    }
-
-    /* Ayusin ang Badge Position */
-    #ton-connect-wrapper .airdrop-badge {
-        position: absolute;
-        top: -30px !important;
-        left: 50%;
-        transform: translateX(-50%);
-        width: max-content;
-    }
-
-    /* 4. MENU BAR (Rewards/Shop) -> BABA GITNA */
-    /* (Assuming '.lobby-menu' ang class ng menu mo) */
-    .lobby-menu, .scroll-menu {
-        position: absolute;
-        top: auto !important;
-        bottom: 10px !important;
-        left: 50% !important;
-        transform: translateX(-50%) scale(0.85);
-    }
-}        
 </style>
 </head>
 <body>
@@ -5387,9 +5326,6 @@ div#opponent-info.hud-active {
     </div>
 
     <div class="lobby-main">
-
-    <div class="game-modes-wrapper">
-        
         <div id="online-button" class="game-card primary-card">
             <div class="card-bg"></div>
             <div class="card-content">
@@ -5406,17 +5342,10 @@ div#opponent-info.hud-active {
                 <div class="card-subtitle">vs AI Computer</div>
             </div>
         </div>
-        
+
+        <div id="ton-connect" style="margin-top: 15px; margin-bottom: 10px; display: flex; justify-content: center;"></div>
     </div>
 
-    <div id="ton-connect-wrapper"> 
-        <div id="airdrop-badge" class="airdrop-badge">
-            🪂 Airdrop Soon!
-        </div>
-        <div id="ton-connect"></div>
-    </div>
-
-</div>
     <div class="lobby-dock">
         <div id="ad-reward-button" class="dock-item" onclick="playAdGram()">
     <div class="dock-icon">📺</div>
@@ -14946,23 +14875,13 @@ const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     buttonRootId: 'ton-connect'
 });
 
-// 2. Makinig sa status change ng wallet (UPDATED WITH BADGE LOGIC)
+// 2. Makinig sa status change ng wallet
 tonConnectUI.onStatusChange(async (wallet) => {
-    const badge = document.getElementById('airdrop-badge'); // Hanapin ang badge
-
     if (wallet) {
-        // --- KAPAG CONNECTED ---
         const walletAddress = wallet.account.address;
         console.log("Wallet Connected:", walletAddress);
         
-        // ✨ VISUAL UPDATE: Gawing Green ang Badge ("Eligible")
-        if (badge) {
-            badge.innerHTML = "✅ Eligible!";
-            badge.style.background = "linear-gradient(45deg, #11998e, #38ef7d)"; // Green
-            badge.style.top = "-15px"; // Umangat ng konti
-        }
-
-        // 1. I-save muna sa localStorage
+        // 1. I-save muna sa localStorage para kahit mag-reload o mabagal ang Auth, may record tayo
         localStorage.setItem('pendingWalletAddress', walletAddress);
 
         // 2. I-check kung may logged in user na
@@ -14971,21 +14890,13 @@ tonConnectUI.onStatusChange(async (wallet) => {
         } else {
             console.log("Waiting for user to log in before saving wallet...");
         }
-
     } else {
-        // --- KAPAG DISCONNECTED ---
         console.log("Wallet disconnected");
         localStorage.removeItem('pendingWalletAddress');
-
-        // 🔄 VISUAL UPDATE: Ibalik sa Red ("Airdrop Soon")
-        if (badge) {
-            badge.innerHTML = "🪂 Airdrop Soon!";
-            badge.style.background = "linear-gradient(45deg, #FF512F, #DD2476)"; // Red/Orange
-            badge.style.top = "-12px"; // Balik sa dati
-        }
     }
 });
 
+// Gawa tayo ng hiwalay na function para malinis
 // Gawa tayo ng hiwalay na function para malinis
 async function saveWalletToFirestore(uid, address) {
     // 1. CHECK: Siguraduhin na ready na ang 'db' bago gamitin
@@ -14996,6 +14907,9 @@ async function saveWalletToFirestore(uid, address) {
     }
 
     try {
+        // 2. Hindi mo na kailangan ang 'await import' dito kung naka-import na sila sa taas ng script
+        // Gagamitin natin ang global 'db' at ang mga imported functions (doc, setDoc, serverTimestamp)
+        
         const playerDocRef = doc(db, "players", uid);
         
         await setDoc(playerDocRef, {
@@ -15010,9 +14924,10 @@ async function saveWalletToFirestore(uid, address) {
         
         // Visual feedback sa Telegram
         if (typeof tg !== 'undefined' && tg.showAlert) {
-            tg.showAlert("Wallet Linked Successfully! Ready for Airdrop.");
+            tg.showAlert("Wallet Linked Successfully!");
         }
     } catch (error) {
+        // Dito papasok yung 'permission-denied' kung hindi mo pa naaayos ang Rules
         console.error("❌ Error saving wallet to Firestore:", error);
         
         if (error.code === 'permission-denied') {
