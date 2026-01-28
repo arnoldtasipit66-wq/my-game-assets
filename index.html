@@ -14701,10 +14701,16 @@ function drawWheel() {
 
 function startSpin() {
     if (isSpinning) return;
-    if (!isDailyRewardAvailable()) {
-        showMessage("Wait for cooldown!", 2000);
-        return;
+
+    // --- DITO ANG PAGBABAGO ---
+    // Kung HINDI galing sa Ad (Regular Daily Reward), check ang cooldown
+    if (!window.isAdSpinMode) {
+        if (!isDailyRewardAvailable()) {
+            showMessage("Wait for daily cooldown!", 2000);
+            return;
+        }
     }
+    // ---------------------------
 
     playButtonSound();
     isSpinning = true;
@@ -14734,20 +14740,11 @@ function finishSpin() {
     isSpinning = false;
     wheelVelocity = 0;
     
-    const arcSize = (2 * Math.PI) / SEGMENTS.length; // Sukat ng bawat slice
-    
-    // 1. Gawing positive ang angle (normalize)
+    const arcSize = (2 * Math.PI) / SEGMENTS.length;
     const currentRotation = (wheelAngle % (2 * Math.PI) + (2 * Math.PI)) % (2 * Math.PI);
-    
-    // 2. MATH FIX:
-    // Ang Arrow ay nasa Taas (270 degrees o 1.5 * PI).
-    // Ang formula: (Arrow Position - Wheel Rotation) % Circle
     let pointerPos = (1.5 * Math.PI - currentRotation + (2 * Math.PI)) % (2 * Math.PI);
-    
-    // 3. Kunin ang index
     let index = Math.floor(pointerPos / arcSize);
     
-    // Safety check kung lumagpas sa array
     if (index >= SEGMENTS.length) index = 0;
     
     const winningSegment = SEGMENTS[index];
@@ -14756,11 +14753,20 @@ function finishSpin() {
     // --- REWARD LOGIC ---
     spinStatus.innerHTML = `YOU WON: <span style="color:${winningSegment.color}; font-size:1.5em;">${prize}</span> COINS!`;
     
+    // 1. I-save ang Coins (Ito ang gumagana sa'yo)
     playerTotalCurrency += prize;
-    saveCurrency();
+    saveCurrency(); // Ito ang nagse-save sa database
     updateCurrencyDisplay();
-    saveLastClaimTime();
-    updateDailyRewardButtonState();
+
+    // 2. CHECK: Kung Daily Reward ito, i-save ang timer.
+    // Kung Ad Spin ito, WAG galawin ang timer (unlimited basta nanonood ng ads)
+    if (!window.isAdSpinMode) {
+        saveLastClaimTime();
+        updateDailyRewardButtonState();
+    }
+
+    // Reset Flag
+    window.isAdSpinMode = false; 
 
     // Play Sound & Effects
     if(typeof playCoinSound === 'function') playCoinSound();
