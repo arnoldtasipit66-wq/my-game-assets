@@ -14972,55 +14972,68 @@ async function saveWalletToFirestore(uid, address) {
         }
     }
 
- // ==========================================
-// 📺 ADGRAM INTEGRATION (FIXED VERSION)
-// ==========================================
+// 1. I-initialize ang Adsgram gamit ang Block ID mo
+const AdController = window.Adsgram.init({ blockId: "21752" });
 
-// Gawing global function para ma-access ng onclick
-window.playAdGram = async function() {
-    console.log("Checking Adsgram...");
+// 2. Ang function para sa panonood ng Ads
+async function watchAdForCoins() {
+    // Play button sound kung meron ka
+    if (typeof playButtonSound === 'function') playButtonSound();
 
-    // Siguraduhing may Adsgram object
-    if (window.Adsgram) {
-        // Initialize gamit ang iyong Block ID: 21752
-        const adController = window.Adsgram.init({ blockId: "21752" });
-
-        adController.show().then((result) => {
-            // ✅ SUCCESS: Tinapos panoorin ang Ad (dapat result.done ay true)
-            if (result.done) {
-                console.log('Ad completed! Giving reward...');
-                
-                const rewardAmount = 500;
-                
-                // 1. Math Fix: Siguraduhing Number ang computation
-                playerTotalCurrency = Number(playerTotalCurrency) + rewardAmount;
-                
-                // 2. Save agad sa database/local
-                saveCurrency(); 
-                
-                // 3. Update ang text sa screen
-                updateCurrencyDisplay(); 
-                
-                // 4. Visual & Sound Effects
-                if (typeof playCoinSound === 'function') playCoinSound();
-                if (typeof spawnFlyingCoins === 'function') spawnFlyingCoins();
-                if (typeof triggerFireworks === 'function') triggerFireworks();
-                
-                showMessage(`Galing! Nakakuha ka ng ${rewardAmount} Coins! 💰`, 3000);
-            } else {
-                // ❌ Sinara ang ad nang maaga
-                showMessage("Kailangang tapusin ang ad para makuha ang coins. 😢", 3000);
-            }
-        }).catch((err) => {
-            // ❌ Error (halimbawa walang ad na available o sinalpak ang block)
-            console.error('AdGram Error:', err);
-            showMessage("Pasensya na, walang available na ad sa ngayon.", 2500);
-        });
-    } else {
-        console.error("AdGram script not loaded yet.");
-        showMessage("Ads is still loading... try again in 5 seconds.", 2000);
+    try {
+        const result = await AdController.show();
+        
+        if (result.done) {
+            // SUCCESS: Dito mo ilalagay ang reward logic
+            alert("Galing! Narito ang 50 Coins mo! 💰");
+            processReward(50); 
+        } else {
+            // USER CLOSED THE AD early
+            alert("Kailangan mong tapusin ang video para makuha ang reward. 😊");
+        }
+    } catch (err) {
+        console.error("Adsgram Error:", err);
+        alert("Walang available na ads sa ngayon, laro muna tayo!");
     }
-};
+}
+
+// 3. FIX: Ang nawawalang function na nag-e-error sa code mo
+function openUniversalModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'flex';
+        // Para sa Telegram back button support
+        window.history.pushState({modal: modalId}, "");
+    }
+}
+
+function processReward(amount) {
+    // Siguraduhin na may userId tayo
+    if (userId === "guest") {
+        console.error("Hindi ma-reward: Walang valid na User ID.");
+        return;
+    }
+
+    // Path sa database: users/USER_ID/coins
+    const userCoinsRef = firebase.database().ref('users/' + userId + '/coins');
+
+    // Ginagamit natin ang .transaction() para hindi magka-error 
+    // kahit sabay-sabay mag-update ang coins (iwas glitch)
+    userCoinsRef.transaction((currentCoins) => {
+        return (currentCoins || 0) + amount;
+    }, (error, committed, snapshot) => {
+        if (error) {
+            console.error("Firebase Update Failed:", error);
+        } else if (committed) {
+            console.log("✅ Coins updated! New balance:", snapshot.val());
+            
+            // OPTIONAL: I-update ang UI ng laro mo para makita agad ang bagong coins
+            if (typeof updateCoinDisplay === 'function') {
+                updateCoinDisplay(snapshot.val());
+            }
+        }
+    });
+}
 
     // ------------------------------------------------------------
 // 🚀 NAVIGATION & BUTTON SYSTEM ACTIVATOR
