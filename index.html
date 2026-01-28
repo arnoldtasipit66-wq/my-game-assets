@@ -5724,9 +5724,11 @@ div#opponent-info.hud-active {
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, serverTimestamp, increment, collection, query, orderBy, limit, getDocs, addDoc, runTransaction, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-const SERVER_URL = "https://70b11688-6910-4031-aef0-f32f14b103a4-00-2pgkc6r631kqx.sisko.replit.dev";
+const SERVER_URL = "https://pinoypooldugz-pldf60qvz-arnoldtasipit66-wqs-projects.vercel.app";
 // --- DITO MAGSISIMULA ANG TELEGRAM SETUP ---
 const tg = window.Telegram.WebApp; // Ngayon, kilala na ng code mo si 'tg'
+const tg = window.Telegram.WebApp; 
+const userId = tg.initDataUnsafe?.user?.id || "guest"; // <--- ILAGAY MO DITO
 tg.ready(); // Sinasabi nito sa Telegram na handa na ang game
 tg.expand(); // Para mag-full screen
 tg.enableClosingConfirmation(); // Ito ang sikreto para magtanong bago mag-close
@@ -5745,29 +5747,34 @@ function handleExitRequest() {
         });
     }
 }
-// --- 2. ANG TAGABANTAY NG BACK BUTTON ---
+// --- 2. ANG PINAKAMALUPIT NA TAGABANTAY NG BACK BUTTON ---
 tg.BackButton.onClick(() => {
-    // Check muna kung may nakabukas na modal (Shop, Leaderboard, etc.)
-    const activeModal = document.querySelector('.modal-overlay.show') || document.querySelector('.modal.show');
+    const activeModal = document.querySelector('.modal-overlay.show');
     
     if (activeModal) {
-        // KUNG MAY MODAL: Isara lang ang modal (WALANG confirmation para hindi nakakairita)
-        activeModal.classList.remove('show'); 
-        tg.BackButton.hide(); // Itago ang back arrow
+        activeModal.classList.remove('show');
+        window.isClosingModal = true;
         
-        if (window) window.isClosingModal = true;
-        history.back(); 
+        // Tawagin ang popstate logic nang manual para mag-sync ang history
+        history.back();
+        
+        // Pagkatapos ng back, i-check ang state
+        setTimeout(() => {
+            restoreGameState();
+            // Itago ang BackButton kung wala na talagang modals
+            if (!document.querySelector('.modal-overlay.show')) {
+                tg.BackButton.hide();
+            }
+        }, 50);
     } else {
-        // KUNG WALANG MODAL (Nasa Main Menu): Tawagin ang confirmation window
-        handleExitRequest(); 
+        handleExitRequest();
     }
 });      
-               let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
-window.isInGame = false;
+               // Gawin nating window properties para ma-access kahit saan
+let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
+window.localPlayerUid = null; // Idagdag ito
+window.db = null;             // Idagdag ito
 
-
-let tempInviteFriendUid = null;
-let tempInviteFriendName = null;
 
 // --- 🤖 STEP 1: BOT NAME GENERATOR 🤖 ---
 const BotGenerator = {
