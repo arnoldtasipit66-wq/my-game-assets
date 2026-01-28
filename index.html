@@ -9253,15 +9253,15 @@ async function findMatch() {
         // ERROR HANDLING (Important: Refund kung nag-error after magbayad)
         if (selectedBetAmount > 0) {
              showMessage("Error occurred. Refunding...", 2000);
-             // Call Refund API
-             fetch(`${SERVER_URL}/api/refund`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid: localPlayerUid, amount: selectedBetAmount })
-             }).then(() => {
-                 playerTotalCurrency += selectedBetAmount;
-                 updateCurrencyDisplay();
-             });
+             
+             // 1. Ibalik ang pera sa local variable
+             playerTotalCurrency += selectedBetAmount;
+             
+             // 2. Update ang display
+             updateCurrencyDisplay();
+
+             // 3. I-save sa Firebase (Ito ang kapalit ng fetch)
+             saveCurrency();
         }
         
         if (e.code === 'failed-precondition') {
