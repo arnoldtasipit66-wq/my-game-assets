@@ -11204,8 +11204,6 @@ function formatCurrencyShort(num) {
 }
 
 function spawnFlyingCoins() {
-    let targetEl = document.getElementById('lobby-coin-display') || document.getElementById('currency-display');
-    if (!targetEl || targetEl.offsetParent === null) return; // Wag ituloy kung tago ang element
     // 1. SMART TARGETING (Kung saan pupunta)
     let targetEl = null;
     if (gameState === 'lobby' || gameState === 'menu') {
