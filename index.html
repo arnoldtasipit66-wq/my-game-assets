@@ -14980,61 +14980,73 @@ async function saveWalletToFirestore(uid, address) {
     }
 
 // ==========================================
-// 📺 ADGRAM INTEGRATION (FIXED & IMPROVED)
+// 📺 ADGRAM INTEGRATION (FIREBASE INCREMENT FIX)
 // ==========================================
 
 window.playAdGram = async function() {
     console.log("Attempting to play AdGram...");
     
-    // 1. Check kung na-load ba ang Adsgram script
+    // Check kung loaded ang Adsgram
     if (!window.Adsgram) {
-        console.error("AdGram script not loaded.");
-        showMessage("⚠️ Ads system not ready. Check internet connection.", 3000);
+        showMessage("⚠️ Ads system not ready. Wait a moment...", 3000);
         return;
     }
 
     try {
-        // 2. Initialize Controller
-        // SIGURADUHIN MONG TAMA ANG "21752" SA ADSGRAM DASHBOARD MO
         const adController = window.Adsgram.init({ blockId: "21752" }); 
 
-        // 3. Show Ad
-        adController.show().then((result) => {
-            // ✅ SUCCESS: Tinapos talaga panoorin ang Ad
+        adController.show().then(async (result) => {
+            // ✅ SUCCESS: Tinapos ang ad
             if (result.done) {
-                console.log('Ad completed successfully!');
-                
                 const rewardAmount = 500;
                 
-                // Siguraduhing Number ang computation
+                showMessage("Processing Reward...", 2000); // Feedback agad
+
+                // --- 1. DIRECT DATABASE UPDATE (PINAKA-IMPORTANTE) ---
+                // Gumagamit tayo ng 'increment' para siguradong pumasok sa server
+                if (localPlayerUid && db) {
+                    try {
+                        const playerRef = doc(db, "players", localPlayerUid);
+                        
+                        // Uutusan ang Firebase na magdagdag ng 500
+                        await updateDoc(playerRef, {
+                            balance: increment(rewardAmount)
+                        });
+                        
+                        console.log("✅ Database updated via increment!");
+                        
+                    } catch (err) {
+                        console.error("Database save failed:", err);
+                        // Fallback: Kung nag-fail ang increment, try manual update
+                        playerTotalCurrency = Number(playerTotalCurrency) + rewardAmount;
+                        saveCurrency();
+                    }
+                }
+
+                // --- 2. UPDATE LOCAL DISPLAY (Optimistic UI) ---
+                // Ipakita agad sa player kahit naglo-load pa ang database
                 playerTotalCurrency = Number(playerTotalCurrency) + rewardAmount;
-                
-                // 1. I-save agad sa database/local
-                saveCurrency(); 
-                
-                // 2. I-update ang text sa screen
                 updateCurrencyDisplay(); 
                 
-                // 3. Visual Effects (Para ramdam ang panalo)
+                // --- 3. VISUAL EFFECTS ---
                 if (typeof playCoinSound === 'function') playCoinSound();
                 if (typeof spawnFlyingCoins === 'function') spawnFlyingCoins();
                 if (typeof triggerFireworks === 'function') triggerFireworks();
                 
-                showMessage(`✅ Success! Received ${rewardAmount} Coins! 💰`, 3000);
+                // --- 4. CONFIRMATION ---
+                // Gumamit ako ng alert para sigurado kang makita mo na tapos na ang process
+                // Pwede mo itong tanggalin kapag okay na.
+                setTimeout(() => {
+                    alert(`✅ SUCCESS!\n\nNakatanggap ka ng ${rewardAmount} Coins!\nNew Balance: ${playerTotalCurrency}`);
+                }, 500);
+
             } else {
-                // ❌ SKIPPED: Sinara ang ad nang hindi tinatapos
-                showMessage("❌ Reward cancelled. You skipped the ad.", 3000);
+                // ❌ SKIPPED
+                showMessage("❌ Sayang! Hindi tinapos ang ad.", 3000);
             }
         }).catch((err) => {
-            // ⚠️ ERROR HANDLING (Dito pumapasok pag walang ads)
             console.error('AdGram Error:', err);
-            
-            // Ipakita ang error sa screen para alam mo kung bakit ayaw
-            if (err && err.description) {
-                showMessage(`⚠️ Ad Error: ${err.description}`, 3000);
-            } else {
-                showMessage("⚠️ No ads available right now. Try again later.", 3000);
-            }
+            showMessage("⚠️ Ad Error. Please try again.", 3000);
         });
 
     } catch (e) {
