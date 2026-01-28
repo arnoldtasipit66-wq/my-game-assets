@@ -5131,6 +5131,17 @@ div#opponent-info.hud-active {
     border-radius: 25px !important;
     background: rgba(0, 0, 0, 0.5) !important;
 }
+
+        #ads-reward-btn .icon-container {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+    animation: pulse-gold 2s infinite;
+}
+
+@keyframes pulse-gold {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(255, 215, 0, 0.7); }
+    100% { transform: scale(1); }
+}
         
 </style>
 </head>
@@ -5349,6 +5360,12 @@ div#opponent-info.hud-active {
     </div>
 
     <div class="lobby-dock">
+        <div class="menu-item" id="ads-reward-btn" onclick="watchAdForCoins()">
+    <div class="icon-container" style="background: linear-gradient(135deg, #ff4e50, #f9d423);">
+        <span class="icon">📺</span>
+    </div>
+    <span class="label">FREE COINS</span>
+        </div>
         <div id="shop-button" class="dock-item">
             <div class="dock-icon">🛒</div>
             <div class="dock-label">Shop</div>
@@ -15173,43 +15190,45 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-// 2. Fix: Universal Modal Opener (Para gumana ang Shop, Profile, etc.)
+// 1. I-initialize ang Adsgram gamit ang Block ID mo
+const AdController = window.Adsgram.init({ blockId: "21752" });
+
+// 2. Ang function para sa panonood ng Ads
+async function watchAdForCoins() {
+    // Play button sound kung meron ka
+    if (typeof playButtonSound === 'function') playButtonSound();
+
+    try {
+        const result = await AdController.show();
+        
+        if (result.done) {
+            // SUCCESS: Dito mo ilalagay ang reward logic
+            alert("Galing! Narito ang 50 Coins mo! 💰");
+            processReward(50); 
+        } else {
+            // USER CLOSED THE AD early
+            alert("Kailangan mong tapusin ang video para makuha ang reward. 😊");
+        }
+    } catch (err) {
+        console.error("Adsgram Error:", err);
+        alert("Walang available na ads sa ngayon, laro muna tayo!");
+    }
+}
+
+// 3. FIX: Ang nawawalang function na nag-e-error sa code mo
 function openUniversalModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'flex';
-        // Nagdadagdag tayo ng state sa history para gumana ang back button sa pagsasara
-        window.history.pushState({modalOpen: modalId}, "");
-    } else {
-        console.error("❌ Modal not found: " + modalId);
+        // Para sa Telegram back button support
+        window.history.pushState({modal: modalId}, "");
     }
 }
 
-// 3. AdGram Reward Function (Gamit ang Block ID mo: 21752)
-const AdController = window.Adsgram.init({ blockId: "21752" });
-
-async function watchAdForCoins() {
-    try {
-        const result = await AdController.show();
-        
-        // Kapag natapos panoorin ang ad
-        if (result.done) {
-            alert("Salamat! Nakakuha ka ng 50 Coins! 💰");
-            rewardUser(50); // Tawagin ang function na mag-a-update sa Firebase
-        } else {
-            // Kung clinose ng user ang ad nang hindi tinatapos
-            alert("Kailangan mong tapusin ang ad para makuha ang reward. ❌");
-        }
-    } catch (error) {
-        console.error("AdGram Error:", error);
-        alert("Pasensya na, walang available na ad sa ngayon. Subukan muli mamaya.");
-    }
-}
-
-// 4. Placeholder para sa Firebase Reward (Dito mo i-connect ang Firebase mo)
-function rewardUser(amount) {
-    console.log(`Nagbibigay ng ${amount} coins sa player...`);
-    // Halimbawa: database.ref('users/' + userId).update({ coins: currentCoins + amount });
+// 4. Reward Processing (I-connect ito sa Firebase mo)
+function processReward(amount) {
+    console.log("Updating Firebase with " + amount + " coins...");
+    // Dito mo ilalagay yung: db.ref('users/' + user.id).update({ coins: current + amount });
 }
     
 </script>
