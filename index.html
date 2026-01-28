@@ -14924,13 +14924,23 @@ const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     buttonRootId: 'ton-connect'
 });
 
-// 2. Makinig sa status change ng wallet
+// 2. Makinig sa status change ng wallet (UPDATED WITH BADGE LOGIC)
 tonConnectUI.onStatusChange(async (wallet) => {
+    const badge = document.getElementById('airdrop-badge'); // Hanapin ang badge
+
     if (wallet) {
+        // --- KAPAG CONNECTED ---
         const walletAddress = wallet.account.address;
         console.log("Wallet Connected:", walletAddress);
         
-        // 1. I-save muna sa localStorage para kahit mag-reload o mabagal ang Auth, may record tayo
+        // ✨ VISUAL UPDATE: Gawing Green ang Badge ("Eligible")
+        if (badge) {
+            badge.innerHTML = "✅ Eligible!";
+            badge.style.background = "linear-gradient(45deg, #11998e, #38ef7d)"; // Green
+            badge.style.top = "-15px"; // Umangat ng konti
+        }
+
+        // 1. I-save muna sa localStorage
         localStorage.setItem('pendingWalletAddress', walletAddress);
 
         // 2. I-check kung may logged in user na
@@ -14939,13 +14949,21 @@ tonConnectUI.onStatusChange(async (wallet) => {
         } else {
             console.log("Waiting for user to log in before saving wallet...");
         }
+
     } else {
+        // --- KAPAG DISCONNECTED ---
         console.log("Wallet disconnected");
         localStorage.removeItem('pendingWalletAddress');
+
+        // 🔄 VISUAL UPDATE: Ibalik sa Red ("Airdrop Soon")
+        if (badge) {
+            badge.innerHTML = "🪂 Airdrop Soon!";
+            badge.style.background = "linear-gradient(45deg, #FF512F, #DD2476)"; // Red/Orange
+            badge.style.top = "-12px"; // Balik sa dati
+        }
     }
 });
 
-// Gawa tayo ng hiwalay na function para malinis
 // Gawa tayo ng hiwalay na function para malinis
 async function saveWalletToFirestore(uid, address) {
     // 1. CHECK: Siguraduhin na ready na ang 'db' bago gamitin
@@ -14956,9 +14974,6 @@ async function saveWalletToFirestore(uid, address) {
     }
 
     try {
-        // 2. Hindi mo na kailangan ang 'await import' dito kung naka-import na sila sa taas ng script
-        // Gagamitin natin ang global 'db' at ang mga imported functions (doc, setDoc, serverTimestamp)
-        
         const playerDocRef = doc(db, "players", uid);
         
         await setDoc(playerDocRef, {
@@ -14973,10 +14988,9 @@ async function saveWalletToFirestore(uid, address) {
         
         // Visual feedback sa Telegram
         if (typeof tg !== 'undefined' && tg.showAlert) {
-            tg.showAlert("Wallet Linked Successfully!");
+            tg.showAlert("Wallet Linked Successfully! Ready for Airdrop.");
         }
     } catch (error) {
-        // Dito papasok yung 'permission-denied' kung hindi mo pa naaayos ang Rules
         console.error("❌ Error saving wallet to Firestore:", error);
         
         if (error.code === 'permission-denied') {
