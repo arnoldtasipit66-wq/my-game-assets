@@ -14980,78 +14980,50 @@ async function saveWalletToFirestore(uid, address) {
     }
 
 // ==========================================
-// 📺 ADGRAM INTEGRATION (FIREBASE INCREMENT FIX)
+// 📺 ADGRAM INTEGRATION (Block ID: 21752)
 // ==========================================
 
+// Gawing global ito para matawag ng onclick sa HTML
 window.playAdGram = async function() {
     console.log("Attempting to play AdGram...");
-    
-    // Check kung loaded ang Adsgram
-    if (!window.Adsgram) {
-        showMessage("⚠️ Ads system not ready. Wait a moment...", 3000);
-        return;
-    }
 
-    try {
-        const adController = window.Adsgram.init({ blockId: "21752" }); 
+    if (window.Adsgram) {
+        const adController = window.Adsgram.init({ blockId: "21752" });
 
-        adController.show().then(async (result) => {
-            // ✅ SUCCESS: Tinapos ang ad
+        adController.show().then((result) => {
+            // ✅ SUCCESS: Tinapos talaga panoorin ang Ad
             if (result.done) {
+                console.log('Ad completed successfully!');
+                
                 const rewardAmount = 500;
                 
-                showMessage("Processing Reward...", 2000); // Feedback agad
-
-                // --- 1. DIRECT DATABASE UPDATE (PINAKA-IMPORTANTE) ---
-                // Gumagamit tayo ng 'increment' para siguradong pumasok sa server
-                if (localPlayerUid && db) {
-                    try {
-                        const playerRef = doc(db, "players", localPlayerUid);
-                        
-                        // Uutusan ang Firebase na magdagdag ng 500
-                        await updateDoc(playerRef, {
-                            balance: increment(rewardAmount)
-                        });
-                        
-                        console.log("✅ Database updated via increment!");
-                        
-                    } catch (err) {
-                        console.error("Database save failed:", err);
-                        // Fallback: Kung nag-fail ang increment, try manual update
-                        playerTotalCurrency = Number(playerTotalCurrency) + rewardAmount;
-                        saveCurrency();
-                    }
-                }
-
-                // --- 2. UPDATE LOCAL DISPLAY (Optimistic UI) ---
-                // Ipakita agad sa player kahit naglo-load pa ang database
+                // Siguraduhing Number ang computation para hindi mag-error ang math
                 playerTotalCurrency = Number(playerTotalCurrency) + rewardAmount;
+                
+                // 1. I-save agad sa database/local
+                saveCurrency(); 
+                
+                // 2. I-update ang text sa screen
                 updateCurrencyDisplay(); 
                 
-                // --- 3. VISUAL EFFECTS ---
+                // 3. Visual Effects (Siguraduhing nandoon ang functions na ito sa script mo)
                 if (typeof playCoinSound === 'function') playCoinSound();
                 if (typeof spawnFlyingCoins === 'function') spawnFlyingCoins();
                 if (typeof triggerFireworks === 'function') triggerFireworks();
                 
-                // --- 4. CONFIRMATION ---
-                // Gumamit ako ng alert para sigurado kang makita mo na tapos na ang process
-                // Pwede mo itong tanggalin kapag okay na.
-                setTimeout(() => {
-                    alert(`✅ SUCCESS!\n\nNakatanggap ka ng ${rewardAmount} Coins!\nNew Balance: ${playerTotalCurrency}`);
-                }, 500);
-
+                showMessage(`Nakuha mo ang ${rewardAmount} Coins! 💰`, 3000);
             } else {
-                // ❌ SKIPPED
-                showMessage("❌ Sayang! Hindi tinapos ang ad.", 3000);
+                // Sinara ang ad nang hindi tinatapos
+                showMessage("Kailangang tapusin ang ad para sa reward. 😢", 3000);
             }
         }).catch((err) => {
             console.error('AdGram Error:', err);
-            showMessage("⚠️ Ad Error. Please try again.", 3000);
+            // Karaniwang error kung walang ad na available (fill rate)
+            showMessage("Walang available na ad sa ngayon. Laro muna tayo!", 2000);
         });
-
-    } catch (e) {
-        console.error("AdGram Init Error:", e);
-        showMessage("⚠️ System Error: Cannot initialize ads.", 3000);
+    } else {
+        console.error("AdGram script not loaded.");
+        showMessage("Naglo-load pa ang Ads... try muli mamaya.", 2000);
     }
 };
 
@@ -15204,67 +15176,7 @@ function restoreGameState() {
     if (typeof draw === 'function') draw(); 
 }
 
- <button onclick="forceAddCoins()" style="position:fixed; top:50px; left:50px; z-index:999999; padding:20px; font-size:20px; background:red; color:white; border:2px solid white;">
-    TEST DB SAVE (PINDUTIN MO)
-</button>
-
-<script>
-// I-paste mo ito sa pinaka-ibaba ng script mo
-window.forceAddCoins = async function() {
-    alert("Sinusubukan mag-save...");
-
-    // 1. Check kung may User ID
-    if (!window.localPlayerUid && !localPlayerUid) {
-        alert("ERROR: Walang User ID! Hindi ka pa naka-login sa Firebase.");
-        return;
-    }
-
-    // Siguraduhing nade-detect ang variable
-    const uid = window.localPlayerUid || localPlayerUid;
-    alert("User ID Found: " + uid);
-
-    try {
-        // 2. Reference sa database
-        // Gumamit tayo ng bracket notation para sure na makuha ang global 'db'
-        const database = window.db || db; 
-        
-        // Manual import kung sakaling hindi mahanap ang functions
-        const { doc, setDoc, getDoc, updateDoc, increment } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
-
-        const playerRef = doc(database, "players", uid);
-
-        // 3. Check muna kung nage-exist ang player document
-        const snap = await getDoc(playerRef);
-
-        if (!snap.exists()) {
-            alert("WARNING: Wala pang player data. Gagawa ng bago...");
-            await setDoc(playerRef, {
-                balance: 500, // Initial balance
-                displayName: "Recovered Player"
-            }, { merge: true });
-            alert("SUCCESS! Created new data. Balance: 500");
-        } else {
-            // 4. Kung meron na, FORCE UPDATE gamit ang setDoc (merge)
-            // Mas matibay ito kesa updateDoc kung minsan
-            await setDoc(playerRef, {
-                balance: increment(500)
-            }, { merge: true });
-            
-            alert("SUCCESS! Added 500 coins via Increment!");
-        }
-
-        // 5. Update UI
-        if(typeof playerTotalCurrency !== 'undefined') {
-            playerTotalCurrency += 500;
-            if(typeof updateCurrencyDisplay === 'function') updateCurrencyDisplay();
-        }
-
-    } catch (e) {
-        alert("POTA ERROR PADIN: " + e.message);
-        console.error(e);
-    }
-}
-  
+   
 
 </script>
 
