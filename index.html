@@ -5130,48 +5130,49 @@ div#opponent-info.hud-active {
     background: rgba(0, 0, 0, 0.5) !important;
 }
 
-        /* AIRDROP BADGE STYLE */
-.airdrop-badge {
-    position: absolute;
-    top: -12px;  /* Iangat sa ibabaw ng button */
-    right: -10px; /* I-usog sa kanan */
+        /* =========================================
+   LANDSCAPE MODE FIXES (Mobile Rotation)
+   ========================================= */
+@media only screen and (orientation: landscape) {
     
-    /* Ganda ng kulay (Red-Orange Gradient) */
-    background: linear-gradient(45deg, #FF512F, #DD2476);
-    
-    color: white;
-    font-family: 'Nunito', sans-serif;
-    font-size: 0.7em;
-    font-weight: bold;
-    padding: 3px 8px;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    white-space: nowrap;
-    z-index: 10;
-    pointer-events: none; /* Para mapindot pa rin ang button sa ilalim */
-    
-    /* Animation: Tumatalbog */
-    animation: floatBadge 2s infinite ease-in-out;
-}
+    /* 1. Global Adjustment: Paliitin ng konti ang lahat para magkasya */
+    body {
+        /* Optional: Pwede mong bawasan zoom kung sobrang laki */
+        zoom: 0.9; 
+    }
 
-/* Maliit na triangle sa baba ng badge (Speech bubble effect) */
-.airdrop-badge::after {
-    content: '';
-    position: absolute;
-    bottom: -4px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 4px solid #DD2476;
-}
+    /* 2. Ayusin ang WALLET & AIRDROP BADGE (Yung nasa kaliwa) */
+    /* Hanapin mo yung wrapper div na ginawa natin kanina */
+    #ton-connect-wrapper { 
+        position: absolute;
+        left: 40px !important; /* I-usog pakanan para di matakpan ng screen edge */
+        top: 60px !important;  /* Ibaba konti para di tamaan ang profile */
+        transform: scale(0.8); /* Paliitin para hindi harang */
+        z-index: 100;
+    }
 
-/* Keyframes para sa talbog */
-@keyframes floatBadge {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
-}
-        
+    /* 3. Ayusin ang MENU BAR (Yung itim na mahaba sa gitna) */
+    /* Palitan ang '.lobby-menu' sa kung ano man ang class name ng menu mo */
+    .lobby-menu, #lobby-footer { 
+        bottom: 10px !important; /* Idikit sa baba */
+        transform: scale(0.85); /* Paliitin para lumuwag ang space */
+        width: 60% !important;  /* Huwag sakupin buong lapad */
+        left: 20% !important;   /* I-center ulit */
+    }
+
+    /* 4. Settings Button & Exit Button */
+    .settings-btn, #exit-btn {
+        transform: scale(0.8);
+        left: 40px !important; /* I-align sa wallet button */
+    }
+    
+    /* 5. USER PROFILE (Yung nasa taas) */
+    .user-profile {
+        top: 10px !important;
+        left: 40px !important;
+        transform: scale(0.9);
+    }
+}        
 </style>
 </head>
 <body>
@@ -5387,12 +5388,11 @@ div#opponent-info.hud-active {
 
         <div style="position: relative; display: inline-block; margin-top: 15px; margin-bottom: 10px;">
     
+    <div id="ton-connect-wrapper"> 
     <div id="airdrop-badge" class="airdrop-badge">
         🪂 Airdrop Soon!
     </div>
-
     <div id="ton-connect"></div>
-
 </div>
 
     <div class="lobby-dock">
