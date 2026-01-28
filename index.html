@@ -8697,33 +8697,24 @@ async function handleStraightBallTurnEnd() {
             try {
                 if (isMyTurn) { 
                     if (typeof currentCombo !== 'undefined') { currentCombo++; showComboPopup(currentCombo); }
-                    // --- REPLIT SERVER UPDATE START ---
+                    
                     const reward = pocketedObjectChips.length * REWARD_PER_BALL; 
                     
-                    // 1. Visual Update (Para makita agad ng player)
+                    // 1. Visual Update
                     playerTotalCurrency += reward; 
                     showRewardPopup(reward); 
                     updateCurrencyDisplay(); 
 
-                    // 2. I-save sa Database gamit ang Replit
-                    if (localPlayerUid) {
-                        fetch(`${SERVER_URL}/api/record-win`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                uid: localPlayerUid,
-                                ballsPocketed: pocketedObjectChips.length,
-                                gameMode: 'straight-ball' 
-                            })
-                        }).catch(e => console.error("Server Save Error:", e));
-                    }
+                    // 2. Save to Firebase (Ito ang pinalit natin sa fetch)
+                    saveCurrency();
 
+                    // 3. XP Update
                     gainXP(pocketedObjectChips.length * XP_PER_BALL);
-                    // --- REPLIT SERVER UPDATE END ---
                 }
-            } catch (err) {}
+            } catch (err) { console.error(err); }
         } else {
             switchTurn = true;
+            // ... (rest of the code)
             if(isMyTurn && myPocketedCount > 0 && opponentPocketedCount > 0) showMessage("Mixed balls. Turn passed.", 3000);
             if(typeof currentCombo !== 'undefined') currentCombo = 0;
         }
