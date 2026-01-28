@@ -5321,10 +5321,10 @@ div#opponent-info.hud-active {
         </div>
         
         <div class="currency-section">
-            <div class="coin-pill">
-                💰 <span class="coin-balance-display">0</span>
-            </div>
-        </div>
+    <div class="coin-pill" id="lobby-coin-display">
+        💰 <span class="coin-balance-display">0</span>
+    </div>
+</div>
     </div>
 
     <div class="lobby-main">
@@ -14975,50 +14975,52 @@ async function saveWalletToFirestore(uid, address) {
     }
 
  // ==========================================
-// 📺 ADGRAM INTEGRATION (Block ID: 21752)
+// 📺 ADGRAM INTEGRATION (FIXED VERSION)
 // ==========================================
 
-// Gawing global ito para matawag ng onclick sa HTML
+// Gawing global function para ma-access ng onclick
 window.playAdGram = async function() {
-    console.log("Attempting to play AdGram...");
+    console.log("Checking Adsgram...");
 
+    // Siguraduhing may Adsgram object
     if (window.Adsgram) {
+        // Initialize gamit ang iyong Block ID: 21752
         const adController = window.Adsgram.init({ blockId: "21752" });
 
         adController.show().then((result) => {
-            // ✅ SUCCESS: Tinapos talaga panoorin ang Ad
+            // ✅ SUCCESS: Tinapos panoorin ang Ad (dapat result.done ay true)
             if (result.done) {
-                console.log('Ad completed successfully!');
+                console.log('Ad completed! Giving reward...');
                 
                 const rewardAmount = 500;
                 
-                // Siguraduhing Number ang computation para hindi mag-error ang math
+                // 1. Math Fix: Siguraduhing Number ang computation
                 playerTotalCurrency = Number(playerTotalCurrency) + rewardAmount;
                 
-                // 1. I-save agad sa database/local
+                // 2. Save agad sa database/local
                 saveCurrency(); 
                 
-                // 2. I-update ang text sa screen
+                // 3. Update ang text sa screen
                 updateCurrencyDisplay(); 
                 
-                // 3. Visual Effects (Siguraduhing nandoon ang functions na ito sa script mo)
+                // 4. Visual & Sound Effects
                 if (typeof playCoinSound === 'function') playCoinSound();
                 if (typeof spawnFlyingCoins === 'function') spawnFlyingCoins();
                 if (typeof triggerFireworks === 'function') triggerFireworks();
                 
-                showMessage(`Nakuha mo ang ${rewardAmount} Coins! 💰`, 3000);
+                showMessage(`Galing! Nakakuha ka ng ${rewardAmount} Coins! 💰`, 3000);
             } else {
-                // Sinara ang ad nang hindi tinatapos
-                showMessage("Kailangang tapusin ang ad para sa reward. 😢", 3000);
+                // ❌ Sinara ang ad nang maaga
+                showMessage("Kailangang tapusin ang ad para makuha ang coins. 😢", 3000);
             }
         }).catch((err) => {
+            // ❌ Error (halimbawa walang ad na available o sinalpak ang block)
             console.error('AdGram Error:', err);
-            // Karaniwang error kung walang ad na available (fill rate)
-            showMessage("Walang available na ad sa ngayon. Laro muna tayo!", 2000);
+            showMessage("Pasensya na, walang available na ad sa ngayon.", 2500);
         });
     } else {
-        console.error("AdGram script not loaded.");
-        showMessage("Naglo-load pa ang Ads... try muli mamaya.", 2000);
+        console.error("AdGram script not loaded yet.");
+        showMessage("Ads is still loading... try again in 5 seconds.", 2000);
     }
 };
 
