@@ -14979,40 +14979,53 @@ async function saveWalletToFirestore(uid, address) {
         }
     }
 
-// 1. I-initialize ang Adsgram gamit ang Block ID mo
-const AdController = window.Adsgram.init({ blockId: "21752" });
+// ==========================================
+// 📺 ADGRAM INTEGRATION (Block ID: 21752)
+// ==========================================
 
-// 2. Ang function para sa panonood ng Ads
-async function watchAdForCoins() {
-    // Play button sound kung meron ka
-    if (typeof playButtonSound === 'function') playButtonSound();
+// Gawing global ito para matawag ng onclick sa HTML
+window.playAdGram = async function() {
+    console.log("Attempting to play AdGram...");
 
-    try {
-        const result = await AdController.show();
-        
-        if (result.done) {
-            // SUCCESS: Dito mo ilalagay ang reward logic
-            alert("Galing! Narito ang 50 Coins mo! 💰");
-            processReward(50); 
-        } else {
-            // USER CLOSED THE AD early
-            alert("Kailangan mong tapusin ang video para makuha ang reward. 😊");
-        }
-    } catch (err) {
-        console.error("Adsgram Error:", err);
-        alert("Walang available na ads sa ngayon, laro muna tayo!");
+    if (window.Adsgram) {
+        const adController = window.Adsgram.init({ blockId: "21752" });
+
+        adController.show().then((result) => {
+            // ✅ SUCCESS: Tinapos talaga panoorin ang Ad
+            if (result.done) {
+                console.log('Ad completed successfully!');
+                
+                const rewardAmount = 500;
+                
+                // Siguraduhing Number ang computation para hindi mag-error ang math
+                playerTotalCurrency = Number(playerTotalCurrency) + rewardAmount;
+                
+                // 1. I-save agad sa database/local
+                saveCurrency(); 
+                
+                // 2. I-update ang text sa screen
+                updateCurrencyDisplay(); 
+                
+                // 3. Visual Effects (Siguraduhing nandoon ang functions na ito sa script mo)
+                if (typeof playCoinSound === 'function') playCoinSound();
+                if (typeof spawnFlyingCoins === 'function') spawnFlyingCoins();
+                if (typeof triggerFireworks === 'function') triggerFireworks();
+                
+                showMessage(`Nakuha mo ang ${rewardAmount} Coins! 💰`, 3000);
+            } else {
+                // Sinara ang ad nang hindi tinatapos
+                showMessage("Kailangang tapusin ang ad para sa reward. 😢", 3000);
+            }
+        }).catch((err) => {
+            console.error('AdGram Error:', err);
+            // Karaniwang error kung walang ad na available (fill rate)
+            showMessage("Walang available na ad sa ngayon. Laro muna tayo!", 2000);
+        });
+    } else {
+        console.error("AdGram script not loaded.");
+        showMessage("Naglo-load pa ang Ads... try muli mamaya.", 2000);
     }
-}
-
-// 3. FIX: Ang nawawalang function na nag-e-error sa code mo
-function openUniversalModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'flex';
-        // Para sa Telegram back button support
-        window.history.pushState({modal: modalId}, "");
-    }
-}
+};
 
 function processReward(amount) {
     // Siguraduhin na may userId tayo
