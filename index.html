@@ -15204,7 +15204,67 @@ function restoreGameState() {
     if (typeof draw === 'function') draw(); 
 }
 
-   
+ <button onclick="forceAddCoins()" style="position:fixed; top:50px; left:50px; z-index:999999; padding:20px; font-size:20px; background:red; color:white; border:2px solid white;">
+    TEST DB SAVE (PINDUTIN MO)
+</button>
+
+<script>
+// I-paste mo ito sa pinaka-ibaba ng script mo
+window.forceAddCoins = async function() {
+    alert("Sinusubukan mag-save...");
+
+    // 1. Check kung may User ID
+    if (!window.localPlayerUid && !localPlayerUid) {
+        alert("ERROR: Walang User ID! Hindi ka pa naka-login sa Firebase.");
+        return;
+    }
+
+    // Siguraduhing nade-detect ang variable
+    const uid = window.localPlayerUid || localPlayerUid;
+    alert("User ID Found: " + uid);
+
+    try {
+        // 2. Reference sa database
+        // Gumamit tayo ng bracket notation para sure na makuha ang global 'db'
+        const database = window.db || db; 
+        
+        // Manual import kung sakaling hindi mahanap ang functions
+        const { doc, setDoc, getDoc, updateDoc, increment } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+
+        const playerRef = doc(database, "players", uid);
+
+        // 3. Check muna kung nage-exist ang player document
+        const snap = await getDoc(playerRef);
+
+        if (!snap.exists()) {
+            alert("WARNING: Wala pang player data. Gagawa ng bago...");
+            await setDoc(playerRef, {
+                balance: 500, // Initial balance
+                displayName: "Recovered Player"
+            }, { merge: true });
+            alert("SUCCESS! Created new data. Balance: 500");
+        } else {
+            // 4. Kung meron na, FORCE UPDATE gamit ang setDoc (merge)
+            // Mas matibay ito kesa updateDoc kung minsan
+            await setDoc(playerRef, {
+                balance: increment(500)
+            }, { merge: true });
+            
+            alert("SUCCESS! Added 500 coins via Increment!");
+        }
+
+        // 5. Update UI
+        if(typeof playerTotalCurrency !== 'undefined') {
+            playerTotalCurrency += 500;
+            if(typeof updateCurrencyDisplay === 'function') updateCurrencyDisplay();
+        }
+
+    } catch (e) {
+        alert("POTA ERROR PADIN: " + e.message);
+        console.error(e);
+    }
+}
+  
 
 </script>
 
