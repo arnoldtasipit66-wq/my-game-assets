@@ -8,6 +8,7 @@
     <title>Pinoy Pool</title>
     <!-- Tone.js for audio synthesis -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <script src="https://sad.adsgram.ai/js/adgram-sdk.js"></script>
 
     
     <!-- Google Fonts -->
@@ -15166,6 +15167,51 @@ console.log("✅ ALL SYSTEMS GO: Navigation & Buttons Ready!");
 // ============================================================
 // 🛑 DITO NA MAGTATAPOS ANG SCRIPT MO
 // ============================================================
+
+// 1. Telegram Initialization
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
+
+// 2. Fix: Universal Modal Opener (Para gumana ang Shop, Profile, etc.)
+function openUniversalModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'flex';
+        // Nagdadagdag tayo ng state sa history para gumana ang back button sa pagsasara
+        window.history.pushState({modalOpen: modalId}, "");
+    } else {
+        console.error("❌ Modal not found: " + modalId);
+    }
+}
+
+// 3. AdGram Reward Function (Gamit ang Block ID mo: 21752)
+const AdController = window.Adsgram.init({ blockId: "21752" });
+
+async function watchAdForCoins() {
+    try {
+        const result = await AdController.show();
+        
+        // Kapag natapos panoorin ang ad
+        if (result.done) {
+            alert("Salamat! Nakakuha ka ng 50 Coins! 💰");
+            rewardUser(50); // Tawagin ang function na mag-a-update sa Firebase
+        } else {
+            // Kung clinose ng user ang ad nang hindi tinatapos
+            alert("Kailangan mong tapusin ang ad para makuha ang reward. ❌");
+        }
+    } catch (error) {
+        console.error("AdGram Error:", error);
+        alert("Pasensya na, walang available na ad sa ngayon. Subukan muli mamaya.");
+    }
+}
+
+// 4. Placeholder para sa Firebase Reward (Dito mo i-connect ang Firebase mo)
+function rewardUser(amount) {
+    console.log(`Nagbibigay ng ${amount} coins sa player...`);
+    // Halimbawa: database.ref('users/' + userId).update({ coins: currentCoins + amount });
+}
+    
 </script>
 </body>
 </html>
