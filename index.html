@@ -14979,81 +14979,63 @@ async function saveWalletToFirestore(uid, address) {
         }
     }
 
-// ==========================================
-// 📺 ADGRAM INTEGRATION (Block ID: 21752)
-// ==========================================
+// GLOBAL VARIABLE: Para malaman ng laro na galing sa Ad ang spin na ito
+window.isAdSpinMode = false;
 
-// Gawing global ito para matawag ng onclick sa HTML
 window.playAdGram = async function() {
-    console.log("Attempting to play AdGram...");
+    console.log("Opening Ad for Spin Reward...");
 
-    if (window.Adsgram) {
-        const adController = window.Adsgram.init({ blockId: "21752" });
-
-        adController.show().then((result) => {
-            // ✅ SUCCESS: Tinapos talaga panoorin ang Ad
-            if (result.done) {
-                console.log('Ad completed successfully!');
-                
-                const rewardAmount = 500;
-                
-                // Siguraduhing Number ang computation para hindi mag-error ang math
-                playerTotalCurrency = Number(playerTotalCurrency) + rewardAmount;
-                
-                // 1. I-save agad sa database/local
-                saveCurrency(); 
-                
-                // 2. I-update ang text sa screen
-                updateCurrencyDisplay(); 
-                
-                // 3. Visual Effects (Siguraduhing nandoon ang functions na ito sa script mo)
-                if (typeof playCoinSound === 'function') playCoinSound();
-                if (typeof spawnFlyingCoins === 'function') spawnFlyingCoins();
-                if (typeof triggerFireworks === 'function') triggerFireworks();
-                
-                showMessage(`Nakuha mo ang ${rewardAmount} Coins! 💰`, 3000);
-            } else {
-                // Sinara ang ad nang hindi tinatapos
-                showMessage("Kailangang tapusin ang ad para sa reward. 😢", 3000);
-            }
-        }).catch((err) => {
-            console.error('AdGram Error:', err);
-            // Karaniwang error kung walang ad na available (fill rate)
-            showMessage("Walang available na ad sa ngayon. Laro muna tayo!", 2000);
-        });
-    } else {
-        console.error("AdGram script not loaded.");
-        showMessage("Naglo-load pa ang Ads... try muli mamaya.", 2000);
-    }
-};
-
-function processReward(amount) {
-    // Siguraduhin na may userId tayo
-    if (userId === "guest") {
-        console.error("Hindi ma-reward: Walang valid na User ID.");
+    // Check kung loaded ang Adsgram
+    if (!window.Adsgram) {
+        showMessage("⚠️ Ads loading... wait lang.", 3000);
         return;
     }
 
-    // Path sa database: users/USER_ID/coins
-    const userCoinsRef = firebase.database().ref('users/' + userId + '/coins');
+    try {
+        const adController = window.Adsgram.init({ blockId: "21752" }); 
 
-    // Ginagamit natin ang .transaction() para hindi magka-error 
-    // kahit sabay-sabay mag-update ang coins (iwas glitch)
-    userCoinsRef.transaction((currentCoins) => {
-        return (currentCoins || 0) + amount;
-    }, (error, committed, snapshot) => {
-        if (error) {
-            console.error("Firebase Update Failed:", error);
-        } else if (committed) {
-            console.log("✅ Coins updated! New balance:", snapshot.val());
-            
-            // OPTIONAL: I-update ang UI ng laro mo para makita agad ang bagong coins
-            if (typeof updateCoinDisplay === 'function') {
-                updateCoinDisplay(snapshot.val());
+        adController.show().then((result) => {
+            if (result.done) {
+                // ✅ SUCCESS: Tinapos ang Ad!
+                console.log('Ad finished! Opening wheel...');
+                
+                // 1. I-set ang flag na "Ad Spin" ito (para i-bypass ang cooldown)
+                window.isAdSpinMode = true;
+
+                // 2. Buksan ang Wheel Modal
+                const modal = document.getElementById('daily-reward-modal');
+                const spinBtn = document.getElementById('spin-btn');
+                const spinStatus = document.getElementById('spin-status-text');
+
+                if (modal) {
+                    modal.classList.add('show');
+                    history.pushState({ modal: 'dailyRewardModal' }, 'Lucky Spin', '#spin');
+                    
+                    // Reset UI ng Wheel
+                    if(spinStatus) spinStatus.innerHTML = "🎉 AD COMPLETED!<br>Spin Now!";
+                    if(spinBtn) {
+                        spinBtn.disabled = false;
+                        spinBtn.textContent = "SPIN!";
+                        spinBtn.style.opacity = "1";
+                    }
+                    
+                    // Redraw para fresh
+                    if(typeof drawWheel === 'function') drawWheel();
+                }
+
+            } else {
+                // ❌ SKIPPED
+                showMessage("❌ Sayang! Tapusin ang ad para makapag-spin.", 3000);
             }
-        }
-    });
-}
+        }).catch((err) => {
+            console.error('AdGram Error:', err);
+            showMessage("⚠️ Walang ad ngayon. Try again later.", 3000);
+        });
+
+    } catch (e) {
+        console.error("AdGram Init Error:", e);
+    }
+};
 
     // ------------------------------------------------------------
 // 🚀 NAVIGATION & BUTTON SYSTEM ACTIVATOR
