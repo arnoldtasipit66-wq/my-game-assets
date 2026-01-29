@@ -10092,8 +10092,10 @@ async function loadCurrency() {
             playerTotalCurrency = snap.data().balance || 0;
             console.log("PPM Loaded:", playerTotalCurrency);
         } else {
-            // New Player? Bigyan ng 100 PPM panimula
-            playerTotalCurrency = 100;
+            // New Player? Bigyan ng 3000 coins panimula (Para makalaro sa 1k bet)
+            playerTotalCurrency = 3000; 
+            
+            // Note: Siguraduhing tama ang field name sa database ('balance' o 'currency')
             updatePlayerData(localPlayerUid); // Save agad
         }
         updateCurrencyDisplay();
