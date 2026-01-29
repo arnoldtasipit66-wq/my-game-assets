@@ -12164,6 +12164,22 @@ function listenToRealtimeAiming(gameId) {
         const gameData = doc.data(); 
         if (!gameData) return; 
 
+        // ▼▼▼ DITO NATIN ILAGAY ANG TRIGGER (ISANG BAGSAKAN) ▼▼▼
+        // Logic: Kapag naging 'playing' ang status, at hindi pa 'playing' dati (Start or Rematch)
+        if (gameData.gameState === 'playing' && previousGameState !== 'playing') {
+            
+            // Check kung may Pusta
+            const potCheck = gameData.betAmount || currentMatchBet || 0;
+            
+            if (potCheck > 0) {
+                // Delay ng konti para sure na nakalabas na ang board
+                setTimeout(() => {
+                    triggerBetAnimation(potCheck);
+                }, 1000); 
+            }
+        }
+        // ▲▲▲ ▲▲▲ 
+
         // --- FORCE CLOSE WAITING ROOM ---
         // Kung nag-start na ang laro pero nakabukas pa ang waiting room
         const waitingModal = document.getElementById('waiting-room');
