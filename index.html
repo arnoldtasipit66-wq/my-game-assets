@@ -15382,60 +15382,109 @@ function restoreGameState() {
     if (typeof draw === 'function') draw(); 
 }
 
-            // --- 💰 BETTING ANIMATION FUNCTION 💰 ---
+            // --- 💰 MULTI-COIN BET ANIMATION (WITH SOUNDS) 💰 ---
+
+// 1. PRE-LOAD SOUNDS (Para mabilis tumunog)
+// Note: Kumukuha ito sa internet. Pwede mong palitan ng sarili mong file 'pag meron na.
+const sfxCoinsFalling = new Audio('https://github.com/arnoldtasipit66-wq/my-game-assets/edit/main/coin-dropped-81172.mp3'); 
+const sfxCashRegister = new Audio('https://github.com/arnoldtasipit66-wq/my-game-assets/edit/main/coin-dropped-81172.mp3');
+
+// Hinaan ng konti para hindi sabog
+sfxCoinsFalling.volume = 0.6; 
+sfxCashRegister.volume = 0.8;
+
 function triggerBetAnimation(amount) {
     if (!amount || amount <= 0) return;
-    console.log("🚀 ANIMATION TRIGGERED: " + amount); // Para makita mo sa console kung gumana
+    
+    // PLAY COIN SOUND (Kalampag ng barya) 🔊
+    // Reset time para pwedeng ulit-ulitin
+    sfxCoinsFalling.currentTime = 0; 
+    sfxCoinsFalling.play().catch(e => console.log("Audio play failed:", e));
 
-    // 1. Player Coin (Bottom)
-    const p1Coin = document.createElement('div');
-    p1Coin.className = 'flying-coin';
-    p1Coin.style.left = '20%'; 
-    p1Coin.style.bottom = '-100px'; 
-    document.body.appendChild(p1Coin);
+    const coinCount = 12; 
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
 
-    // 2. Opponent Coin (Top)
-    const p2Coin = document.createElement('div');
-    p2Coin.className = 'flying-coin';
-    p2Coin.style.right = '20%'; 
-    p2Coin.style.top = '-100px'; 
-    document.body.appendChild(p2Coin);
+    // LOOP: Gumawa ng maraming coins
+    for (let i = 0; i < coinCount; i++) {
+        const delay = i * 60; 
 
-    // 3. Fly to Center
-    setTimeout(() => {
-        p1Coin.style.bottom = '50%';
-        p1Coin.style.left = '50%';
-        p1Coin.style.transform = 'translate(-50%, 50%)';
-
-        p2Coin.style.top = '50%';
-        p2Coin.style.right = '50%'; // Reset right
-        p2Coin.style.left = '50%';  // Use left for centering
-        p2Coin.style.transform = 'translate(-50%, -50%)';
-    }, 100);
-
-    // 4. Collision & Popup
-    setTimeout(() => {
-        p1Coin.remove();
-        p2Coin.remove();
-
-        const potDiv = document.createElement('div');
-        potDiv.className = 'pot-popup';
-        potDiv.innerHTML = `POT MONEY<br>💰 ${formatCurrencyShort(amount * 2)} 💰`;
-        document.body.appendChild(potDiv);
-
-        requestAnimationFrame(() => potDiv.classList.add('show'));
-
-        // Play Sound (Kung meron)
-        if(typeof playButtonSound === 'function') playButtonSound();
-
-        // Hide
         setTimeout(() => {
-            potDiv.classList.remove('show');
-            setTimeout(() => potDiv.remove(), 400);
-        }, 2500);
-    }, 900);
+            createSingleFlyingCoin('player', centerX, centerY);   
+            createSingleFlyingCoin('opponent', centerX, centerY); 
+        }, delay);
+    }
+
+    // SHOW POT POPUP (Pagkatapos makarating lahat)
+    setTimeout(() => {
+        showPotPopup(amount);
+    }, (coinCount * 60) + 600);
 }
 
+// Helper: Taga-gawa ng isang coin
+function createSingleFlyingCoin(source, targetX, targetY) {
+    const coin = document.createElement('div');
+    coin.className = 'flying-coin';
+    
+    const randomSpread = (Math.random() - 0.5) * 80; 
+
+    if (source === 'player') {
+        coin.style.left = `calc(20% + ${randomSpread}px)`; 
+        coin.style.bottom = '-60px'; 
+    } else {
+        coin.style.right = `calc(20% + ${randomSpread}px)`; 
+        coin.style.top = '-60px'; 
+    }
+
+    coin.style.width = '40px'; 
+    coin.style.height = '40px';
+    
+    document.body.appendChild(coin);
+
+    // Fly to Center
+    setTimeout(() => {
+        const targetSpread = (Math.random() - 0.5) * 30;
+
+        if (source === 'player') {
+            coin.style.bottom = '50%';
+            coin.style.left = (centerX + targetSpread) + 'px';
+            coin.style.transform = 'translate(-50%, 50%) scale(0.8)'; 
+        } else {
+            coin.style.top = '50%';
+            coin.style.right = 'auto'; 
+            coin.style.left = (centerX + targetSpread) + 'px';
+            coin.style.transform = 'translate(-50%, -50%) scale(0.8)';
+        }
+        
+        coin.style.opacity = '0'; 
+    }, 50);
+
+    setTimeout(() => {
+        coin.remove();
+    }, 1000);
+}
+
+// Helper: Taga-pakita ng Pot Money Text
+function showPotPopup(amount) {
+    const existing = document.querySelector('.pot-popup');
+    if (existing) existing.remove();
+
+    const potDiv = document.createElement('div');
+    potDiv.className = 'pot-popup';
+    potDiv.innerHTML = `POT MONEY<br>💰 ${formatCurrencyShort(amount * 2)} 💰`;
+    document.body.appendChild(potDiv);
+
+    requestAnimationFrame(() => potDiv.classList.add('show'));
+
+    // PLAY JACKPOT SOUND (Cha-Ching!) 🔊
+    sfxCashRegister.currentTime = 0;
+    sfxCashRegister.play().catch(e => console.log("Audio play failed:", e));
+
+    setTimeout(() => {
+        potDiv.classList.remove('show');
+        setTimeout(() => potDiv.remove(), 400);
+    }, 2000);
+}
 </script>
 
 </body>
