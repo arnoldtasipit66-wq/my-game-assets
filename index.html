@@ -9123,21 +9123,28 @@ async function findMatch() {
         return; 
     }
 
-    // 2. SERVER PAYMENT FIRST (Bayad Muna!)
-    // Kung may taya, tawagin ang Replit para maningil.
+    // 2. PAYMENT CHECK (LOCAL / CLIENT-SIDE)
     if (selectedBetAmount > 0) {
-        showMessage(`Processing Entry Fee: ${formatCurrencyShort(selectedBetAmount)}...`, 1000);
         
-        // Tawagin ang Server API
-        const isPaid = await processBet(selectedBetAmount);
-        
-        if (!isPaid) {
-            // Kung walang pera o nag-error, STOP AGAD.
-            return; 
+        // A. Check kung sapat ang coins
+        if (playerTotalCurrency < selectedBetAmount) {
+            showMessage(`Not enough coins! You need ${formatCurrencyShort(selectedBetAmount)}`, 2000);
+            return; // STOP: Wag ituloy ang searching
         }
+
+        showMessage(`Placing Bet: ${formatCurrencyShort(selectedBetAmount)}...`, 1000);
+
+        // B. BAWAS AGAD (Dito na tayo magbabawas manual)
+        playerTotalCurrency -= selectedBetAmount;
         
-        // Visual Update lang (para sa UI logic)
+        // C. SAVE AGAD (Para ma-record sa database)
+        saveCurrency(); 
+        updateCurrencyDisplay();
+
+        // D. Set Global Variable (Para alam ng game logic)
         currentMatchBet = selectedBetAmount;
+        
+        // TANDAAN: Wala na tayong 'await processBet' kaya didiretso na ito sa searching!
     }
 
     // 3. UI SETUP
