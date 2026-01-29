@@ -15382,83 +15382,95 @@ function restoreGameState() {
     if (typeof draw === 'function') draw(); 
 }
 
-            // --- 💰 MULTI-COIN BET ANIMATION (WITH SOUNDS) 💰 ---
+            // --- 💰 MULTI-COIN BET ANIMATION (LANDSCAPE: LEFT & RIGHT) 💰 ---
 
-// 1. PRE-LOAD SOUNDS (Para mabilis tumunog)
-// Note: Kumukuha ito sa internet. Pwede mong palitan ng sarili mong file 'pag meron na.
-const sfxCoinsFalling = new Audio('https://github.com/arnoldtasipit66-wq/my-game-assets/edit/main/coin-dropped-81172.mp3'); 
-const sfxCashRegister = new Audio('https://github.com/arnoldtasipit66-wq/my-game-assets/edit/main/coin-dropped-81172.mp3');
-
-// Hinaan ng konti para hindi sabog
-sfxCoinsFalling.volume = 0.6; 
-sfxCashRegister.volume = 0.8;
+// 1. SETUP AUDIO (Gamit ang RAW Link para gumana)
+// Inayos ko ang link mo: tinanggal ang 'edit' at ginawang raw file access
+const coinSoundUrl = 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my-game-assets/main/coin-dropped-81172.mp3';
+const sfxCoins = new Audio(coinSoundUrl);
+sfxCoins.volume = 1.0; // Todo lakas para rinig agad
 
 function triggerBetAnimation(amount) {
     if (!amount || amount <= 0) return;
     
-    // PLAY COIN SOUND (Kalampag ng barya) 🔊
-    // Reset time para pwedeng ulit-ulitin
-    sfxCoinsFalling.currentTime = 0; 
-    sfxCoinsFalling.play().catch(e => console.log("Audio play failed:", e));
+    // PLAY SOUND 🔊
+    // Browser Rule: Dapat may interaction (click) bago tumunog. 
+    // Since galing ito sa click event (Play/Join), dapat gagana ito.
+    sfxCoins.currentTime = 0; 
+    sfxCoins.play().catch(e => console.error("Sound blocked by browser:", e));
 
-    const coinCount = 12; 
+    const coinCount = 15; // Mas madaming coins para mas siksik
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
 
-    // LOOP: Gumawa ng maraming coins
+    // LOOP: Gumawa ng stream ng coins
     for (let i = 0; i < coinCount; i++) {
-        const delay = i * 60; 
+        // Delay para magmukhang 'machine gun' ang labas ng pera
+        const delay = i * 50; 
 
         setTimeout(() => {
-            createSingleFlyingCoin('player', centerX, centerY);   
-            createSingleFlyingCoin('opponent', centerX, centerY); 
+            createLandscapeCoin('left', centerX, centerY);   // Galing KALIWA (Ikaw)
+            createLandscapeCoin('right', centerX, centerY);  // Galing KANAN (Kalaban)
         }, delay);
     }
 
-    // SHOW POT POPUP (Pagkatapos makarating lahat)
+    // SHOW POT POPUP (Pag-ipon sa gitna)
     setTimeout(() => {
         showPotPopup(amount);
-    }, (coinCount * 60) + 600);
+    }, (coinCount * 50) + 600);
 }
 
-// Helper: Taga-gawa ng isang coin
-function createSingleFlyingCoin(source, targetX, targetY) {
+// Helper: Taga-gawa ng Coin (Left/Right Logic)
+function createLandscapeCoin(side, targetX, targetY) {
     const coin = document.createElement('div');
     coin.className = 'flying-coin';
     
-    const randomSpread = (Math.random() - 0.5) * 80; 
+    // Spread sa Y-Axis (Vertical) para hindi isang straight line
+    const verticalSpread = (Math.random() - 0.5) * 150; // +/- 75px taas-baba
 
-    if (source === 'player') {
-        coin.style.left = `calc(20% + ${randomSpread}px)`; 
-        coin.style.bottom = '-60px'; 
+    // 1. INITIAL POSITION (Start)
+    if (side === 'left') {
+        // Galing sa KALIWA
+        coin.style.left = '-60px'; 
+        coin.style.top = `calc(50% + ${verticalSpread}px)`; 
     } else {
-        coin.style.right = `calc(20% + ${randomSpread}px)`; 
-        coin.style.top = '-60px'; 
+        // Galing sa KANAN
+        coin.style.right = '-60px'; 
+        coin.style.left = 'auto'; // Reset left
+        coin.style.top = `calc(50% + ${verticalSpread}px)`; 
     }
 
-    coin.style.width = '40px'; 
-    coin.style.height = '40px';
+    // Size Randomization (Para mas natural)
+    const size = 35 + Math.random() * 15; // 35px to 50px
+    coin.style.width = `${size}px`; 
+    coin.style.height = `${size}px`;
     
     document.body.appendChild(coin);
 
-    // Fly to Center
+    // 2. ANIMATE TO CENTER
+    // Lagyan ng konting delay (50ms) para kumagat ang transition ng CSS
     setTimeout(() => {
-        const targetSpread = (Math.random() - 0.5) * 30;
+        // Targetin ang gitna pero may konting "kalat" (Scatter)
+        const scatterX = (Math.random() - 0.5) * 40;
+        const scatterY = (Math.random() - 0.5) * 40;
 
-        if (source === 'player') {
-            coin.style.bottom = '50%';
-            coin.style.left = (centerX + targetSpread) + 'px';
-            coin.style.transform = 'translate(-50%, 50%) scale(0.8)'; 
+        coin.style.top = `calc(50% + ${scatterY}px)`;
+        
+        if (side === 'left') {
+            coin.style.left = `calc(50% + ${scatterX}px)`;
+            coin.style.transform = 'translate(-50%, -50%) scale(0.5) rotate(360deg)'; 
         } else {
-            coin.style.top = '50%';
-            coin.style.right = 'auto'; 
-            coin.style.left = (centerX + targetSpread) + 'px';
-            coin.style.transform = 'translate(-50%, -50%) scale(0.8)';
+            coin.style.right = 'auto';
+            coin.style.left = `calc(50% + ${scatterX}px)`;
+            coin.style.transform = 'translate(-50%, -50%) scale(0.5) rotate(-360deg)';
         }
         
-        coin.style.opacity = '0'; 
+        // Mag-fade out pagdating sa gitna
+        coin.style.opacity = '0.8'; 
+
     }, 50);
 
+    // 3. REMOVE ELEMENT
     setTimeout(() => {
         coin.remove();
     }, 1000);
@@ -15476,9 +15488,9 @@ function showPotPopup(amount) {
 
     requestAnimationFrame(() => potDiv.classList.add('show'));
 
-    // PLAY JACKPOT SOUND (Cha-Ching!) 🔊
-    sfxCashRegister.currentTime = 0;
-    sfxCashRegister.play().catch(e => console.log("Audio play failed:", e));
+    // Ulitin ang sound effect paglabas ng text (Optional)
+    // sfxCoins.currentTime = 0;
+    // sfxCoins.play().catch(()=>{});
 
     setTimeout(() => {
         potDiv.classList.remove('show');
