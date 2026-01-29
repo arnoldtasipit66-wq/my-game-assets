@@ -5193,18 +5193,20 @@ div#opponent-info.hud-active {
     /* .lobby-main, #game-container { display: none; } */
 }
 
-        /* --- BETTING ANIMATION STYLES --- */
+        /* --- SUREBOL VISIBLE BETTING ANIMATION --- */
 .flying-coin {
     position: fixed;
     width: 60px;
     height: 60px;
-    /* Palitan mo ito ng image ng chips mo kung meron, or use this emoji placeholder */
-    background: url('https://cdn-icons-png.flaticon.com/512/217/217853.png') no-repeat center center;
-    background-size: contain;
-    z-index: 10000;
+    background-color: #FFD700; /* Gold Fallback */
+    background-image: url('https://cdn-icons-png.flaticon.com/512/217/217853.png'); 
+    background-size: cover;
+    border-radius: 50%;
+    border: 2px solid #FFF;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+    z-index: 999999; /* PINAKA-IBABAW PARA DI MATABUNAN */
     pointer-events: none;
-    transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1); /* Smooth fly */
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+    transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 .pot-popup {
@@ -5212,31 +5214,23 @@ div#opponent-info.hud-active {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0);
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    border: 3px solid #FFF;
-    border-radius: 15px;
+    background: radial-gradient(circle, #FFD700, #FFA500);
+    border: 5px solid #FFF;
+    border-radius: 20px;
     padding: 20px 40px;
     color: #000;
-    font-family: sans-serif;
-    font-weight: bold;
-    font-size: 2em;
+    font-family: 'Arial Black', sans-serif;
+    font-size: 24px;
     text-align: center;
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
-    z-index: 10001;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+    z-index: 999999; /* PINAKA-IBABAW */
     opacity: 0;
     transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.4s;
 }
 
 .pot-popup.show {
-    transform: translate(-50%, -50%) scale(1);
+    transform: translate(-50%, -50%) scale(1.2);
     opacity: 1;
-}
-
-.pot-popup small {
-    display: block;
-    font-size: 0.5em;
-    color: #444;
-    margin-top: 5px;
 }
         
 </style>
@@ -15366,87 +15360,59 @@ function restoreGameState() {
     if (typeof draw === 'function') draw(); 
 }
 
-            // =========================================================
-// 💰 AUTOMATIC BETTING ANIMATION SYSTEM (Paste at the End) 💰
-// =========================================================
-
-// 1. ANIMATION FUNCTION
+            // --- 💰 BETTING ANIMATION FUNCTION 💰 ---
 function triggerBetAnimation(amount) {
     if (!amount || amount <= 0) return;
+    console.log("🚀 ANIMATION TRIGGERED: " + amount); // Para makita mo sa console kung gumana
 
-    // Sound Effect (Kung may sound function ka)
-    if (typeof playButtonSound === 'function') playButtonSound(); 
-
-    // Create Player Coin (Bottom)
+    // 1. Player Coin (Bottom)
     const p1Coin = document.createElement('div');
     p1Coin.className = 'flying-coin';
-    p1Coin.style.left = '50%'; 
+    p1Coin.style.left = '20%'; 
     p1Coin.style.bottom = '-100px'; 
-    p1Coin.style.transform = 'translateX(-50%)';
     document.body.appendChild(p1Coin);
 
-    // Create Opponent Coin (Top)
+    // 2. Opponent Coin (Top)
     const p2Coin = document.createElement('div');
     p2Coin.className = 'flying-coin';
-    p2Coin.style.left = '50%'; 
+    p2Coin.style.right = '20%'; 
     p2Coin.style.top = '-100px'; 
-    p2Coin.style.transform = 'translateX(-50%)';
     document.body.appendChild(p2Coin);
 
-    // FLY ANIMATION (Start after 100ms)
+    // 3. Fly to Center
     setTimeout(() => {
-        // Magtatagpo sa gitna
         p1Coin.style.bottom = '50%';
+        p1Coin.style.left = '50%';
+        p1Coin.style.transform = 'translate(-50%, 50%)';
+
         p2Coin.style.top = '50%';
+        p2Coin.style.right = '50%'; // Reset right
+        p2Coin.style.left = '50%';  // Use left for centering
+        p2Coin.style.transform = 'translate(-50%, -50%)';
     }, 100);
 
-    // COLLISION & POPUP (After 800ms)
+    // 4. Collision & Popup
     setTimeout(() => {
         p1Coin.remove();
         p2Coin.remove();
 
         const potDiv = document.createElement('div');
         potDiv.className = 'pot-popup';
-        // Format: P2,000 (Total Pot)
-        potDiv.innerHTML = `TOTAL POT<br>₱${(amount * 2).toLocaleString()}<br><small>GOOD LUCK!</small>`;
+        potDiv.innerHTML = `POT MONEY<br>💰 ${formatCurrencyShort(amount * 2)} 💰`;
         document.body.appendChild(potDiv);
 
-        // Show
         requestAnimationFrame(() => potDiv.classList.add('show'));
 
-        // Hide after 2 seconds
+        // Play Sound (Kung meron)
+        if(typeof playButtonSound === 'function') playButtonSound();
+
+        // Hide
         setTimeout(() => {
             potDiv.classList.remove('show');
             setTimeout(() => potDiv.remove(), 400);
-        }, 2000);
-    }, 800);
+        }, 2500);
+    }, 900);
 }
-
-// 2. THE "HOOK" (Override showGameUI)
-// Ito ang magic! Haharangin nito ang showGameUI para isingit ang animation.
-if (typeof showGameUI === 'function') {
-    const originalShowGameUI = showGameUI; // I-save ang lumang function
-
-    window.showGameUI = function() {
-        // Patakbuhin muna ang original na code (Para lumabas ang board)
-        originalShowGameUI.apply(this, arguments);
-
-        // CHECK: Online ba at may Pusta?
-        if (typeof isOnlineGame !== 'undefined' && isOnlineGame === true) {
-            if (typeof currentMatchBet !== 'undefined' && currentMatchBet > 0) {
-                console.log("Auto-Triggering Bet Animation for:", currentMatchBet);
-                
-                // Delay ng konti para loaded na ang UI bago lumipad ang coins
-                setTimeout(() => {
-                    triggerBetAnimation(currentMatchBet);
-                }, 500);
-            }
-        }
-    };
-    console.log("💰 Betting Animation System Activated!");
-}
-// =========================================================
-   
 
 </script>
 
