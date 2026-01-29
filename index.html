@@ -9194,6 +9194,12 @@ async function startBotMatch() {
         opponentPlayerName = botName; 
         updateInfoBox(); 
     }, 500); 
+    if (typeof currentMatchBet !== 'undefined' && currentMatchBet > 0) {
+        // Delay ng 1 segundo para makita muna ang table bago lumipad ang coins
+        setTimeout(() => {
+            triggerBetAnimation(currentMatchBet);
+        }, 1000);
+    }
 }
     // ---------------------------------------------  
 async function findMatch() {
