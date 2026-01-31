@@ -11975,7 +11975,6 @@ async function cancelOnlineGame() {
         
         async function resetOnlineGameForRematch(gameData) { 
     // Tanggalin ang unsubscribe dito, kasi HINDI natin papatayin ang listener
-    // if (unsubscribeGameListener) unsubscribeGameListener(); <--- WAG MO ITO GAWIN
     
     gameMode = `online-${gameData.gameType}`; 
     resizeCanvas(); 
@@ -11993,9 +11992,14 @@ async function cancelOnlineGame() {
         winner: null, 
         rematchRequest: null, 
         turnId: (gameData.turnId || 0) + 10, 
-        lastShot: null 
+        lastShot: null,
+
+        // ▼▼▼ ITO ANG FIX: NAGLALAGAY ULIT NG PERA SA GITNA ▼▼▼
+        pot: (gameData.betAmount || 0) * 2 
+        // ▲▲▲ ▲▲▲
     }; 
     
+    // --- GAME MODE SPECIFIC RESETS ---
     if (gameData.gameType === 'poker') { 
         createDeck(); 
         dealCards(); 
@@ -12014,12 +12018,10 @@ async function cancelOnlineGame() {
     
     try { 
         await updateDoc(doc(db, "games", gameId), resetData); 
-        console.log("Game reset successfully for rematch.");
+        console.log("Game reset successfully for rematch. Pot refilled.");
     } catch (error) { 
         console.error("Failed to reset game for rematch:", error); 
     } 
-    // DITO ANG FIX: TINANGGAL KO YUNG 'finally { listenToGameUpdates... }' 
-    // Kasi active pa ang listener, hindi kailangan ulitin.
 }
         function sendLiveAimData() {
     // 1. Safety Checks (Wag galawin - ito yung dati)
