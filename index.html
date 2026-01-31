@@ -7106,7 +7106,22 @@ createPlayerDocument();
 
     // --- Lobby Button Listeners ---
     vsAiButton.addEventListener('click', () => {
+        playButtonSound(); // 1. Tumunog muna
+
+        // 2. CHECK BALANCE MUNA (Bago itago ang Lobby)
+        if (playerTotalCurrency < 1000) {
+             showMessage("Need at least 1,000 Coins to play! Watch Ads for Free Coins.", 3000);
+             return; // STOP! Mananatili sa Lobby, hindi matatago ang UI.
+        }
+
+        // 3. Pag okay ang pera, tsaka lang itago ang Lobby
         hideLobbyUI();
+        
+        // 4. I-set na "Free Play" ang susunod na game
+        selectedBetAmount = 0; 
+        currentMatchBet = 0; 
+        
+        // 5. Buksan ang AI Menu
         aiMenu.classList.add('show');
         history.pushState({ modal: 'aiMenu' }, 'AI Menu', '#ai');
     });
