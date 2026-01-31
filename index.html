@@ -6428,48 +6428,92 @@ setCueForCurrentTurn();
             } 
         }
         
-        // === NEW FUNCTION FOR AI REMATCH ===
-        function restartAiGame() {
-            playButtonSound();
-            winnerModal.classList.remove('show');
-            // Reuse existing gameMode and difficulty
-            resizeCanvas(); 
-            playerTurn = Math.random() < 0.5; 
-            canMoveCueBall = false; 
-            chipsMoving = false; 
-            colorsAssigned = false; 
-            playerChipsType = null; 
-            opponentChipsType = null; 
-            setupChips(); 
-            isBreakShot = true; 
-            canMoveCueBall = true; 
-            gameState = 'moving'; 
-            cueStick.visible = true; 
-            if (playerTurn) { 
-                showMessage("Rematch! Your turn to break.", 4000); 
-                dragGuideText.style.display = 'block'; 
-            } else { 
-                showMessage("Rematch! Opponent will break.", 4000); 
-                placeCueChipForAI(); 
-            } 
-            resetPektus(); 
-            if (gameMode.includes('poker')) { 
-                createDeck(); 
-                dealCards(); 
-                updateCardDisplay(); 
-            } else if (gameMode.includes('61-ball')) { 
-                player61Score = 0; 
-                opponent61Score = 0; 
-                lowestChipNumber = 1; 
-            }
-            updateInfoBox(); // Will call updateLegalTargetChips()
-            history.pushState({ modal: 'game' }, 'Game', '#game');
-setCueForCurrentTurn(); // Update history state
-             if (gameMode.startsWith('ai')) { 
-                setTimeout(() => { aiDisplayMessage(getAiChatMessage('start')); }, 1500); 
-            } 
+        // === NEW FUNCTION FOR AI REMATCH (WITH PAYMENT & ANIMATION) ===
+async function restartAiGame() {
+    playButtonSound();
+
+    // ▼▼▼ 1. PAYMENT LOGIC (DITO ANG FIX!) ▼▼▼
+    // Gamitin ang selectedBetAmount (ang huling piniling taya)
+    let cost = selectedBetAmount;
+    
+    // Safety check
+    if (!cost || cost < 0) cost = 0;
+
+    if (cost > 0) {
+        // A. Check kung may pambayad pa
+        if (playerTotalCurrency < cost) {
+            showMessage(`Not enough coins! Need: ${formatCurrencyShort(cost)}`, 3000);
+            return; // STOP! Bawal maglaro kung walang pera
         }
-        // === END NEW FUNCTION ===
+
+        // B. Kaltas Agad
+        playerTotalCurrency -= cost;
+        saveCurrency();
+        updateCurrencyDisplay();
+
+        // C. I-set ang pot money para sa new game (Para may mapanalunan sa dulo)
+        currentMatchBet = cost;
+
+        showMessage(`Rematch vs AI! Paid: -${formatCurrencyShort(cost)}`, 2000);
+        
+        // D. Animation Trigger (Delay konti para makita ang table)
+        setTimeout(() => {
+            triggerBetAnimation(cost);
+        }, 1000);
+
+    } else {
+        // Free Play
+        currentMatchBet = 0;
+        showMessage("Rematch vs AI (Free Play)", 2000);
+    }
+    // ▲▲▲ END PAYMENT LOGIC ▲▲▲
+
+    winnerModal.classList.remove('show');
+    
+    // Reuse existing gameMode and difficulty
+    resizeCanvas(); 
+    playerTurn = Math.random() < 0.5; 
+    canMoveCueBall = false; 
+    chipsMoving = false; 
+    colorsAssigned = false; 
+    playerChipsType = null; 
+    opponentChipsType = null; 
+    
+    setupChips(); 
+    
+    isBreakShot = true; 
+    canMoveCueBall = true; 
+    gameState = 'moving'; 
+    cueStick.visible = true; 
+    
+    if (playerTurn) { 
+        // showMessage("Rematch! Your turn to break.", 4000); 
+        dragGuideText.style.display = 'block'; 
+    } else { 
+        // showMessage("Rematch! Opponent will break.", 4000); 
+        placeCueChipForAI(); 
+    } 
+    
+    resetPektus(); 
+    
+    if (gameMode.includes('poker')) { 
+        createDeck(); 
+        dealCards(); 
+        updateCardDisplay(); 
+    } else if (gameMode.includes('61-ball')) { 
+        player61Score = 0; 
+        opponent61Score = 0; 
+        lowestChipNumber = 1; 
+    }
+    
+    updateInfoBox(); 
+    history.pushState({ modal: 'game' }, 'Game', '#game');
+    setCueForCurrentTurn(); 
+    
+    if (gameMode.startsWith('ai')) { 
+        setTimeout(() => { aiDisplayMessage(getAiChatMessage('start')); }, 1500); 
+    } 
+}
 
 
         function waitForCardPick() { return new Promise(resolve => { pokerFoulCardPickModal.classList.add('show'); pokerFoulCardsContainer.innerHTML = ''; const cardsToDraw = []; for (let i = 0; i < 5; i++) if (deck.length > 0) cardsToDraw.push(deck.splice(Math.floor(Math.random() * deck.length), 1)[0]); if (cardsToDraw.length === 0) { pokerFoulCardPickModal.classList.remove('show'); resolve(null); return; } cardsToDraw.forEach(card => { const cardDiv = document.createElement('div'); cardDiv.className = 'card face-down'; cardDiv.onclick = () => { playButtonSound(); cardDiv.classList.remove('face-down'); const color = (card.suit === '♥' || card.suit === '♦') ? '#ff0000' : '#212121'; cardDiv.innerHTML = `<span class="card-rank" style="color: ${color};">${card.rank}</span><span class="card-suit" style="color: ${color};">${card.suit}</span>`; pokerFoulCardsContainer.querySelectorAll('.card').forEach(c => { c.onclick = null; c.style.cursor = 'default'; }); setTimeout(() => { pokerFoulCardPickModal.classList.remove('show'); cardsToDraw.forEach(c => { if (c !== card) deck.push(c); }); resolve(card); }, 1500); }; pokerFoulCardsContainer.appendChild(cardDiv); }); }); }
