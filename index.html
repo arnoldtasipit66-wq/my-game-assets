@@ -12147,11 +12147,18 @@ function listenToRealtimeAiming(gameId) {
         const gameData = doc.data(); 
         if (!gameData) return; 
 
-        // ▼▼▼ DITO NATIN ILAGAY ANG TRIGGER (ISANG BAGSAKAN) ▼▼▼
-        // Logic: Kapag naging 'playing' ang status, at hindi pa 'playing' dati (Start or Rematch)
+        // ▼▼▼ 1. FIX: FORCE SYNC NG PUSTA (Para hindi maging 0 sa Rematch) ▼▼▼
+        // Kinokopya nito ang presyo galing database para sure na may laman ang variable mo
+        if (gameData.betAmount && gameData.betAmount > 0) {
+            currentMatchBet = gameData.betAmount; 
+        }
+        // ▲▲▲ ▲▲▲
+
+        // ▼▼▼ 2. ANIMATION TRIGGER (Isang bagsakan) ▼▼▼
+        // Logic: Kapag naging 'playing' ang status, at hindi pa 'playing' dati
         if (gameData.gameState === 'playing' && previousGameState !== 'playing') {
             
-            // Check kung may Pusta
+            // Check kung may Pusta (Ngayon sure na tayong tama ang value nito dahil sa step 1)
             const potCheck = gameData.betAmount || currentMatchBet || 0;
             
             if (potCheck > 0) {
