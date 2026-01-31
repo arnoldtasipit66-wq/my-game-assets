@@ -7525,32 +7525,7 @@ function draw() {
     // (Pinalitan nito ang dating ctx.clearRect at drawTable)
     ctx.drawImage(backgroundCanvas, 0, 0);
 
-        // --- VIGNETTE EFFECT (UNIVERSAL FIX) ---
-    // Gamitin ang canvas dimensions para laging sentro sa game world
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
-
-    // TRICK: Sa landscape, gusto natin na ang liwanag ay hindi sobrang laki.
-    // Kaya ibabase natin ang "Inner Light" sa Height (mas maikli) para focused sa gitna.
-    // Ang "Outer Shadow" naman ay ibabase sa Width (mas mahaba) para umabot sa kanto.
-    
-    // Radius ng Liwanag (Center)
-    const rInner = canvas.height * 0.0; 
-    
-    // Radius ng Shadow (Edges) - Gumamit ng Math.max para safe sa portrait/landscape
-    const rOuter = Math.max(canvas.width, canvas.height) * 0.8;
-
-    const vignette = ctx.createRadialGradient(cx, cy, rInner, cx, cy, rOuter);
-
-    // Color Steps
-    vignette.addColorStop(0, "rgba(255, 255, 255, 0.1)");  // Kintab sa gitna (Dagdagan mo kung gusto mo mas shiny)
-    vignette.addColorStop(0.5, "rgba(0, 0, 0, 0)");       // Transition (Clear part)
-    vignette.addColorStop(1, "rgba(0, 0, 0, 0.9)");        // Shadow sa gilid
-
-    // Drawing
-    ctx.fillStyle = vignette;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // --- END VIGNETTE ---
+        
     // 2. I-drawing ang mga bagay na gumagalaw (Walang babaguhin dito)
     drawChips(); 
     
