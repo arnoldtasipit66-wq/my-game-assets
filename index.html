@@ -7139,18 +7139,35 @@ document.getElementById('invite-game-select-close-btn').addEventListener('click'
 });
 
     aiStraightBallButton.addEventListener('click', () => {
+        // ▼▼▼ DAGDAG MO ITO ▼▼▼
+        selectedBetAmount = 0; 
+        currentMatchBet = 0; // Reset din ito para sure
+        // ▲▲▲ ▲▲▲
+        
         selectedGameConfig.mode = 'ai-straight-ball';
         aiMenu.classList.remove('show');
         straightBallInstructions.classList.add('show');
         history.pushState({ modal: 'straightBallInstructions' }, 'Rules', '#rules');
     });
+
     aiPokerButton.addEventListener('click', () => {
+        // ▼▼▼ DAGDAG MO ITO ▼▼▼
+        selectedBetAmount = 0;
+        currentMatchBet = 0;
+        // ▲▲▲ ▲▲▲
+
         selectedGameConfig.mode = 'ai-poker';
         aiMenu.classList.remove('show');
         pokerInstructions.classList.add('show');
         history.pushState({ modal: 'pokerInstructions' }, 'Rules', '#rules');
     });
+
     ai61Button.addEventListener('click', () => {
+        // ▼▼▼ DAGDAG MO ITO ▼▼▼
+        selectedBetAmount = 0;
+        currentMatchBet = 0;
+        // ▲▲▲ ▲▲▲
+
         selectedGameConfig.mode = 'ai-61-ball';
         aiMenu.classList.remove('show');
         sixtyOneInstructions.classList.add('show');
