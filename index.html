@@ -12698,10 +12698,7 @@ animateAiAiming(breakAngle, 1.0, { DURATION_ALIGN: 1000, DURATION_FEATHER: 1000 
         }
     }
 
-    // 5. MESSAGE & EXECUTE
-    if (shotType === "doblete") showMessage("opponent attempting Bank Shot (Doblete)!", 2000);
-    if (shotType === "banda") showMessage("opponent calculating Kick Shot (Banda)...", 2000);
-    if (shotType === "direct" && highestDirectScore > 900) showMessage("opponent aiming Sureball...", 1500);
+    
 
     // I-lock ang tira
     animateAiAiming(finalShot.angle, finalShot.power, { DURATION_ALIGN: 800, DURATION_FEATHER: 1500 }, finalShot.pektus || { x: 0, y: 0 });
