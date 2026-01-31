@@ -9029,38 +9029,48 @@ function applyShot(shotData) {
         lastTurnControllerUid = shotData.uid;
     }
 }
-async function handleRematchRequest() { 
+        async function handleRematchRequest() { 
     // =========================================================
     // PART A: LOGIC PARA SA BOT / AI (OFFLINE)
     // =========================================================
     if (gameMode && gameMode.includes('ai')) {
         console.log("Handling AI Rematch...");
 
-        // 1. Siguraduhing may presyo
-        let cost = currentMatchBet;
-        if (!cost || cost <= 0) cost = 1000; // Fallback kung nawala ang value
+        // 1. FIX: Gamitin ang 'selectedBetAmount' kasi naging 0 na ang currentMatchBet sa endGame
+        let cost = selectedBetAmount;
 
-        // 2. Check Balance
-        if (playerTotalCurrency < cost) {
-            showMessage(`Not enough coins! Need: ${formatCurrencyShort(cost)}`, 3000);
-            return;
+        // Safety check: Kung sakaling nawala, mag-default sa 1000 o Free
+        if (!cost || cost < 0) cost = 0; 
+
+        if (cost > 0) {
+            // 2. Check Balance
+            if (playerTotalCurrency < cost) {
+                showMessage(`Not enough coins! Need: ${formatCurrencyShort(cost)}`, 3000);
+                return;
+            }
+
+            // 3. BAYAD AGAD (Manual Kaltas)
+            playerTotalCurrency -= cost;
+            saveCurrency();
+            updateCurrencyDisplay();
+            
+            showMessage(`Rematch vs AI! Paid: -${formatCurrencyShort(cost)}`, 2000);
+        } else {
+            showMessage(`Rematch vs AI (Free Play)`, 2000);
         }
-
-        // 3. BAYAD AGAD (Manual Kaltas)
-        playerTotalCurrency -= cost;
-        saveCurrency();
-        updateCurrencyDisplay();
         
-        // 4. Start New Game
-        showMessage(`Rematch vs AI! Paid: -${formatCurrencyShort(cost)}`, 2000);
-        
+        // 4. UI Feedback
         const btn = document.getElementById('rematch-button');
         if(btn) {
             btn.disabled = true;
             btn.textContent = 'Starting...';
         }
 
-        startBotMatch(); // <--- Restart agad!
+        // 5. IMPORTANT: I-refresh ang currentMatchBet bago mag-start
+        currentMatchBet = cost;
+
+        // 6. Start Game
+        startBotMatch(); 
         return; // STOP DITO. Wag na ituloy ang Online logic.
     }
 
@@ -9072,7 +9082,7 @@ async function handleRematchRequest() {
     if (!isOnlineGame || !gameId) return; 
     
     const rematchButton = document.getElementById('rematch-button'); 
-    rematchButton.disabled = true; // Disable muna para di ma-spam
+    rematchButton.disabled = true; 
 
     try {
         // 1. Kuhanin ang magkano ang pusta sa laro galing Database
@@ -9097,7 +9107,6 @@ async function handleRematchRequest() {
             // Sync local variable para sa animation
             currentMatchBet = betAmount; 
 
-            // Visual Feedback
             if (rematchButton.textContent.includes('Accept')) {
                 showMessage(`Rematch Accepted! Paid -${formatCurrencyShort(betAmount)}`, 2000);
             } else {
@@ -9115,7 +9124,6 @@ async function handleRematchRequest() {
         console.error("Error sending rematch request:", error); 
         
         // REFUND PAG NAG-ERROR (Safety Net)
-        // Kailangan natin kunin ulit ang betAmount kung sakaling nag-fail
         if (currentMatchBet > 0) {
             playerTotalCurrency += currentMatchBet;
             saveCurrency();
