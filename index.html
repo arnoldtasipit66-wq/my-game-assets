@@ -5233,9 +5233,30 @@ div#opponent-info.hud-active {
     opacity: 1;
 }
 
-        /* --- FIX PARA MAKITA ANG MESSAGE KAHIT NASA LOBBY --- */
+        /* --- MESSAGE BOX FIX (PINAKA-BAGO) --- */
 #message-box {
-    z-index: 999999 !important; /* Pinaka-ibabaw sa lahat */
+    position: fixed !important; /* Laging nakadikit sa screen */
+    top: 20px; 
+    left: 50%; 
+    transform: translateX(-50%);
+    
+    background-color: rgba(20, 20, 35, 0.95); 
+    color: #FFD700; 
+    padding: 15px 30px; 
+    border-radius: 50px; 
+    font-size: 1.2em;
+    display: none; 
+    text-align: center; 
+    font-weight: bold;
+    text-shadow: 1px 1px 2px black;
+    border: 2px solid #FFD700;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+
+    /* LAYER FIX: Nasa ibabaw ng lahat */
+    z-index: 999999 !important; 
+    
+    pointer-events: none;
+    animation: fadeIn 0.3s ease-out;
 }
         
 </style>
