@@ -5908,18 +5908,26 @@ div#opponent-info.hud-active {
     </div>
     
     <script type="module">
+    // 1. IMPORTS (DAPAT NASA UNA SA MODULE)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, serverTimestamp, increment, collection, query, orderBy, limit, getDocs, addDoc, runTransaction, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-    // --- 1. TELEGRAM FULLSCREEN SETUP (AGAD-AGAD) ---
+    // 2. TELEGRAM FULLSCREEN SETUP (AGAD-AGAD PAGKATAPOS NG IMPORT)
     const tg = window.Telegram.WebApp; 
     if (tg) {
         tg.ready();
-        tg.expand(); // <--- ITO ANG MAHALAGA!
+        tg.expand(); // <--- SABOG FULLSCREEN AGAD
+        
+        // Pilitin ulit after 100ms (Pang-backup)
+        setTimeout(() => {
+            tg.expand();
+            console.log("Force Expand triggered.");
+        }, 100);
+
         tg.enableClosingConfirmation();
-        console.log("Telegram Fullscreen Requested!");
+        console.log("Telegram initialized.");
         
         // Back Button Logic
         tg.BackButton.onClick(() => {
@@ -5928,17 +5936,11 @@ div#opponent-info.hud-active {
                 activeModal.classList.remove('show');
                 window.isClosingModal = true;
                 history.back();
-                // Restore Game State after delay
                 setTimeout(() => {
-                    if (typeof restoreGameState === 'function') {
-                        restoreGameState();
-                    }
-                    if (!document.querySelector('.modal-overlay.show')) {
-                        tg.BackButton.hide();
-                    }
+                    if (typeof restoreGameState === 'function') restoreGameState();
+                    if (!document.querySelector('.modal-overlay.show')) tg.BackButton.hide();
                 }, 50);
             } else {
-                // Exit Confirmation
                 tg.showConfirm("Exit Pinoy Pool Monster?", (isConfirmed) => {
                     if (isConfirmed) tg.close();
                 });
@@ -5946,27 +5948,29 @@ div#opponent-info.hud-active {
         });
     }
 
-    // --- 2. BACK BUTTON OVERRIDE FOR MODALS ---
+    // 3. BACK BUTTON OVERRIDE (Fix sa Modals)
     (function() {
         const originalAdd = DOMTokenList.prototype.add;
         DOMTokenList.prototype.add = function(...tokens) {
             originalAdd.apply(this, tokens);
-            if (tokens.includes('show')) {
-                if (window.Telegram && window.Telegram.WebApp) {
-                    window.Telegram.WebApp.BackButton.show();
-                }
+            if (tokens.includes('show') && tg) {
+                tg.BackButton.show();
             }
         };
     })();
 
     const userId = tg?.initDataUnsafe?.user?.id || "guest";
 
-    // --- 3. FIREBASE INITIALIZATION ---
+    // 4. FIREBASE VARIABLES
     let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
     window.localPlayerUid = null; 
     window.db = null;             
 
-    // 👇 DITO SA BABA NITO AY YUNG "const BotGenerator = ..." (Wag mo buburahin yun) 👇
+    // 5. BOT GENERATOR (DITO MO IDUGTONG YUNG DATI MONG CODE)
+    // Siguraduhin mong NASA BABA NITO yung "const BotGenerator = { ... }" at ang iba pang game logic mo.
+    
+    // (WAG MONG KALIMUTANG ILAGAY DITO YUNG BUONG LARO MO NA NASA BABA NG 'window.db = null' DATI)
+
 
 
 
