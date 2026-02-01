@@ -5907,32 +5907,33 @@ div#opponent-info.hud-active {
     </div>
     </div>
 
-    </script>
-                              <div id="message-box"></div>
+    
 
     
     <script type="module">
-    // 1. IMPORTS (DAPAT NASA UNA SA MODULE)
+    // =============================================================
+    // 1. IMPORTS (FIREBASE)
+    // =============================================================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, serverTimestamp, increment, collection, query, orderBy, limit, getDocs, addDoc, runTransaction, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-    // 2. TELEGRAM FULLSCREEN SETUP (AGAD-AGAD PAGKATAPOS NG IMPORT)
+    // =============================================================
+    // 2. TELEGRAM FULLSCREEN & SETUP (Nandito na sa loob!)
+    // =============================================================
     const tg = window.Telegram.WebApp; 
+    
     if (tg) {
         tg.ready();
-        tg.expand(); // <--- SABOG FULLSCREEN AGAD
+        tg.expand(); // Sabog Fullscreen agad!
         
-        // Pilitin ulit after 100ms (Pang-backup)
-        setTimeout(() => {
-            tg.expand();
-            console.log("Force Expand triggered.");
-        }, 100);
+        // Safety: Ulitin expand pagkatapos ng konting delay
+        setTimeout(() => tg.expand(), 100); 
 
         tg.enableClosingConfirmation();
-        console.log("Telegram initialized.");
-        
+        console.log("Telegram initialized & Expanded.");
+
         // Back Button Logic
         tg.BackButton.onClick(() => {
             const activeModal = document.querySelector('.modal-overlay.show');
@@ -5950,31 +5951,42 @@ div#opponent-info.hud-active {
                 });
             }
         });
+
+        // Auto-Show Back Button Logic
+        (function() {
+            const originalAdd = DOMTokenList.prototype.add;
+            DOMTokenList.prototype.add = function(...tokens) {
+                originalAdd.apply(this, tokens);
+                if (tokens.includes('show') && tg) tg.BackButton.show();
+            };
+        })();
     }
 
-    // 3. BACK BUTTON OVERRIDE (Fix sa Modals)
-    (function() {
-        const originalAdd = DOMTokenList.prototype.add;
-        DOMTokenList.prototype.add = function(...tokens) {
-            originalAdd.apply(this, tokens);
-            if (tokens.includes('show') && tg) {
-                tg.BackButton.show();
-            }
-        };
-    })();
-
+    // =============================================================
+    // 3. FIREBASE VARIABLES
+    // =============================================================
     const userId = tg?.initDataUnsafe?.user?.id || "guest";
-
-    // 4. FIREBASE VARIABLES
     let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
     window.localPlayerUid = null; 
     window.db = null;             
 
-    // 5. BOT GENERATOR (DITO MO IDUGTONG YUNG DATI MONG CODE)
-    // Siguraduhin mong NASA BABA NITO yung "const BotGenerator = { ... }" at ang iba pang game logic mo.
+    // =============================================================
+    // 4. DITO MO IDUGTONG ANG BUONG GAME LOGIC MO
+    // =============================================================
     
-    // (WAG MONG KALIMUTANG ILAGAY DITO YUNG BUONG LARO MO NA NASA BABA NG 'window.db = null' DATI)
+    // 👇 COPY-PASTE MO DITO PABABA YUNG DATI MONG CODE 👇
+    // (Simula sa "const BotGenerator = { ... }" hanggang sa dulo ng laro mo)
 
+    // Example:
+    /*
+    const BotGenerator = {
+       // ... code ...
+    };
+    
+    // ... lahat ng functions mo ...
+    */
+
+</script>
 
 
 
@@ -15728,6 +15740,8 @@ function showPotPopup(amount) {
         setTimeout(() => potDiv.remove(), 400);
     }, 2000);
 }
+    </script>
+                              <div id="message-box"></div>
 
 </body>
 </html>
