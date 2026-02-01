@@ -5907,80 +5907,92 @@ div#opponent-info.hud-active {
     </div>
     </div>
     
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, serverTimestamp, increment, collection, query, orderBy, limit, getDocs, addDoc, runTransaction, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-// --- DITO MAGSISIMULA ANG TELEGRAM SETUP ---
-        (function() {
-            // 1. I-save ang original na function ng browser
-            const originalAdd = DOMTokenList.prototype.add;
-
-            // 2. Palitan (Override) ang function
-            DOMTokenList.prototype.add = function(...tokens) {
-                // Gawin muna ang original na trabaho (mag-add ng class)
-                originalAdd.apply(this, tokens);
-
-                // 3. MAGIC: Kapag ang class na dinagdag ay 'show' (Open Modal)
-                if (tokens.includes('show')) {
-                    // Automatic na ipakita ang Back Button ng Telegram
-                    if (window.Telegram && window.Telegram.WebApp) {
-                        window.Telegram.WebApp.BackButton.show();
-                    }
-                }
-            };
-        })();
-const tg = window.Telegram.WebApp; // Ngayon, kilala na ng code mo si 'tg'
- 
-const userId = tg.initDataUnsafe?.user?.id || "guest"; // <--- ILAGAY MO DITO
-tg.ready(); // Sinasabi nito sa Telegram na handa na ang game
-tg.expand(); // Para mag-full screen
-tg.enableClosingConfirmation(); // Ito ang sikreto para magtanong bago mag-close
-function handleExitRequest() {
-    if (typeof tg !== 'undefined') {
-        // Ipakita ang native Telegram confirmation dialog
-        tg.showConfirm("Are you sure you want to exit Pinoy Pool Monster?", (isConfirmed) => {
-            if (isConfirmed) {
-                // Kung pinindot ng player ang 'OK' o 'Yes'
-                console.log("Exiting game...");
-                tg.close(); // Isasara ang buong Telegram Mini App
-            } else {
-                // Kung 'Cancel', mananatili lang sa laro
-                console.log("Exit cancelled.");
-            }
-        });
-    }
-}
-// --- 2. ANG PINAKAMALUPIT NA TAGABANTAY NG BACK BUTTON ---
-tg.BackButton.onClick(() => {
-    const activeModal = document.querySelector('.modal-overlay.show');
-    
-    if (activeModal) {
-        activeModal.classList.remove('show');
-        window.isClosingModal = true;
+    <script>
+    // Ito ang unang babasahin ng browser para mag-fullscreen agad
+    if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand(); // SABOG AGAD ANG FULLSCREEN!
         
-        // Tawagin ang popstate logic nang manual para mag-sync ang history
-        history.back();
-        
-        // Pagkatapos ng back, i-check ang state
+        // Pilitin ulit after 100ms para surebol
         setTimeout(() => {
-            restoreGameState();
-            // Itago ang BackButton kung wala na talagang modals
-            if (!document.querySelector('.modal-overlay.show')) {
-                tg.BackButton.hide();
-            }
-        }, 50);
-    } else {
-        handleExitRequest();
+            tg.expand();
+        }, 100);
+        
+        tg.enableClosingConfirmation(); // Iwas exit
+        console.log("🚀 Telegram Fullscreen Activated Immediately!");
     }
-});      
-               // Gawin nating window properties para ma-access kahit saan
-let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
-window.localPlayerUid = null; // Idagdag ito
-window.db = null;             // Idagdag ito
+</script>
 
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, serverTimestamp, increment, collection, query, orderBy, limit, getDocs, addDoc, runTransaction, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
+    // --- TELEGRAM BACK BUTTON SETUP ---
+    (function() {
+        const originalAdd = DOMTokenList.prototype.add;
+        DOMTokenList.prototype.add = function(...tokens) {
+            originalAdd.apply(this, tokens);
+            if (tokens.includes('show')) {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.BackButton.show();
+                }
+            }
+        };
+    })();
+
+    // Re-declare tg for internal logic
+    const tg = window.Telegram.WebApp; 
+    const userId = tg.initDataUnsafe?.user?.id || "guest";
+
+    // Exit Confirmation Logic
+    function handleExitRequest() {
+        if (typeof tg !== 'undefined') {
+            tg.showConfirm("Are you sure you want to exit Pinoy Pool Monster?", (isConfirmed) => {
+                if (isConfirmed) {
+                    tg.close();
+                }
+            });
+        }
+    }
+
+    // Back Button Logic
+    tg.BackButton.onClick(() => {
+        const activeModal = document.querySelector('.modal-overlay.show');
+        
+        if (activeModal) {
+            activeModal.classList.remove('show');
+            window.isClosingModal = true;
+            
+            // Sync Browser History
+            history.back();
+            
+            // Restore Game State (Siguraduhing defined ang function na ito sa baba ng code mo)
+            setTimeout(() => {
+                if (typeof restoreGameState === 'function') {
+                    restoreGameState();
+                }
+                // Hide button kung wala nang modal
+                if (!document.querySelector('.modal-overlay.show')) {
+                    tg.BackButton.hide();
+                }
+            }, 50);
+        } else {
+            handleExitRequest();
+        }
+    });
+
+    // --- FIREBASE VARIABLES ---
+    let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
+    window.localPlayerUid = null; 
+    window.db = null;             
+
+    // 👇 DITO MO NA IDUGTONG YUNG KARUGTONG NG CODE MO 👇
+    // (Simula sa "const BotGenerator = ..." pababa)
+
+</script>
 // --- 🤖 STEP 1: BOT NAME GENERATOR 🤖 ---
 const BotGenerator = {
     prefixes: [
