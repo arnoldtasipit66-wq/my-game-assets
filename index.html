@@ -5906,71 +5906,81 @@ div#opponent-info.hud-active {
         <img id="full-image-display" src="" style="max-width: 90%; max-height: 80vh; border: 3px solid #FFD700; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); border-radius: 10px; object-fit: contain;">
     </div>
     </div>
-
-    
-
     
     <script type="module">
-    // =============================================================
-    // 1. IMPORTS (FIREBASE)
-    // =============================================================
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, serverTimestamp, increment, collection, query, orderBy, limit, getDocs, addDoc, runTransaction, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-
-    // =============================================================
-    // 2. TELEGRAM FULLSCREEN & SETUP (Nandito na sa loob!)
-    // =============================================================
-    const tg = window.Telegram.WebApp; 
-    
-    if (tg) {
-        tg.ready();
-        tg.expand(); // Sabog Fullscreen agad!
-        
-        // Safety: Ulitin expand pagkatapos ng konting delay
-        setTimeout(() => tg.expand(), 100); 
-
-        tg.enableClosingConfirmation();
-        console.log("Telegram initialized & Expanded.");
-
-        // Back Button Logic
-        tg.BackButton.onClick(() => {
-            const activeModal = document.querySelector('.modal-overlay.show');
-            if (activeModal) {
-                activeModal.classList.remove('show');
-                window.isClosingModal = true;
-                history.back();
-                setTimeout(() => {
-                    if (typeof restoreGameState === 'function') restoreGameState();
-                    if (!document.querySelector('.modal-overlay.show')) tg.BackButton.hide();
-                }, 50);
-            } else {
-                tg.showConfirm("Exit Pinoy Pool Monster?", (isConfirmed) => {
-                    if (isConfirmed) tg.close();
-                });
-            }
-        });
-
-        // Auto-Show Back Button Logic
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, serverTimestamp, increment, collection, query, orderBy, limit, getDocs, addDoc, runTransaction, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+// --- DITO MAGSISIMULA ANG TELEGRAM SETUP ---
         (function() {
+            // 1. I-save ang original na function ng browser
             const originalAdd = DOMTokenList.prototype.add;
+
+            // 2. Palitan (Override) ang function
             DOMTokenList.prototype.add = function(...tokens) {
+                // Gawin muna ang original na trabaho (mag-add ng class)
                 originalAdd.apply(this, tokens);
-                if (tokens.includes('show') && tg) tg.BackButton.show();
+
+                // 3. MAGIC: Kapag ang class na dinagdag ay 'show' (Open Modal)
+                if (tokens.includes('show')) {
+                    // Automatic na ipakita ang Back Button ng Telegram
+                    if (window.Telegram && window.Telegram.WebApp) {
+                        window.Telegram.WebApp.BackButton.show();
+                    }
+                }
             };
         })();
+const tg = window.Telegram.WebApp; // Ngayon, kilala na ng code mo si 'tg'
+ 
+const userId = tg.initDataUnsafe?.user?.id || "guest"; // <--- ILAGAY MO DITO
+tg.ready(); // Sinasabi nito sa Telegram na handa na ang game
+tg.expand(); // Para mag-full screen
+tg.enableClosingConfirmation(); // Ito ang sikreto para magtanong bago mag-close
+function handleExitRequest() {
+    if (typeof tg !== 'undefined') {
+        // Ipakita ang native Telegram confirmation dialog
+        tg.showConfirm("Are you sure you want to exit Pinoy Pool Monster?", (isConfirmed) => {
+            if (isConfirmed) {
+                // Kung pinindot ng player ang 'OK' o 'Yes'
+                console.log("Exiting game...");
+                tg.close(); // Isasara ang buong Telegram Mini App
+            } else {
+                // Kung 'Cancel', mananatili lang sa laro
+                console.log("Exit cancelled.");
+            }
+        });
     }
-
-    // =============================================================
-    // 3. FIREBASE VARIABLES
-    // =============================================================
-    const userId = tg?.initDataUnsafe?.user?.id || "guest";
-    let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
-    window.localPlayerUid = null; 
-    window.db = null;             
-
+}
+// --- 2. ANG PINAKAMALUPIT NA TAGABANTAY NG BACK BUTTON ---
+tg.BackButton.onClick(() => {
+    const activeModal = document.querySelector('.modal-overlay.show');
     
+    if (activeModal) {
+        activeModal.classList.remove('show');
+        window.isClosingModal = true;
+        
+        // Tawagin ang popstate logic nang manual para mag-sync ang history
+        history.back();
+        
+        // Pagkatapos ng back, i-check ang state
+        setTimeout(() => {
+            restoreGameState();
+            // Itago ang BackButton kung wala na talagang modals
+            if (!document.querySelector('.modal-overlay.show')) {
+                tg.BackButton.hide();
+            }
+        }, 50);
+    } else {
+        handleExitRequest();
+    }
+});      
+               // Gawin nating window properties para ma-access kahit saan
+let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
+window.localPlayerUid = null; // Idagdag ito
+window.db = null;             // Idagdag ito
+
+
 // --- 🤖 STEP 1: BOT NAME GENERATOR 🤖 ---
 const BotGenerator = {
     prefixes: [
@@ -15721,7 +15731,7 @@ function showPotPopup(amount) {
         setTimeout(() => potDiv.remove(), 400);
     }, 2000);
 }
-    </script>
+</script>
                               <div id="message-box"></div>
 
 </body>
