@@ -1621,15 +1621,32 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
 
 
 .lobby-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 10px;
+    position: relative; /* Importante ito para sa centering */
+    display: flex;
+    justify-content: flex-end; /* Itulak ang Coins sa KANAN */
+    align-items: center;
+    padding: 10px 20px;
+    height: 70px; /* Bigyan ng space para sa profile */
 }
 
 .profile-section {
-    display: flex; align-items: center; gap: 12px;
-    background: rgba(255,255,255,0.1); padding: 8px 15px;
-    border-radius: 50px; border: 1px solid rgba(255,255,255,0.2);
+    /* --- CENTERING CODE (Lutang sa Gitna) --- */
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%); /* Hila pabalik sa perfect center */
+    top: 15px; /* Adjust mo to kung gaano kataas/baba */
+    z-index: 10;
+    
+    /* --- OLD STYLES (Design) --- */
+    display: flex; 
+    align-items: center; 
+    gap: 12px;
+    background: rgba(255,255,255,0.1); 
+    padding: 8px 20px;
+    border-radius: 50px; 
+    border: 1px solid rgba(255,255,255,0.2);
     backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 .avatar-circle {
@@ -1649,9 +1666,45 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
 }
 
 .coin-pill {
-    background: rgba(0,0,0,0.5); padding: 8px 20px; border-radius: 50px;
-    color: #FFD700; font-weight: bold; font-size: 1.2em; border: 1px solid #FFD700;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    /* --- POSITION: BABANG KALIWA --- */
+    position: absolute !important;
+    bottom: 30px !important; /* Taas konti mula sa sahig */
+    left: 20px !important;   /* Dikit sa kaliwa */
+    
+    /* Reset natin ang dating pwesto */
+    top: auto !important;
+    right: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+
+    /* --- DESIGN (Mas Pina-angas) --- */
+    background: linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.6)) !important;
+    padding: 10px 25px !important;
+    border-radius: 50px !important;
+    
+    /* Text Styles */
+    color: #FFD700 !important; /* Gold Text */
+    font-weight: 900 !important;
+    font-size: 1.3em !important; /* Mas malaki konti */
+    
+    /* Borders & Glow */
+    border: 2px solid #FFD700 !important;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.4), inset 0 0 10px rgba(0,0,0,0.5) !important;
+    
+    /* Z-Index: Siguradong nasa ibabaw */
+    z-index: 60 !important; 
+    
+    /* Flex para sa icon at text */
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+/* Hover Effect para astig */
+.coin-pill:hover {
+    transform: scale(1.05) !important;
+    background: rgba(50, 50, 50, 0.9) !important;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.6) !important;
 }
 
 /* --- CENTER STAGE (BIG CARDS) --- */
@@ -8478,8 +8531,7 @@ async function handle61BallTurnEnd() {
     const lowestChipOnTable = lowestChipNumber;
     const wasCueBallPocketed = chipsPocketedInTurn.some(c => c.id === 0);
     
-    // 1. FOUL DETECTION (Original Logic)
-    // Dapat tamaan muna ang lowest number.
+    // 1. FOUL DETECTION
     const didHitWrongBallFirst = !isBreakShot && firstChipHitInTurn && firstChipHitInTurn.id !== lowestChipOnTable;
     const didNotHitAnyBall = firstChipHitInTurn === null && chips.some(c => c.inPlay && c.id !== 0);
     
@@ -8488,15 +8540,18 @@ async function handle61BallTurnEnd() {
     }
 
     if (foul) {
+        let foulMsg = ""; // Container para sa dahilan
+
         // --- FOUL HANDLING ---
-        if(typeof currentCombo !== 'undefined') currentCombo = 0; // Reset Combo
+        if(typeof currentCombo !== 'undefined') currentCombo = 0; 
         if (isMyTurn && !isOnlineGame) setTimeout(() => aiDisplayMessage(getAiChatMessage('playerFoul')), 800);
         
-        switchTurn = true; // Lipat turn pag foul
-        canMoveCueBall = true; // Ball in hand
+        switchTurn = true; 
+        canMoveCueBall = true; 
         
-        // Ibalik ang Cue Ball kung Scratch
+        // A. Scratch Logic
         if (wasCueBallPocketed) {
+            foulMsg += "Scratch! ";
             const cueChip = chips.find(c => c.id === 0);
             if (cueChip) {
                 resetChipStateForReturn(cueChip);
@@ -8505,7 +8560,11 @@ async function handle61BallTurnEnd() {
             }
         }
         
-        // Ibalik ang lahat ng bola na nahulog (No points sa foul)
+        // B. Wrong Ball / No Hit Logic
+        if (didHitWrongBallFirst) foulMsg += `Must hit #${lowestChipOnTable} first. `;
+        if (didNotHitAnyBall) foulMsg += "No ball hit. ";
+
+        // C. Return Chips Logic
         if (pocketedObjectChips.length > 0) {
             pocketedObjectChips.forEach(chip => {
                 const chipToReturn = chips.find(c => c.id === chip.id);
@@ -8514,13 +8573,20 @@ async function handle61BallTurnEnd() {
                     placeChipOnSpot(chipToReturn);
                 }
             });
+            foulMsg += "(Chips returned). ";
         }
-        if (isMyTurn) showMessage("Foul! Chips returned.", 2500);
+
+        // --- UNIFIED MESSAGING ---
+        if (isMyTurn) {
+            showMessage("Foul! " + foulMsg, 3000);
+        } else {
+            showMessage("⚠️ Opponent Foul! " + foulMsg + "Ball in Hand.", 3000);
+        }
 
     } else {
         // --- VALID SHOT SCENARIO ---
         if (pocketedObjectChips.length > 0) {
-            // Compute Score (Sum of values)
+            // Compute Score
             const pointsThisTurn = pocketedObjectChips.reduce((sum, chip) => sum + chip.value, 0);
             
             if (isMyTurn) player61Score += pointsThisTurn;
@@ -8529,49 +8595,36 @@ async function handle61BallTurnEnd() {
             switchTurn = false; // Tuloy ang tira
             if (isMyTurn && !isOnlineGame) setTimeout(() => aiDisplayMessage(getAiChatMessage('playerGoodShot')), 800);
             
-            // Combo & Rewards
+            // Rewards (Only for Player)
             if (isMyTurn) {
-            // 1. Combo Logic
-            if(typeof currentCombo !== 'undefined') { 
-                currentCombo++; 
-                showComboPopup(currentCombo); 
+                if(typeof currentCombo !== 'undefined') { 
+                    currentCombo++; 
+                    showComboPopup(currentCombo); 
+                }
+                
+                const reward = pocketedObjectChips.length * REWARD_PER_BALL;
+                playerTotalCurrency += reward;
+                showRewardPopup(reward);
+                updateCurrencyDisplay();
+                saveCurrency();
+                gainXP(pocketedObjectChips.length * XP_PER_BALL); 
             }
-            
-            // 2. Calculate Reward
-            const reward = pocketedObjectChips.length * REWARD_PER_BALL;
 
-            // --- CLIENT-SIDE UPDATE (No Server) ---
-            
-            // A. Update Visuals & Variable
-            playerTotalCurrency += reward;
-            showRewardPopup(reward);
-            updateCurrencyDisplay();
-
-            // B. Save to Firebase (Ito ang pinalit sa fetch)
-            saveCurrency();
-
-            // C. Gain XP
-            gainXP(pocketedObjectChips.length * XP_PER_BALL); 
-            // ------------------------------------
+        } else {
+            // Missed Shot
+            switchTurn = true;
+            if(typeof currentCombo !== 'undefined') currentCombo = 0;
         }
-
-    } else {
-        // Walang pumasok -> Lipat turn
-        switchTurn = true;
-        if(typeof currentCombo !== 'undefined') currentCombo = 0;
-    }
     }
 
-    // Update Lowest Chip (Para sa susunod na tira)
+    // Update Lowest Chip
     const newRemainingChips = chips.filter(c => c.inPlay && c.id !== 0);
     lowestChipNumber = newRemainingChips.length > 0 ? Math.min(...newRemainingChips.map(c => c.id)) : 0;
     
-    // 2. CHECK WINNER & ONLINE SYNC (Dito ang Fix)
-    const winner = checkWinCondition(); // (Score >= 61 check)
+    // 2. CHECK WINNER & SYNC
+    const winner = checkWinCondition(); 
     
     if (winner) {
-        
-        // ▼▼▼ ITO ANG FIX PARA HINDI MA-STUCK ANG KALABAN ▼▼▼
         if (isOnlineGame && gameId) {
             try {
                 const gameRef = doc(db, "games", gameId);
@@ -8585,18 +8638,15 @@ async function handle61BallTurnEnd() {
                     else if (winner === 'opponent') winnerUid = (gData.players.player1.uid === localPlayerUid) ? gData.players.player2.uid : gData.players.player1.uid;
                     else winnerUid = 'draw';
 
-                    // Update Firebase na FINISHED na at i-save ang final score
                     await updateDoc(gameRef, { 
                         gameState: 'finished', 
                         winner: winnerUid,
-                        // Siguraduhing updated ang score sa server
                         player1_61Score: localPlayerId === 'player1' ? player61Score : opponent61Score,
                         player2_61Score: localPlayerId === 'player1' ? opponent61Score : player61Score
                     });
                 }
             } catch (err) { console.error(err); }
         }
-        // ▲▲▲ END NG FIX ▲▲▲
 
         const winnerText = (winner === 'player') ? 'You Win!' : (winner === 'opponent' ? 'You Lose!' : "It's a Draw! 60-60");
         await endGame(winnerText);
@@ -8607,7 +8657,6 @@ async function handle61BallTurnEnd() {
     if (isOnlineGame) await updateOnlineGameState(switchTurn);
     else updateLocalGameState(switchTurn);
 }
-
         // ▼▼▼ UPDATED MESSAGE BOX (WITH FILTER) ▼▼▼
 
 function showMessage(msg, duration = 2000) { 
@@ -8637,106 +8686,118 @@ function showMessage(msg, duration = 2000) {
 }
         function resetChipStateForReturn(chip) { if (!chip) return; chip.inPlay = true; chip.isPocketing = false; chip.pocketingProgress = 0; chip.pocketingHole = null; chip.vx = 0; chip.vy = 0; chip.rotation = 0; chip.rotationSpeed = 0; } // Dinagdag ang reset sa rotation
         async function handleTurnEnd() { if (isOnlineGame && lastTurnControllerUid !== localPlayerUid) { return; } if (isProcessingTurnEnd) return; isProcessingTurnEnd = true; if (gameMode.includes('poker')) await handlePokerTurnEnd(); else if (gameMode.includes('straight-ball')) await handleStraightBallTurnEnd(); else if (gameMode.includes('61-ball')) await handle61BallTurnEnd(); isProcessingTurnEnd = false; }
-        async function handlePokerTurnEnd() {
+        
+async function handlePokerTurnEnd() {
     const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
     
-    // 1. IDENTIFY HANDS (Original Logic)
-    // Gamitin ang global variables nang direkta para ma-update sila agad
+    // 1. IDENTIFY STATE (Kinuha natin ang mga baraha at chips)
     const currentHand = isMyTurn ? playerHand : opponentHand;
-    
     const pocketedObjectChips = chipsPocketedInTurn.filter(c => c.id !== 0);
     const wasCueBallPocketed = chipsPocketedInTurn.some(c => c.id === 0);
     const didHitNothing = firstChipHitInTurn === null && chips.some(c => c.inPlay && c.id !== 0);
     
-    // Check kung valid ang pumasok (nasa kamay ba?)
+    // Valid ba ang tinira? (Nasa kamay ba ang bola?)
     const legallyPocketedOwnChips = pocketedObjectChips.filter(chip => currentHand.some(card => card.value === chip.id));
 
     let switchTurn = true; 
     let foul = wasCueBallPocketed || didHitNothing;
+    let foulMsg = ""; // Dito natin iipunin ang sasabihin para hindi paulit-ulit ang popup
 
-    // 2. TURN SWITCH & COMBO LOGIC (Pinaghalong Original + Combo)
+    // 2. TURN SWITCH & REWARDS (Valid Shot Logic)
     if (legallyPocketedOwnChips.length > 0 && !foul && pocketedObjectChips.length === legallyPocketedOwnChips.length) {
-        switchTurn = false; // Tuloy ang tira
+        switchTurn = false; // Tuloy ang tira kasi valid
         
         if (isMyTurn && !isOnlineGame) setTimeout(() => aiDisplayMessage(getAiChatMessage('playerGoodShot')), 800);
         
-        // Combo & Rewards
+        // Rewards (Coins/XP) - Para lang sa Player
         if (isMyTurn) {
-            // 1. Combo Logic
             if(typeof currentCombo !== 'undefined') { 
                 currentCombo++; 
                 showComboPopup(currentCombo); 
             }
             
-            // 2. Calculate Reward
             const reward = legallyPocketedOwnChips.length * REWARD_PER_BALL;
-            
-            // --- CLIENT-SIDE UPDATE (Poker) ---
-            
-            // A. Update Visuals & Variable
             playerTotalCurrency += reward;
             showRewardPopup(reward);
             updateCurrencyDisplay();
-
-            // B. Save to Firebase (Direct)
             saveCurrency();
-
-            // C. Gain XP
             gainXP(legallyPocketedOwnChips.length * XP_PER_BALL);
-            // ----------------------------------
         }
     } else {
         if(typeof currentCombo !== 'undefined') currentCombo = 0;
     }
 
-    // 3. REMOVE POCKETED CARDS (Original Logic - CRITICAL)
-    // Ina-update nito ang GLOBAL variables na playerHand/opponentHand bago mag-check ng panalo
+    // 3. REMOVE POCKETED CARDS (Update Global Hands)
+    // Importante ito: Tanggalin sa kamay ang mga bolang nahulog na
     if (pocketedObjectChips.length > 0) {
         const pocketedIds = pocketedObjectChips.map(c => c.id);
-        // I-filter ang global variables
         playerHand = playerHand.filter(card => !pocketedIds.includes(card.value));
         opponentHand = opponentHand.filter(card => !pocketedIds.includes(card.value));
     }
 
-    // 4. HANDLE FOULS & PENALTY CARDS (Original Logic)
+    // 4. HANDLE FOULS & PENALTY CARDS
     if (foul) {
         if(typeof currentCombo !== 'undefined') currentCombo = 0;
         if (isMyTurn && !isOnlineGame) setTimeout(() => aiDisplayMessage(getAiChatMessage('playerFoul')), 800);
         canMoveCueBall = true; 
         
         if (wasCueBallPocketed) {
-            // Ibalik ang Cue Ball
+            foulMsg = "Scratch! ";
+
+            // Ibalik ang Cue Ball sa gitna
             const cueChip = chips.find(c => c.id === 0);
             if (cueChip) {
                 resetChipStateForReturn(cueChip);
                 cueChip.x = canvas.width * 0.25;
                 cueChip.y = canvas.height / 2;
             }
-            if (isMyTurn) showMessage("Foul! You scratched.", 3000);
 
-            // Draw Penalty Card
-            let newCard = isMyTurn ? await waitForCardPick() : (deck.length > 0 ? deck.splice(Math.floor(Math.random() * deck.length), 1)[0] : null);
+            // --- DRAW CARD LOGIC ---
+            let newCard = null;
+            if (isMyTurn) {
+                newCard = await waitForCardPick(); // Player: Pumili ng card
+            } else {
+                // AI: Random bunot
+                if (deck.length > 0) newCard = deck.splice(Math.floor(Math.random() * deck.length), 1)[0];
+            }
             
             if (newCard) {
                 const cardName = `${newCard.rank}${newCard.suit}`;
-                // Check kung ang nabunot ay pumasok na (Discard rule)
                 const correspondingChip = chips.find(c => c.id === newCard.value);
                 
+                // Logic: Kung ang nabunot ay wala na sa mesa (discard rule)
                 if (correspondingChip && !correspondingChip.inPlay) {
-                    if (isMyTurn) showMessage(`You picked ${cardName}, but ball is gone. Card discarded.`, 3000);
+                    if (isMyTurn) {
+                        foulMsg += `(Picked ${cardName}, Discarded).`;
+                    } else {
+                        // SECRET: Hindi natin sasabihin kung ano ang card ng kalaban
+                        foulMsg += `(Drew a card, Discarded).`; 
+                    }
                 } else {
-                    // Idagdag sa GLOBAL hand
+                    // Idagdag sa kamay (Penalty)
                     (isMyTurn ? playerHand : opponentHand).push(newCard);
-                    if (isMyTurn) showMessage(`Foul! You picked ${cardName}.`, 3000);
+                    
+                    if (isMyTurn) {
+                        foulMsg += `(Picked ${cardName}).`;
+                    } else {
+                        // SECRET: Hidden card message
+                        foulMsg += `(Drew a Penalty Card).`; 
+                    }
                 }
             }
         } else if (didHitNothing) {
-            if (isMyTurn) showMessage("Foul! No ball hit.", 3000);
+            foulMsg = "No ball hit.";
+        }
+
+        // --- FINAL MESSAGE DISPLAY ---
+        if (isMyTurn) {
+            showMessage("Foul! " + foulMsg, 3000);
+        } else {
+            showMessage("⚠️ Opponent Foul! " + foulMsg, 3000);
         }
     }
 
-    // 5. CHECK WIN CONDITION (Original Logic)
-    // Tinitignan nito ang updated na hands para malaman kung sino ang nanalo
+    // 5. CHECK WIN CONDITION
     let winner = null;
     let shouldEndGame = false;
     
@@ -8758,173 +8819,8 @@ function showMessage(msg, duration = 2000) {
         }
     }
 
-    // 6. END GAME & SYNC FIX (Dito lang tayo nagdagdag)
+    // 6. END GAME & ONLINE SYNC
     if (shouldEndGame) {
-        
-        // ▼▼▼ ITO LANG ANG BINAGO (SYNC FIX) ▼▼▼
-        if (isOnlineGame && gameId) {
-            try {
-                const gameRef = doc(db, "games", gameId);
-                // Tukuyin ang UID ng nanalo para alam ng server
-                let winnerUid;
-                // Kuhanin muna ang current game data para sa UIDs
-                const gSnap = await getDoc(gameRef);
-                if (gSnap.exists()) {
-                    const gData = gSnap.data();
-                    if (winner === 'player') {
-                        winnerUid = localPlayerUid;
-                    } else {
-                        // Kung opponent ang nanalo, kunin ang UID ng kalaban
-                        winnerUid = (gData.players.player1.uid === localPlayerUid) ? gData.players.player2.uid : gData.players.player1.uid;
-                    }
-                    
-                    // I-update sa Firebase na TAPOS NA
-                    await updateDoc(gameRef, {
-                        gameState: 'finished',
-                        winner: winnerUid,
-                        // I-update din ang cards para sakto sa reveal
-                        player1Hand: localPlayerId === 'player1' ? playerHand : opponentHand,
-                        player2Hand: localPlayerId === 'player1' ? opponentHand : playerHand
-                    });
-                }
-            } catch (err) { console.error("Error finishing game:", err); }
-        }
-        // ▲▲▲ END NG SYNC FIX ▲▲▲
-
-        const winnerText = (winner === 'player') ? 'You Win!' : 'You Lose!';
-        await endGame(winnerText);
-        return;
-    }
-
-    // 7. CONTINUE GAME (Original Logic)
-    isBreakShot = false;
-    if (isOnlineGame) await updateOnlineGameState(switchTurn);
-    else updateLocalGameState(switchTurn);
-}
-
-
-async function handleStraightBallTurnEnd() {
-    let isFoul = false;
-    let switchTurn = true;
-    let foulReason = "";
-    
-    const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
-    const pocketedObjectChips = chipsPocketedInTurn.filter(c => c.id !== 0);
-    const wasCueBallPocketed = chipsPocketedInTurn.some(c => c.id === 0);
-    
-    const didNotHitAnyBall = firstChipHitInTurn === null && chips.some(c => c.inPlay && c.id !== 0);
-    let didHitWrongBallFirst = false;
-    if (colorsAssigned) {
-        const currentPlayerColor = isMyTurn ? playerChipsType : opponentChipsType;
-        didHitWrongBallFirst = !isBreakShot && firstChipHitInTurn && firstChipHitInTurn.type !== currentPlayerColor;
-    }
-
-    if (wasCueBallPocketed || didHitWrongBallFirst || didNotHitAnyBall) isFoul = true;
-
-    // Assign colors logic...
-    if (pocketedObjectChips.length > 0 && !colorsAssigned) {
-        const redCount = pocketedObjectChips.filter(c => c.type === 'red').length;
-        const blueCount = pocketedObjectChips.filter(c => c.type === 'blue').length;
-        let chosenType = pocketedObjectChips[0].type; 
-        if (redCount > blueCount) chosenType = 'red';
-        else if (blueCount > redCount) chosenType = 'blue';
-
-        if (isMyTurn) {
-            playerChipsType = chosenType;
-            opponentChipsType = (chosenType === 'red' ? 'blue' : 'red');
-        } else {
-            opponentChipsType = chosenType;
-            playerChipsType = (chosenType === 'red' ? 'blue' : 'red');
-        }
-        colorsAssigned = true;
-        const colorName = (isMyTurn ? playerChipsType : opponentChipsType).toUpperCase();
-        showColorAssignmentPopup(isMyTurn ? `You got ${colorName}!` : `Opponent got ${colorName}!`, (isMyTurn ? playerChipsType : opponentChipsType));
-    }
-
-    const shooterColor = isMyTurn ? playerChipsType : opponentChipsType;
-    const opponentColor = isMyTurn ? opponentChipsType : playerChipsType;
-
-    if (isFoul) {
-        if(typeof currentCombo !== 'undefined') currentCombo = 0;
-        if (isMyTurn && !isOnlineGame) setTimeout(() => aiDisplayMessage(getAiChatMessage('playerFoul')), 800);
-        switchTurn = true;
-        canMoveCueBall = true; 
-
-        if (wasCueBallPocketed) {
-            foulReason += "Scratch! ";
-            const cueChip = chips.find(c => c.id === 0);
-            if (cueChip) {
-                resetChipStateForReturn(cueChip);
-                cueChip.x = canvas.width * 0.25;
-                cueChip.y = canvas.height / 2;
-            }
-            // Penalty: Return 1 ball
-            const shooterPocketedBalls = pocketedObjectChips.filter(c => c.type === shooterColor);
-            let chipToReturn = null;
-            if (shooterPocketedBalls.length > 0) chipToReturn = chips.find(c => c.id === shooterPocketedBalls[0].id);
-            else chipToReturn = chips.find(c => c.type === shooterColor && !c.inPlay);
-
-            if (chipToReturn) {
-                resetChipStateForReturn(chipToReturn);
-                placeChipOnSpot(chipToReturn);
-                if (isMyTurn) showMessage("Scratch! 1 ball returned.", 3000);
-            }
-        }
-
-        if (didHitWrongBallFirst) {
-            foulReason += "Hit opponent's ball first. ";
-            const myIllegalPocketed = pocketedObjectChips.filter(c => c.type === shooterColor);
-            if (myIllegalPocketed.length > 0) {
-                foulReason += "Your balls returned. ";
-                myIllegalPocketed.forEach(pc => {
-                    const foundChip = chips.find(c => c.id === pc.id);
-                    if (foundChip) {
-                        resetChipStateForReturn(foundChip);
-                        placeChipOnSpot(foundChip);
-                    }
-                });
-            }
-        }
-
-        if (didNotHitAnyBall) foulReason += "No ball hit. ";
-        if (isMyTurn && foulReason) showMessage("Foul! " + foulReason.trim(), 4000);
-
-    } else {
-        const myPocketedCount = pocketedObjectChips.filter(c => c.type === shooterColor).length;
-        const opponentPocketedCount = pocketedObjectChips.filter(c => c.type === opponentColor).length;
-
-        if (myPocketedCount > 0 && opponentPocketedCount === 0) {
-            switchTurn = false;
-            try {
-                if (isMyTurn) { 
-                    if (typeof currentCombo !== 'undefined') { currentCombo++; showComboPopup(currentCombo); }
-                    
-                    const reward = pocketedObjectChips.length * REWARD_PER_BALL; 
-                    
-                    // 1. Visual Update
-                    playerTotalCurrency += reward; 
-                    showRewardPopup(reward); 
-                    updateCurrencyDisplay(); 
-
-                    // 2. Save to Firebase (Ito ang pinalit natin sa fetch)
-                    saveCurrency();
-
-                    // 3. XP Update
-                    gainXP(pocketedObjectChips.length * XP_PER_BALL);
-                }
-            } catch (err) { console.error(err); }
-        } else {
-            switchTurn = true;
-            // ... (rest of the code)
-            if(isMyTurn && myPocketedCount > 0 && opponentPocketedCount > 0) showMessage("Mixed balls. Turn passed.", 3000);
-            if(typeof currentCombo !== 'undefined') currentCombo = 0;
-        }
-    }
-
-    // CHECK WINNER
-    const winner = checkWinCondition();
-    if (winner) {
-        // ▼▼▼ ITO ANG FIX PARA SA ONLINE GAME! ▼▼▼
         if (isOnlineGame && gameId) {
             try {
                 const gameRef = doc(db, "games", gameId);
@@ -8932,24 +8828,190 @@ async function handleStraightBallTurnEnd() {
                 if (gSnap.exists()) {
                     const gData = gSnap.data();
                     let winnerUid;
+                    // Tukuyin kung sino ang nanalo sa database
                     if (winner === 'player') winnerUid = localPlayerUid;
                     else winnerUid = (gData.players.player1.uid === localPlayerUid) ? gData.players.player2.uid : gData.players.player1.uid;
-
-                    await updateDoc(gameRef, { gameState: 'finished', winner: winnerUid });
+                    
+                    // Update Database na tapos na ang laro
+                    await updateDoc(gameRef, {
+                        gameState: 'finished',
+                        winner: winnerUid,
+                        player1Hand: localPlayerId === 'player1' ? playerHand : opponentHand,
+                        player2Hand: localPlayerId === 'player1' ? opponentHand : playerHand
+                    });
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error("Error finishing game:", err); }
         }
-        // ▲▲▲ END NG FIX ▲▲▲
 
-        await endGame((winner === 'player') ? 'You Win!' : 'You Lose!');
+        const winnerText = (winner === 'player') ? 'You Win!' : 'You Lose!';
+        await endGame(winnerText);
         return;
     }
-    
+
+    // 7. CONTINUE GAME
     isBreakShot = false;
     if (isOnlineGame) await updateOnlineGameState(switchTurn);
     else updateLocalGameState(switchTurn);
 }
 
+async function handleStraightBallTurnEnd() { 
+    let isFoul = false; 
+    let switchTurn = true; 
+    let foulReason = ""; // Dito natin ipunin ang dahilan
+     
+    const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn; 
+    const pocketedObjectChips = chipsPocketedInTurn.filter(c => c.id !== 0); 
+    const wasCueBallPocketed = chipsPocketedInTurn.some(c => c.id === 0); 
+     
+    const didNotHitAnyBall = firstChipHitInTurn === null && chips.some(c => c.inPlay && c.id !== 0); 
+    let didHitWrongBallFirst = false; 
+    
+    if (colorsAssigned) { 
+        const currentPlayerColor = isMyTurn ? playerChipsType : opponentChipsType; 
+        didHitWrongBallFirst = !isBreakShot && firstChipHitInTurn && firstChipHitInTurn.type !== currentPlayerColor; 
+    } 
+
+    // Check kung Foul
+    if (wasCueBallPocketed || didHitWrongBallFirst || didNotHitAnyBall) isFoul = true; 
+
+    // --- COLOR ASSIGNMENT LOGIC ---
+    if (pocketedObjectChips.length > 0 && !colorsAssigned) { 
+        const redCount = pocketedObjectChips.filter(c => c.type === 'red').length; 
+        const blueCount = pocketedObjectChips.filter(c => c.type === 'blue').length; 
+        let chosenType = pocketedObjectChips[0].type;  
+        if (redCount > blueCount) chosenType = 'red'; 
+        else if (blueCount > redCount) chosenType = 'blue'; 
+
+        if (isMyTurn) { 
+            playerChipsType = chosenType; 
+            opponentChipsType = (chosenType === 'red' ? 'blue' : 'red'); 
+        } else { 
+            opponentChipsType = chosenType; 
+            playerChipsType = (chosenType === 'red' ? 'blue' : 'red'); 
+        } 
+        colorsAssigned = true; 
+        const colorName = (isMyTurn ? playerChipsType : opponentChipsType).toUpperCase(); 
+        showColorAssignmentPopup(isMyTurn ? `You got ${colorName}!` : `Opponent got ${colorName}!`, (isMyTurn ? playerChipsType : opponentChipsType)); 
+    } 
+
+    const shooterColor = isMyTurn ? playerChipsType : opponentChipsType; 
+    const opponentColor = isMyTurn ? opponentChipsType : playerChipsType; 
+
+    // --- FOUL HANDLING ---
+    if (isFoul) { 
+        if(typeof currentCombo !== 'undefined') currentCombo = 0; 
+        // AI Chatter (Opsyonal: Tatawa ang AI pag nag-foul ka)
+        if (isMyTurn && !isOnlineGame) setTimeout(() => aiDisplayMessage(getAiChatMessage('playerFoul')), 800); 
+        
+        switchTurn = true; 
+        canMoveCueBall = true;  
+
+        // 1. SCRATCH (Nahulog ang Puti)
+        if (wasCueBallPocketed) { 
+            foulReason += "Scratch! "; 
+            
+            const cueChip = chips.find(c => c.id === 0); 
+            if (cueChip) { 
+                resetChipStateForReturn(cueChip); 
+                cueChip.x = canvas.width * 0.25; 
+                cueChip.y = canvas.height / 2; 
+            } 
+            
+            // Penalty: Return 1 ball 
+            const shooterPocketedBalls = pocketedObjectChips.filter(c => c.type === shooterColor); 
+            let chipToReturn = null; 
+            if (shooterPocketedBalls.length > 0) chipToReturn = chips.find(c => c.id === shooterPocketedBalls[0].id); 
+            else chipToReturn = chips.find(c => c.type === shooterColor && !c.inPlay); 
+
+            if (chipToReturn) { 
+                resetChipStateForReturn(chipToReturn); 
+                placeChipOnSpot(chipToReturn); 
+                foulReason += "(Ball returned). "; 
+            } 
+        } 
+
+        // 2. WRONG BALL (Mali ang tinamaan)
+        if (didHitWrongBallFirst) { 
+            foulReason += "Wrong ball hit. "; 
+            const myIllegalPocketed = pocketedObjectChips.filter(c => c.type === shooterColor); 
+            if (myIllegalPocketed.length > 0) { 
+                foulReason += "(Balls returned). "; 
+                myIllegalPocketed.forEach(pc => { 
+                    const foundChip = chips.find(c => c.id === pc.id); 
+                    if (foundChip) { 
+                        resetChipStateForReturn(foundChip); 
+                        placeChipOnSpot(foundChip); 
+                    } 
+                }); 
+            } 
+        } 
+
+        // 3. NO HIT (Walang tinamaan)
+        if (didNotHitAnyBall) foulReason += "No ball hit. "; 
+        
+        // ▼▼▼ FINAL MESSAGE DISPLAY ▼▼▼
+        if (isMyTurn) {
+            showMessage("Foul! " + foulReason.trim(), 4000); 
+        } else {
+            showMessage("⚠️ Opponent Foul! " + (foulReason ? foulReason.trim() : "Ball in Hand"), 3000);
+        }
+
+    } else { 
+        // --- VALID SHOT LOGIC ---
+        const myPocketedCount = pocketedObjectChips.filter(c => c.type === shooterColor).length; 
+        const opponentPocketedCount = pocketedObjectChips.filter(c => c.type === opponentColor).length; 
+
+        if (myPocketedCount > 0 && opponentPocketedCount === 0) { 
+            switchTurn = false; 
+            try { 
+                if (isMyTurn) {  
+                    if (typeof currentCombo !== 'undefined') { currentCombo++; showComboPopup(currentCombo); } 
+                    
+                    const reward = pocketedObjectChips.length * REWARD_PER_BALL;  
+                    playerTotalCurrency += reward;  
+                    showRewardPopup(reward);  
+                    updateCurrencyDisplay();  
+                    saveCurrency(); 
+                    gainXP(pocketedObjectChips.length * XP_PER_BALL); 
+                } 
+            } catch (err) { console.error(err); } 
+        } else { 
+            switchTurn = true; 
+            
+            // Mixed Balls Message
+            if (myPocketedCount > 0 && opponentPocketedCount > 0) {
+                 if(isMyTurn) showMessage("Mixed balls. Turn passed.", 3000);
+                 else showMessage("Opponent hit mixed balls. Your turn.", 3000);
+            }
+
+            if(typeof currentCombo !== 'undefined') currentCombo = 0; 
+        } 
+    } 
+
+    // --- WIN CONDITION ---
+    const winner = checkWinCondition(); 
+    if (winner) { 
+        if (isOnlineGame && gameId) { 
+            try { 
+                const gameRef = doc(db, "games", gameId); 
+                const gSnap = await getDoc(gameRef); 
+                if (gSnap.exists()) { 
+                    const gData = gSnap.data(); 
+                    let winnerUid; 
+                    if (winner === 'player') winnerUid = localPlayerUid; 
+                    else winnerUid = (gData.players.player1.uid === localPlayerUid) ? gData.players.player2.uid : gData.players.player1.uid; 
+                    await updateDoc(gameRef, { gameState: 'finished', winner: winnerUid }); 
+                } 
+            } catch (err) { console.error(err); } 
+        } 
+        await endGame((winner === 'player') ? 'You Win!' : 'You Lose!'); 
+        return; 
+    } 
+     
+    isBreakShot = false; 
+    if (isOnlineGame) await updateOnlineGameState(switchTurn); 
+    else updateLocalGameState(switchTurn); 
+}
         async function updateOnlineGameState(switchTurn) { try { const gameDocRef = doc(db, "games", gameId); const docSnap = await getDoc(gameDocRef); if (!docSnap.exists() || docSnap.data().gameState === 'finished') return; let nextTurnUid = docSnap.data().currentTurnUid; if (switchTurn) { nextTurnUid = (nextTurnUid === docSnap.data().players.player1.uid) ? docSnap.data().players.player2.uid : docSnap.data().players.player1.uid; } const chipsToSend = chips.map(c => ({...c, x: c.x / canvas.width, y: c.y / canvas.height })); const newTurnId = (docSnap.data().turnId || 0) + 1; const updatedData = { chips: chipsToSend, currentTurnUid: nextTurnUid, canMoveCueBall, isBreakShot: false, turnInProgress: false, turnId: newTurnId, liveAimData: null }; if (gameMode.includes('poker')) { const hands = (localPlayerId === 'player1') ? { player1Hand: playerHand, player2Hand: opponentHand } : { player1Hand: opponentHand, player2Hand: playerHand }; Object.assign(updatedData, { deck }, hands); } else if (gameMode.includes('straight-ball')) { const types = (localPlayerId === 'player1') ? { player1ChipsType: playerChipsType, player2ChipsType: opponentChipsType } : { player1ChipsType: opponentChipsType, player2ChipsType: playerChipsType }; Object.assign(updatedData, { colorsAssigned }, types); } else if (gameMode.includes('61-ball')) { const scores = (localPlayerId === 'player1') ? { player1_61Score: player61Score, player2_61Score: opponent61Score } : { player1_61Score: opponent61Score, player2_61Score: player61Score }; Object.assign(updatedData, { lowestChipNumber }, scores); } await updateDoc(gameDocRef, updatedData); } catch (error) { console.error("Error updating game state:", error); showMessage("Connection error.", 3000); } }
         function updateLocalGameState(switchTurn) {
     if (switchTurn) {
