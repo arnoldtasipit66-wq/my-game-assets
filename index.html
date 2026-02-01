@@ -5913,6 +5913,24 @@ div#opponent-info.hud-active {
         import { getFirestore, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, serverTimestamp, increment, collection, query, orderBy, limit, getDocs, addDoc, runTransaction, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 // --- DITO MAGSISIMULA ANG TELEGRAM SETUP ---
+        (function() {
+            // 1. I-save ang original na function ng browser
+            const originalAdd = DOMTokenList.prototype.add;
+
+            // 2. Palitan (Override) ang function
+            DOMTokenList.prototype.add = function(...tokens) {
+                // Gawin muna ang original na trabaho (mag-add ng class)
+                originalAdd.apply(this, tokens);
+
+                // 3. MAGIC: Kapag ang class na dinagdag ay 'show' (Open Modal)
+                if (tokens.includes('show')) {
+                    // Automatic na ipakita ang Back Button ng Telegram
+                    if (window.Telegram && window.Telegram.WebApp) {
+                        window.Telegram.WebApp.BackButton.show();
+                    }
+                }
+            };
+        })();
 const tg = window.Telegram.WebApp; // Ngayon, kilala na ng code mo si 'tg'
  
 const userId = tg.initDataUnsafe?.user?.id || "guest"; // <--- ILAGAY MO DITO
