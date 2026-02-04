@@ -9119,35 +9119,32 @@ function checkWinCondition() {
     return winner; 
 }
 
-/**
- * Tumatanggap ng "raw power" (2-42) at ipinapasa ito sa animation at applyShot.
- */
-async function shoot(shotPowerValue) { // Renamed parameter to avoid conflict
+// ▼▼▼ FIXED SHOOT FUNCTION (Gagana na ang Online Sargo dito) ▼▼▼
+async function shoot(shotPowerValue) {
     if (gameState !== 'aiming' || chipsMoving) return;
-    const powerNormalized = (shotPowerValue - 2) / 40; // Normalize power (0 to ~1)
-    playCueHitSound(powerNormalized); // Pass normalized power
+    
+    const powerNormalized = (shotPowerValue - 2) / 40; 
+    playCueHitSound(powerNormalized); 
+    
     chipsPocketedInTurn = [];
     firstChipHitInTurn = null;
     shotPektusOffset = { ...pektusOffset };
 
-    // === SIMULA NG PAGBABAGO ===
-    // Kunin ang stats ng tako mo BAGO tumira
     const stats = getCurrentCueStats();
     
-    // Isama ang 'cueStats' sa ipapadalang data
     const shotData = {
         uid: localPlayerUid,
         angle: cueStick.angle,
         power: shotPowerValue,
         pektus: shotPektusOffset,
         timestamp: Date.now(),
-        cueStats: stats // <-- ITO ANG BAGONG DAGDAG!
+        cueStats: stats 
     };
-    // === TAPOS NG PAGBABAGO ===
 
     cueStick.power = 0;
     powerBar.style.height = '0%';
     gameState = 'shooting_animation';
+    
     let startTime = null;
     const animationDuration = 100;
     const startPullback = cueStick.pullback;
@@ -9157,23 +9154,38 @@ async function shoot(shotPowerValue) { // Renamed parameter to avoid conflict
         if (!startTime) startTime = timestamp;
         const progress = Math.min((timestamp - startTime) / animationDuration, 1);
         cueStick.pullback = startPullback + (endPullback - startPullback) * progress;
+        
         if (progress < 1) {
             requestAnimationFrame(animateLocalShot);
         } else {
+            // ANIMATION DONE
             cueStick.pullback = 0;
             cueStick.visible = false;
             if(cueStickElement) cueStickElement.style.display = 'none';
+
+            // --- DITO ANG FIX NA GINAWA KO ---
             if (isOnlineGame) {
                 try {
                     lastTurnControllerUid = localPlayerUid;
-                    // Ipadala ang shotData na may kasama nang stats
-                    updateDoc(doc(db, "games", gameId), { lastShot: shotData, turnInProgress: true, lastTurnController: localPlayerUid });
+                    
+                    // 1. I-save sa database
+                    updateDoc(doc(db, "games", gameId), { 
+                        lastShot: shotData, 
+                        turnInProgress: true, 
+                        lastTurnController: localPlayerUid 
+                    });
+
+                    // 2. IMPORTANTE: I-apply din ang tira sa LOCAL para gumalaw ang bola!
+                    // (Ito yung nawawala sa code mo kaya nag-i-stuck)
+                    applyShot(shotData); 
+
                 } catch (error) {
                     console.error("Error sending shot data:", error);
-                    gameState = 'aiming'; // Revert state if sending fails
+                    gameState = 'aiming'; 
                     cueStick.visible = true;
                 }
             } else {
+                // Offline / AI Mode
                 applyShot(shotData);
             }
         }
