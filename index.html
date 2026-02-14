@@ -5108,79 +5108,84 @@ div#opponent-info.hud-active {
 /* --- CLEAN ELITE SIDEBAR (4-BUTTON SETUP) --- */
 
 /* 1. Main Anchor (5% distansya sa gilid ng screen) */
+/* SHARED STYLES: Dikit sa Kaliwa (Left) at Standard Size */
 #exit-button, 
 #main-settings-btn, 
 #utility-controls-container, 
 #pektus-control {
-    left: 7% !important; 
+    left: 10px !important;  /* Dikit sa gilid (pixel) hindi % para fix */
     right: auto !important;
     position: absolute !important;
-    width: 50px !important; /* Standard width para sa lahat */
+    width: 42px !important; /* Pinaliit ko konti (mula 50px) */
     margin: 0 !important;
     transform: none !important;
-    z-index: 99999 !important;
+    z-index: 99999 !important; /* Keep this para laging visible */
     transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5) !important;
 }
 
-/* 2. Perfect Vertical Spacing (Settings -> Shop -> Pektus -> Exit) */
+/* --- ARRANGEMENT: Mula Taas Pababa (Exit -> Settings -> Shop -> Pektus) --- */
 
-/* SETTINGS */
-#main-settings-btn {
-    top: calc(50% - 105px) !important;
-    height: 50px !important;
-    background: linear-gradient(135deg, #6200ea, #311b92) !important;
-    border: 2px solid #D500F9 !important;
-    border-radius: 14px !important;
+/* 1. EXIT BUTTON (Pinakataas) */
+#exit-button {
+    top: 10px !important; /* Dikit sa bubong ng screen */
+    height: 35px !important;
+    background: linear-gradient(135deg, #d32f2f, #b71c1c) !important;
+    border: 2px solid #ff5252 !important;
+    border-radius: 10px !important;
+    color: white !important; 
+    font-weight: 900 !important; 
+    font-size: 10px !important;
     display: flex !important; align-items: center; justify-content: center;
 }
 
-/* SHOP */
+/* 2. SETTINGS (Sumunod sa Exit) */
+#main-settings-btn {
+    top: 55px !important; /* 10px (exit top) + 35px (height) + 10px (gap) */
+    height: 42px !important;
+    background: linear-gradient(135deg, #6200ea, #311b92) !important;
+    border: 2px solid #D500F9 !important;
+    border-radius: 12px !important;
+    display: flex !important; align-items: center; justify-content: center;
+}
+
+/* 3. SHOP (Sumunod sa Settings) */
 #utility-controls-container {
-    top: calc(50% - 45px) !important;
+    top: 107px !important; /* 55px + 42px + 10px gap */
+    height: 42px !important;
     border: none !important; box-shadow: none !important; background: none !important;
 }
 #ingame-shop-button {
-    width: 50px !important; height: 50px !important;
+    width: 42px !important; height: 42px !important;
     background: linear-gradient(135deg, #FFD700, #B8860B) !important;
     border: 2px solid #FFF !important;
-    border-radius: 14px !important;
+    border-radius: 12px !important;
     display: flex !important; align-items: center; justify-content: center;
 }
 
-/* PEKTUS */
+/* 4. PEKTUS (Pinaka-baba ng hilera) */
 #pektus-control {
-    top: calc(50% + 15px) !important;
+    top: 159px !important; /* 107px + 42px + 10px gap */
     height: 24px !important;
     background: #1a1a1a !important;
-    border: 2px solid #FFD700 !important;
+    border: 1px solid #FFD700 !important;
     border-radius: 6px !important;
-}
-
-/* EXIT */
-#exit-button {
-    top: calc(50% + 50px) !important;
-    height: 40px !important;
-    background: linear-gradient(135deg, #e53935, #b71c1c) !important;
-    border: 2px solid #ff5252 !important;
-    border-radius: 14px !important;
-    color: white !important; font-weight: 900 !important; font-size: 11px !important;
-    display: flex !important; align-items: center; justify-content: center;
 }
 
 /* Icons Styling */
 .sidebar-icon {
-    width: 28px; height: 28px; fill: white;
+    width: 24px; height: 24px; fill: white;
 }
 
-/* Power Bar Alignment (Right Balance) */
+/* Power Bar Alignment (Right Side) */
+/* Inusog ko rin ito sa gilid (Right: 10px) para hindi harang */
 #power-control {
-    right: 8% !important;
-    top: 55% !important;
+    right: 10px !important; 
+    top: 50% !important;
     transform: translateY(-50%) !important;
     border: 2px solid rgba(255, 215, 0, 0.4) !important;
     border-radius: 25px !important;
-    background: rgba(0, 0, 0, 0.5) !important;
+    background: rgba(0, 0, 0, 0.6) !important;
 }
 
         /* =========================================
