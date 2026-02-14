@@ -5109,83 +5109,72 @@ div#opponent-info.hud-active {
 
 /* 1. Main Anchor (5% distansya sa gilid ng screen) */
 /* SHARED STYLES: Dikit sa Kaliwa (Left) at Standard Size */
+/* --- RESCUE CODE: PAMPALITAW NG BUTTONS --- */
+
+/* 1. SHARED STYLE (Para sa Exit, Settings, Shop, Pektus) */
 #exit-button, 
 #main-settings-btn, 
 #utility-controls-container, 
 #pektus-control {
-    left: 10px !important;  /* Dikit sa gilid (pixel) hindi % para fix */
-    right: auto !important;
-    position: absolute !important;
-    width: 42px !important; /* Pinaliit ko konti (mula 50px) */
+    position: fixed !important; /* FIXED para hindi gumalaw */
+    left: 20px !important;      /* Inusog ko para iwas sa gilid */
+    z-index: 999999 !important; /* PINAKA-MATAAS para lumitaw */
+    width: 45px !important;
     margin: 0 !important;
     transform: none !important;
-    z-index: 99999 !important; /* Keep this para laging visible */
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.5) !important;
+    box-shadow: 0 0 10px rgba(0,0,0,0.8) !important; /* Glow para makita agad */
 }
 
-/* --- ARRANGEMENT: Mula Taas Pababa (Exit -> Settings -> Shop -> Pektus) --- */
-
-/* 1. EXIT BUTTON (Pinakataas) */
+/* 2. EXIT (Red - Pinaka-taas) */
 #exit-button {
-    top: 10px !important; /* Dikit sa bubong ng screen */
+    top: 20px !important; /* Ibinaba ko konti para di matago sa status bar */
     height: 35px !important;
-    background: linear-gradient(135deg, #d32f2f, #b71c1c) !important;
-    border: 2px solid #ff5252 !important;
-    border-radius: 10px !important;
-    color: white !important; 
-    font-weight: 900 !important; 
-    font-size: 10px !important;
+    background: red !important;
+    color: white !important;
+    border: 2px solid white !important;
     display: flex !important; align-items: center; justify-content: center;
 }
 
-/* 2. SETTINGS (Sumunod sa Exit) */
+/* 3. SETTINGS (Purple - Sumunod sa Exit) */
 #main-settings-btn {
-    top: 55px !important; /* 10px (exit top) + 35px (height) + 10px (gap) */
-    height: 42px !important;
-    background: linear-gradient(135deg, #6200ea, #311b92) !important;
-    border: 2px solid #D500F9 !important;
-    border-radius: 12px !important;
-    display: flex !important; align-items: center; justify-content: center;
+    top: 70px !important; /* 20px + 35px + 15px gap */
+    height: 45px !important;
+    background: purple !important;
+    border: 2px solid white !important;
 }
 
-/* 3. SHOP (Sumunod sa Settings) */
+/* 4. SHOP (Gold - Sumunod sa Settings) */
 #utility-controls-container {
-    top: 107px !important; /* 55px + 42px + 10px gap */
-    height: 42px !important;
-    border: none !important; box-shadow: none !important; background: none !important;
+    top: 130px !important; /* 70px + 45px + 15px gap */
+    height: 45px !important;
+    background: none !important; border: none !important;
 }
 #ingame-shop-button {
-    width: 42px !important; height: 42px !important;
-    background: linear-gradient(135deg, #FFD700, #B8860B) !important;
-    border: 2px solid #FFF !important;
-    border-radius: 12px !important;
-    display: flex !important; align-items: center; justify-content: center;
+    width: 45px !important; height: 45px !important;
+    background: gold !important;
+    border: 2px solid white !important;
 }
 
-/* 4. PEKTUS (Pinaka-baba ng hilera) */
+/* 5. PEKTUS (Black - Pinaka-baba) */
 #pektus-control {
-    top: 159px !important; /* 107px + 42px + 10px gap */
-    height: 24px !important;
-    background: #1a1a1a !important;
-    border: 1px solid #FFD700 !important;
-    border-radius: 6px !important;
+    top: 190px !important;
+    height: 30px !important;
+    background: black !important;
+    border: 1px solid gold !important;
 }
 
-/* Icons Styling */
-.sidebar-icon {
-    width: 24px; height: 24px; fill: white;
-}
-
-/* Power Bar Alignment (Right Side) */
-/* Inusog ko rin ito sa gilid (Right: 10px) para hindi harang */
+/* --- POWER BAR (RESCUE) --- */
 #power-control {
-    right: 10px !important; 
-    top: 50% !important;
+    position: fixed !important;
+    right: 20px !important;     /* Siguradong nasa KANAN */
+    top: 50% !important;        /* Nasa GITNA vertically */
     transform: translateY(-50%) !important;
-    border: 2px solid rgba(255, 215, 0, 0.4) !important;
-    border-radius: 25px !important;
-    background: rgba(0, 0, 0, 0.6) !important;
+    z-index: 999999 !important; /* LITAW DAPAT */
+    width: 30px !important;     /* Siguradong may lapad */
+    height: 200px !important;   /* Siguradong may tangkad */
+    background: rgba(0, 0, 0, 0.5) !important;
+    border: 2px solid white !important;
+    border-radius: 15px !important;
 }
 
         /* =========================================
