@@ -5105,88 +5105,82 @@ div#opponent-info.hud-active {
     }
 }
 
-/* --- EMERGENCY VISIBILITY FIX --- */
+/* --- CLEAN ELITE SIDEBAR (4-BUTTON SETUP) --- */
 
-/* 1. FORCE CONTAINER VISIBILITY */
-/* Siguraduhin na ang container nila ay nasa ibabaw ng Canvas/Game Table */
-body, html {
-    overflow: hidden !important; /* Iwas scroll */
-}
-
-/* 2. SHARED STYLE FOR BUTTONS (The Rescue) */
+/* 1. Main Anchor (5% distansya sa gilid ng screen) */
 #exit-button, 
 #main-settings-btn, 
 #utility-controls-container, 
 #pektus-control {
-    position: fixed !important;  /* FIXED: Nakapako sa screen ng iframe */
-    left: 15px !important;       /* Dikit sa kaliwa */
-    display: flex !important;    /* Force display */
-    visibility: visible !important;
-    opacity: 1 !important;
-    z-index: 2147483647 !important; /* MAX Z-INDEX: Walang tatalo dito */
-    
-    /* Reset Transform */
-    transform: none !important;
+    left: 7% !important; 
+    right: auto !important;
+    position: absolute !important;
+    width: 50px !important; /* Standard width para sa lahat */
     margin: 0 !important;
-    
-    /* Size & Shape */
-    width: 45px !important;
-    height: 45px !important;
-    border-radius: 50% !important; /* Gawin nating bilog para cute */
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8) !important; /* Glow para makita mo agad */
+    transform: none !important;
+    z-index: 99999 !important;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important;
 }
 
-/* 3. EXIT (RED) - TOP LEFT */
-#exit-button {
-    top: 15px !important; 
-    background: red !important;
-    border: 2px solid white !important;
-    color: white !important; font-weight: bold !important; font-size: 10px !important;
-}
+/* 2. Perfect Vertical Spacing (Settings -> Shop -> Pektus -> Exit) */
 
-/* 4. SETTINGS (PURPLE) - BELOW EXIT */
+/* SETTINGS */
 #main-settings-btn {
-    top: 70px !important; 
-    background: purple !important;
-    border: 2px solid white !important;
+    top: calc(50% - 105px) !important;
+    height: 50px !important;
+    background: linear-gradient(135deg, #6200ea, #311b92) !important;
+    border: 2px solid #D500F9 !important;
+    border-radius: 14px !important;
+    display: flex !important; align-items: center; justify-content: center;
 }
 
-/* 5. SHOP (GOLD) - BELOW SETTINGS */
+/* SHOP */
 #utility-controls-container {
-    top: 125px !important; 
-    background: none !important; border: none !important; box-shadow: none !important;
+    top: calc(50% - 45px) !important;
+    border: none !important; box-shadow: none !important; background: none !important;
 }
 #ingame-shop-button {
-    width: 45px !important; height: 45px !important;
-    background: gold !important;
-    border: 2px solid white !important;
+    width: 50px !important; height: 50px !important;
+    background: linear-gradient(135deg, #FFD700, #B8860B) !important;
+    border: 2px solid #FFF !important;
+    border-radius: 14px !important;
     display: flex !important; align-items: center; justify-content: center;
-    z-index: 2147483647 !important;
 }
 
-/* 6. PEKTUS (BLACK) - BELOW SHOP */
+/* PEKTUS */
 #pektus-control {
-    top: 180px !important; 
-    height: 45px !important; /* Gawing square/circle din para uniform */
-    background: black !important;
-    border: 2px solid gold !important;
+    top: calc(50% + 15px) !important;
+    height: 24px !important;
+    background: #1a1a1a !important;
+    border: 2px solid #FFD700 !important;
+    border-radius: 6px !important;
 }
 
-/* --- POWER BAR RESCUE (RIGHT SIDE) --- */
+/* EXIT */
+#exit-button {
+    top: calc(50% + 50px) !important;
+    height: 40px !important;
+    background: linear-gradient(135deg, #e53935, #b71c1c) !important;
+    border: 2px solid #ff5252 !important;
+    border-radius: 14px !important;
+    color: white !important; font-weight: 900 !important; font-size: 11px !important;
+    display: flex !important; align-items: center; justify-content: center;
+}
+
+/* Icons Styling */
+.sidebar-icon {
+    width: 28px; height: 28px; fill: white;
+}
+
+/* Power Bar Alignment (Right Balance) */
 #power-control {
-    position: fixed !important;
-    right: 15px !important;      /* Dikit sa KANAN */
-    top: 50% !important;         /* Gitna */
+    right: 8% !important;
+    top: 55% !important;
     transform: translateY(-50%) !important;
-    z-index: 2147483647 !important; /* MAX Z-INDEX */
-    
-    width: 35px !important;
-    height: 220px !important;
-    background: rgba(0, 0, 0, 0.6) !important;
-    border: 2px solid #FFD700 !important;
-    border-radius: 20px !important;
-    display: block !important;
-    visibility: visible !important;
+    border: 2px solid rgba(255, 215, 0, 0.4) !important;
+    border-radius: 25px !important;
+    background: rgba(0, 0, 0, 0.5) !important;
 }
 
         /* =========================================
