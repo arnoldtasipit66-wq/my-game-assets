@@ -5183,6 +5183,27 @@ div#opponent-info.hud-active {
     background: rgba(0, 0, 0, 0.5) !important;
 }
 
+ /* --- ANG SUSI: ITO ANG MAGPAPALITAW SA KANILA --- */
+body.game-ready #exit-button,
+body.game-ready #main-settings-btn,
+body.game-ready #utility-controls-container,
+body.game-ready #pektus-control,
+body.game-ready #power-control {
+    opacity: 1 !important;       /* Kita na! */
+    visibility: visible !important;
+    pointer-events: auto !important; /* Pwede na pindutin */
+}
+
+/* --- HIDE SA MENU: ITO ANG MAGTATAGO PAG NASA SHOP KA --- */
+body.menu-open #exit-button,
+body.menu-open #main-settings-btn,
+body.menu-open #utility-controls-container,
+body.menu-open #pektus-control,
+body.menu-open #power-control {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+} 
         /* =========================================
    ROTATE DEVICE OVERLAY (Force Landscape)
    ========================================= */
@@ -15743,6 +15764,47 @@ function showPotPopup(amount) {
         setTimeout(() => potDiv.remove(), 400);
     }, 2000);
 }
+
+    // 1. Initial Load: Maghintay ng 4 seconds (sabay sa Mobuzzz curtain)
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            document.body.classList.add('game-ready');
+            console.log("Game UI is now Visible!");
+        }, 4000); 
+    });
+
+    // 2. Auto-Hide UI kapag binuksan ang Shop o Settings
+    // Hanapin natin ang existing functions mo at dagdagan ng logic
+    
+    // I-update natin ang SHOP Button click
+    const shopBtn = document.getElementById('ingame-shop-button');
+    if(shopBtn) {
+        shopBtn.addEventListener('click', () => {
+            document.body.classList.add('menu-open'); // Tago UI
+        });
+    }
+
+    // I-update natin ang SETTINGS Button click
+    const setBtn = document.getElementById('main-settings-btn');
+    if(setBtn) {
+        setBtn.addEventListener('click', () => {
+            document.body.classList.add('menu-open'); // Tago UI
+        });
+    }
+
+    // 3. Ibalik ang UI kapag nagsara ng Shop/Settings
+    // Gumamit tayo ng malupit na detection: Kahit anong 'close' button
+    document.addEventListener('click', (e) => {
+        const target = e.target;
+        // Kung ang pinindot ay mukhang Close button (X, Back, Close)
+        if(target.innerText === 'X' || 
+           target.innerText === 'Close' || 
+           target.classList.contains('close-btn') ||
+           target.id === 'close-settings-btn') { // Add specific IDs if needed
+            
+            document.body.classList.remove('menu-open'); // Litaw UI ulit
+        }
+    });
 </script>
                               <div id="message-box"></div>
 
