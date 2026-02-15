@@ -6514,7 +6514,17 @@ window.isInGame = true;
             }
             */  // <-- AT LAGYAN MO NITO SA DULO
 
-            
+            document.body.classList.remove('game-ready'); 
+    document.body.classList.remove('menu-open');
+
+    // Maghintay ng 4 seconds (habang nagro-rotate) tapos ILABAS
+    setTimeout(() => {
+        // Check kung nasa laro pa rin tayo bago ilabas
+        if (window.isInGame) {
+            document.body.classList.add('game-ready');
+            console.log("Game Start: UI Visible Now!");
+        }
+    }, 4000);
 
             resizeCanvas(); 
             const allModals = [gameModeSelect, aiMenu, /*difficultySelect,*/ straightBallInstructions, pokerInstructions, sixtyOneInstructions, onlineGameSelect, onlineMenu, waitingRoom, winnerModal, confirmExitModal, pokerFoulCardPickModal, leaderboardModal];
