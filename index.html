@@ -5183,18 +5183,35 @@ div#opponent-info.hud-active {
     background: rgba(0, 0, 0, 0.5) !important;
 }
 
- /* --- ANG SUSI: ITO ANG MAGPAPALITAW SA KANILA --- */
+ /* --- UI VISIBILITY LOGIC (Refactored) --- */
+
+/* 1. INITIAL STATE: Tago lahat ng buttons sa gilid */
+#exit-button, 
+#main-settings-btn, 
+#utility-controls-container, 
+#pektus-control,
+#power-control {
+    /* Existing positioning... */
+    transition: opacity 0.5s ease, visibility 0.5s !important;
+    
+    /* DEFAULT: Invisible */
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* 2. GAME READY STATE: Litaw na! (Added via JS after 4s) */
 body.game-ready #exit-button,
 body.game-ready #main-settings-btn,
 body.game-ready #utility-controls-container,
 body.game-ready #pektus-control,
 body.game-ready #power-control {
-    opacity: 1 !important;       /* Kita na! */
+    opacity: 1 !important;
     visibility: visible !important;
-    pointer-events: auto !important; /* Pwede na pindutin */
+    pointer-events: auto !important;
 }
 
-/* --- HIDE SA MENU: ITO ANG MAGTATAGO PAG NASA SHOP KA --- */
+/* 3. MENU OPEN STATE: Tago ulit pag may nakaharang na Shop/Settings */
 body.menu-open #exit-button,
 body.menu-open #main-settings-btn,
 body.menu-open #utility-controls-container,
@@ -5203,7 +5220,7 @@ body.menu-open #power-control {
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
-} 
+}
         /* =========================================
    ROTATE DEVICE OVERLAY (Force Landscape)
    ========================================= */
@@ -15765,46 +15782,65 @@ function showPotPopup(amount) {
     }, 2000);
 }
 
-    // 1. Initial Load: Maghintay ng 4 seconds (sabay sa Mobuzzz curtain)
+    <script>
+    // --- 1. GAME START ANIMATION (Wake Up Timer) ---
+    // Maghintay ng 4 seconds (habang loading/rotating), tapos ilabas ang buttons
     window.addEventListener('load', () => {
         setTimeout(() => {
-            document.body.classList.add('game-ready');
-            console.log("Game UI is now Visible!");
+            // Siguraduhin lang na nasa 'game' state tayo bago magpakita
+            // (Para hindi lumitaw sa Lobby kung mabilis mag-load)
+            if (window.isInGame) {
+                document.body.classList.add('game-ready');
+                console.log("Game UI Visible!");
+            }
         }, 4000); 
     });
 
-    // 2. Auto-Hide UI kapag binuksan ang Shop o Settings
-    // Hanapin natin ang existing functions mo at dagdagan ng logic
-    
-    // I-update natin ang SHOP Button click
-    const shopBtn = document.getElementById('ingame-shop-button');
-    if(shopBtn) {
-        shopBtn.addEventListener('click', () => {
-            document.body.classList.add('menu-open'); // Tago UI
-        });
-    }
+    // --- 2. AUTO-HIDE UI (Kapag nagbukas ng Shop/Settings) ---
+    const menuTriggers = [
+        document.getElementById('ingame-shop-button'), 
+        document.getElementById('main-settings-btn')
+    ];
 
-    // I-update natin ang SETTINGS Button click
-    const setBtn = document.getElementById('main-settings-btn');
-    if(setBtn) {
-        setBtn.addEventListener('click', () => {
-            document.body.classList.add('menu-open'); // Tago UI
-        });
-    }
-
-    // 3. Ibalik ang UI kapag nagsara ng Shop/Settings
-    // Gumamit tayo ng malupit na detection: Kahit anong 'close' button
-    document.addEventListener('click', (e) => {
-        const target = e.target;
-        // Kung ang pinindot ay mukhang Close button (X, Back, Close)
-        if(target.innerText === 'X' || 
-           target.innerText === 'Close' || 
-           target.classList.contains('close-btn') ||
-           target.id === 'close-settings-btn') { // Add specific IDs if needed
-            
-            document.body.classList.remove('menu-open'); // Litaw UI ulit
+    menuTriggers.forEach(btn => {
+        if(btn) {
+            btn.addEventListener('click', () => {
+                document.body.classList.add('menu-open'); // Tago muna buttons
+            });
         }
     });
+
+    // --- 3. AUTO-SHOW UI (Kapag nagsara ng kahit anong Modal) ---
+    // Gumamit tayo ng Global Click Listener para surebol na mahuhuli lahat ng 'Close' buttons
+    document.addEventListener('click', (e) => {
+        const target = e.target;
+
+        // Check kung ang pinindot ay Close Button (X) o yung Overlay mismo (click outside)
+        if (
+            target.classList.contains('modal-close-btn') || // Yung "×" button
+            target.id.includes('close') ||                  // Kahit anong ID na may "close"
+            target.innerHTML === '&times;' ||               // Yung symbol na "×"
+            target.classList.contains('modal-overlay')      // Pag click sa labas (background)
+        ) {
+            // Ibalik ang UI buttons!
+            document.body.classList.remove('menu-open');
+            
+            // Safety: Siguraduhing naka-set din ang game-ready kung nasa laro
+            if (window.isInGame) {
+                document.body.classList.add('game-ready');
+            }
+        }
+    });
+
+    // --- 4. Additional Safety for Lobby ---
+    // Kapag bumalik sa Lobby, tanggalin ang game-ready para tago ulit sila
+    const exitBtn = document.getElementById('exit-button');
+    if(exitBtn) {
+        exitBtn.addEventListener('click', () => {
+            document.body.classList.remove('game-ready');
+            document.body.classList.remove('menu-open');
+        });
+    }
 </script>
                               <div id="message-box"></div>
 
