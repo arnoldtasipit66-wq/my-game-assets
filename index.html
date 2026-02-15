@@ -15795,20 +15795,9 @@ function showPotPopup(amount) {
 }
 
     <script>
-    // --- 1. GAME START ANIMATION (Wake Up Timer) ---
-    // Maghintay ng 4 seconds (habang loading/rotating), tapos ilabas ang buttons
-    window.addEventListener('load', () => {
-        setTimeout(() => {
-            // Siguraduhin lang na nasa 'game' state tayo bago magpakita
-            // (Para hindi lumitaw sa Lobby kung mabilis mag-load)
-            if (window.isInGame) {
-                document.body.classList.add('game-ready');
-                console.log("Game UI Visible!");
-            }
-        }, 4000); 
-    });
+    // --- UI AUTO-HIDE & RESTORE LOGIC ---
 
-    // --- 2. AUTO-HIDE UI (Kapag nagbukas ng Shop/Settings) ---
+    // 1. Listeners para sa Shop at Settings (TAGO)
     const menuTriggers = [
         document.getElementById('ingame-shop-button'), 
         document.getElementById('main-settings-btn')
@@ -15817,42 +15806,35 @@ function showPotPopup(amount) {
     menuTriggers.forEach(btn => {
         if(btn) {
             btn.addEventListener('click', () => {
-                document.body.classList.add('menu-open'); // Tago muna buttons
+                // Pag binuksan ang shop, itago ang UI
+                document.body.classList.add('menu-open'); 
             });
         }
     });
 
-    // --- 3. AUTO-SHOW UI (Kapag nagsara ng kahit anong Modal) ---
-    // Gumamit tayo ng Global Click Listener para surebol na mahuhuli lahat ng 'Close' buttons
+    // 2. Global Listener para sa PAG-CLOSE (LITAW)
+    // Ito ang solusyon para siguradong babalik sila kahit anong close button ang pindutin
     document.addEventListener('click', (e) => {
-        const target = e.target;
+        const t = e.target;
+        
+        // Check kung ang pinindot ay Close Button (X), Back, o Overlay background
+        const isCloseAction = 
+            t.classList.contains('modal-close-btn') || 
+            t.classList.contains('modal-overlay') || 
+            t.id.includes('close') || 
+            t.innerHTML === '&times;' ||
+            t.textContent === 'X';
 
-        // Check kung ang pinindot ay Close Button (X) o yung Overlay mismo (click outside)
-        if (
-            target.classList.contains('modal-close-btn') || // Yung "×" button
-            target.id.includes('close') ||                  // Kahit anong ID na may "close"
-            target.innerHTML === '&times;' ||               // Yung symbol na "×"
-            target.classList.contains('modal-overlay')      // Pag click sa labas (background)
-        ) {
-            // Ibalik ang UI buttons!
+        if (isCloseAction) {
+            // Tanggalin ang 'menu-open' para lumitaw ulit ang buttons
             document.body.classList.remove('menu-open');
             
-            // Safety: Siguraduhing naka-set din ang game-ready kung nasa laro
+            // Safety: Siguraduhin na naka-set ang 'game-ready' kung nasa laro tayo
             if (window.isInGame) {
                 document.body.classList.add('game-ready');
             }
         }
     });
-
-    // --- 4. Additional Safety for Lobby ---
-    // Kapag bumalik sa Lobby, tanggalin ang game-ready para tago ulit sila
-    const exitBtn = document.getElementById('exit-button');
-    if(exitBtn) {
-        exitBtn.addEventListener('click', () => {
-            document.body.classList.remove('game-ready');
-            document.body.classList.remove('menu-open');
-        });
-    }
 </script>
                               <div id="message-box"></div>
 
