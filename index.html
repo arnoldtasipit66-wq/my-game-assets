@@ -9208,7 +9208,7 @@ async function shoot(shotPowerValue) {
     const startPullback = cueStick.pullback;
     const endPullback = -30 * scale;
 
-    function animateLocalShot(timestamp) {
+        function animateLocalShot(timestamp) {
         if (!startTime) startTime = timestamp;
         const progress = Math.min((timestamp - startTime) / animationDuration, 1);
         cueStick.pullback = startPullback + (endPullback - startPullback) * progress;
@@ -9221,34 +9221,38 @@ async function shoot(shotPowerValue) {
             cueStick.visible = false;
             if(cueStickElement) cueStickElement.style.display = 'none';
 
-            // --- DITO ANG FIX NA GINAWA KO ---
+            // --- REFACTORED SYNC LOGIC ---
+            // Gawin nating simple: I-apply ang shot locally muna (para sa user experience)
+            // tapos i-sync sa database.
+            
+            applyShot(shotData); // Apply muna para gumalaw agad ang bola mo!
+
             if (isOnlineGame) {
                 try {
                     lastTurnControllerUid = localPlayerUid;
                     
-                    // 1. I-save sa database
+                    // I-update ang game state sa Firestore
+                    // Siguraduhin na ang 'gameId' ay available sa scope na ito
                     updateDoc(doc(db, "games", gameId), { 
                         lastShot: shotData, 
                         turnInProgress: true, 
                         lastTurnController: localPlayerUid 
+                    }).then(() => {
+                        console.log("✅ Shot synced to Firestore!");
                     });
-
-                    // 2. IMPORTANTE: I-apply din ang tira sa LOCAL para gumalaw ang bola!
-                    // (Ito yung nawawala sa code mo kaya nag-i-stuck)
-                    applyShot(shotData); 
 
                 } catch (error) {
                     console.error("Error sending shot data:", error);
+                    // Kung nag-error, hayaan mong makatira ulit (revert state)
                     gameState = 'aiming'; 
                     cueStick.visible = true;
+                    if(cueStickElement) cueStickElement.style.display = 'block';
                 }
-            } else {
-                // Offline / AI Mode
-                applyShot(shotData);
             }
         }
     }
     requestAnimationFrame(animateLocalShot);
+
 }
 
 
