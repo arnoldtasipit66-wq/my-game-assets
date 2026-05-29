@@ -9189,24 +9189,32 @@ function checkWinCondition() {
 async function shoot(shotPowerValue) {
     if (gameState !== 'aiming' || chipsMoving) return;
     
-    const powerNormalized = (shotPowerValue - 2) / 40; 
+    // --- 1. ANTI-NaN GUARDS ---
+    // Kung hindi number ang pumasok (e.g. click event) o undefined, 
+    // kunin ang power mula sa mismong cueStick.
+    let safePower = typeof shotPowerValue === 'number' ? shotPowerValue : (cueStick.power || 20);
+    if (isNaN(safePower)) safePower = 20;
+
+    let safeAngle = cueStick.angle || 0;
+    if (isNaN(safeAngle)) safeAngle = 0;
+    // --------------------------
+
+    const powerNormalized = (safePower - 2) / 40; 
     
-    // Safety check para sa sound
     if (typeof playCueHitSound === 'function') {
         playCueHitSound(powerNormalized); 
     }
     
     chipsPocketedInTurn = [];
     firstChipHitInTurn = null;
-    shotPektusOffset = { ...pektusOffset };
+    shotPektusOffset = pektusOffset ? { ...pektusOffset } : { x: 0, y: 0 };
 
-    // Safety check para sa cue stats
     const stats = (typeof getCurrentCueStats === 'function') ? getCurrentCueStats() : { power: 1, aim: 1, spin: 1 };
     
     const shotData = {
         uid: localPlayerUid,
-        angle: cueStick.angle,
-        power: shotPowerValue,
+        angle: safeAngle,
+        power: safePower,
         pektus: shotPektusOffset,
         timestamp: Date.now(),
         cueStats: stats 
@@ -9218,8 +9226,11 @@ async function shoot(shotPowerValue) {
     
     let startTime = null;
     const animationDuration = 100;
-    const startPullback = cueStick.pullback;
-    const endPullback = -30 * scale;
+    const startPullback = cueStick.pullback || 0;
+    
+    // Safety check sa 'scale' variable para hindi mag-NaN ang pullback
+    const safeScale = (typeof scale !== 'undefined' && !isNaN(scale)) ? scale : 1;
+    const endPullback = -30 * safeScale;
 
     function animateLocalShot(timestamp) {
         if (!startTime) startTime = timestamp;
@@ -9229,55 +9240,50 @@ async function shoot(shotPowerValue) {
         if (progress < 1) {
             requestAnimationFrame(animateLocalShot);
         } else {
-            // ANIMATION DONE (Nakatama na ang tako)
+            // ANIMATION DONE
             cueStick.pullback = 0;
             cueStick.visible = false;
             if (typeof cueStickElement !== 'undefined' && cueStickElement) {
                 cueStickElement.style.display = 'none';
             }
 
-            // 1. APPLY SHOT LOCALLY (Ligtas na paraan)
+            // APPLY SHOT LOCALLY
             try {
-                applyShot(shotData);
+                if (typeof applyShot === 'function') {
+                    applyShot(shotData);
+                } else {
+                    console.error("❌ Nawawala ang applyShot function!");
+                }
             } catch (err) {
-                console.error("❌ Error sa applyShot (pero hindi magfi-freeze ang game):", err);
+                console.error("❌ Error sa applyShot (pero hindi mabubura ang balls):", err);
             }
 
-            // 2. SYNC SA DATABASE
+            // SYNC SA DATABASE
             if (typeof isOnlineGame !== 'undefined' && isOnlineGame) {
                 try {
-                    // Kunin ang tamang Room ID nang hindi nag-e-error
                     let roomId = null;
                     if (typeof currentRoomId !== 'undefined') roomId = currentRoomId;
                     else if (typeof gameId !== 'undefined') roomId = gameId;
 
-                    if (!roomId) {
-                        console.error("❌ Walang Room ID na nahanap!");
-                        return;
+                    if (roomId) {
+                        if (typeof lastTurnControllerUid !== 'undefined') {
+                            lastTurnControllerUid = localPlayerUid;
+                        }
+
+                        let exportedChips = [];
+                        if (typeof exportChipsForSync === 'function') {
+                            exportedChips = exportChipsForSync();
+                        }
+
+                        updateDoc(doc(db, "games", roomId), { 
+                            lastShot: shotData, 
+                            turnInProgress: true, 
+                            lastTurnController: localPlayerUid,
+                            chips: exportedChips
+                        }).catch((error) => {
+                            console.error("❌ Error sa Firebase updateDoc:", error);
+                        });
                     }
-
-                    if (typeof lastTurnControllerUid !== 'undefined') {
-                        lastTurnControllerUid = localPlayerUid;
-                    }
-
-                    // Kunin ang posisyon ng mga bola bago i-save
-                    let exportedChips = [];
-                    if (typeof exportChipsForSync === 'function') {
-                        exportedChips = exportChipsForSync();
-                    }
-
-                    // I-save sa Firebase (Walang await para hindi mag-lag)
-                    updateDoc(doc(db, "games", roomId), { 
-                        lastShot: shotData, 
-                        turnInProgress: true, 
-                        lastTurnController: localPlayerUid,
-                        chips: exportedChips
-                    }).then(() => {
-                        console.log("✅ Shot synced sa server!");
-                    }).catch((error) => {
-                        console.error("❌ Error sa Firebase updateDoc:", error);
-                    });
-
                 } catch (syncErr) {
                     console.error("❌ Error sa pag-prepare ng sync data:", syncErr);
                 }
