@@ -9190,13 +9190,18 @@ async function shoot(shotPowerValue) {
     if (gameState !== 'aiming' || chipsMoving) return;
     
     const powerNormalized = (shotPowerValue - 2) / 40; 
-    playCueHitSound(powerNormalized); 
+    
+    // Safety check para sa sound
+    if (typeof playCueHitSound === 'function') {
+        playCueHitSound(powerNormalized); 
+    }
     
     chipsPocketedInTurn = [];
     firstChipHitInTurn = null;
     shotPektusOffset = { ...pektusOffset };
 
-    const stats = getCurrentCueStats();
+    // Safety check para sa cue stats
+    const stats = (typeof getCurrentCueStats === 'function') ? getCurrentCueStats() : { power: 1, aim: 1, spin: 1 };
     
     const shotData = {
         uid: localPlayerUid,
@@ -9208,7 +9213,7 @@ async function shoot(shotPowerValue) {
     };
 
     cueStick.power = 0;
-    powerBar.style.height = '0%';
+    if (typeof powerBar !== 'undefined' && powerBar) powerBar.style.height = '0%';
     gameState = 'shooting_animation';
     
     let startTime = null;
@@ -9224,49 +9229,65 @@ async function shoot(shotPowerValue) {
         if (progress < 1) {
             requestAnimationFrame(animateLocalShot);
         } else {
-            // ANIMATION DONE
+            // ANIMATION DONE (Nakatama na ang tako)
             cueStick.pullback = 0;
             cueStick.visible = false;
-            if (cueStickElement) cueStickElement.style.display = 'none';
+            if (typeof cueStickElement !== 'undefined' && cueStickElement) {
+                cueStickElement.style.display = 'none';
+            }
 
-            // 1. I-APPLY ANG SHOT LOCALLY
-            // Ginagawa ito agad para walang delay o lag sa screen ng tumira
-            applyShot(shotData); 
+            // 1. APPLY SHOT LOCALLY (Ligtas na paraan)
+            try {
+                applyShot(shotData);
+            } catch (err) {
+                console.error("❌ Error sa applyShot (pero hindi magfi-freeze ang game):", err);
+            }
 
-            // 2. I-SYNC SA DATABASE (BACKGROUND PROCESS)
-            if (isOnlineGame) {
-                // Siguraduhing tama ang variable name ng Room ID mo
-                // (currentRoomId ang karaniwang ginagamit sa laro mo)
-                const roomId = typeof currentRoomId !== 'undefined' ? currentRoomId : gameId;
-                
-                // Optional: i-update ang global tracking kung kailangan
-                if (typeof lastTurnControllerUid !== 'undefined') {
-                    lastTurnControllerUid = localPlayerUid;
+            // 2. SYNC SA DATABASE
+            if (typeof isOnlineGame !== 'undefined' && isOnlineGame) {
+                try {
+                    // Kunin ang tamang Room ID nang hindi nag-e-error
+                    let roomId = null;
+                    if (typeof currentRoomId !== 'undefined') roomId = currentRoomId;
+                    else if (typeof gameId !== 'undefined') roomId = gameId;
+
+                    if (!roomId) {
+                        console.error("❌ Walang Room ID na nahanap!");
+                        return;
+                    }
+
+                    if (typeof lastTurnControllerUid !== 'undefined') {
+                        lastTurnControllerUid = localPlayerUid;
+                    }
+
+                    // Kunin ang posisyon ng mga bola bago i-save
+                    let exportedChips = [];
+                    if (typeof exportChipsForSync === 'function') {
+                        exportedChips = exportChipsForSync();
+                    }
+
+                    // I-save sa Firebase (Walang await para hindi mag-lag)
+                    updateDoc(doc(db, "games", roomId), { 
+                        lastShot: shotData, 
+                        turnInProgress: true, 
+                        lastTurnController: localPlayerUid,
+                        chips: exportedChips
+                    }).then(() => {
+                        console.log("✅ Shot synced sa server!");
+                    }).catch((error) => {
+                        console.error("❌ Error sa Firebase updateDoc:", error);
+                    });
+
+                } catch (syncErr) {
+                    console.error("❌ Error sa pag-prepare ng sync data:", syncErr);
                 }
-
-                // Inalis ang try-catch dahil async promise na ito na walang 'await'
-                updateDoc(doc(db, "games", roomId), { 
-                    lastShot: shotData, 
-                    turnInProgress: true, 
-                    lastTurnController: localPlayerUid 
-                })
-                .then(() => {
-                    console.log("✅ Shot synced to Firestore!");
-                })
-                .catch((error) => {
-                    console.error("❌ Error sending shot data:", error);
-                    // HINDI TAYO MAG-REVERT SA 'AIMING' DITO.
-                    // Bakit? Dahil natawag na ang applyShot() sa itaas at
-                    // gumugulong na ang bola. Kung ibabalik mo sa 'aiming',
-                    // lilitaw ang tako kahit gumagalaw pa ang cue ball at 
-                    // masisira ang physics loop.
-                });
             }
         }
     }
     
     requestAnimationFrame(animateLocalShot);
 }
+
 
 
 
