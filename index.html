@@ -9216,7 +9216,7 @@ async function shoot(shotPowerValue) {
     const startPullback = cueStick.pullback;
     const endPullback = -30 * scale;
 
-        function animateLocalShot(timestamp) {
+    function animateLocalShot(timestamp) {
         if (!startTime) startTime = timestamp;
         const progress = Math.min((timestamp - startTime) / animationDuration, 1);
         cueStick.pullback = startPullback + (endPullback - startPullback) * progress;
@@ -9227,41 +9227,47 @@ async function shoot(shotPowerValue) {
             // ANIMATION DONE
             cueStick.pullback = 0;
             cueStick.visible = false;
-            if(cueStickElement) cueStickElement.style.display = 'none';
+            if (cueStickElement) cueStickElement.style.display = 'none';
 
-            // --- REFACTORED SYNC LOGIC ---
-            // Gawin nating simple: I-apply ang shot locally muna (para sa user experience)
-            // tapos i-sync sa database.
-            
-            applyShot(shotData); // Apply muna para gumalaw agad ang bola mo!
+            // 1. I-APPLY ANG SHOT LOCALLY
+            // Ginagawa ito agad para walang delay o lag sa screen ng tumira
+            applyShot(shotData); 
 
+            // 2. I-SYNC SA DATABASE (BACKGROUND PROCESS)
             if (isOnlineGame) {
-                try {
+                // Siguraduhing tama ang variable name ng Room ID mo
+                // (currentRoomId ang karaniwang ginagamit sa laro mo)
+                const roomId = typeof currentRoomId !== 'undefined' ? currentRoomId : gameId;
+                
+                // Optional: i-update ang global tracking kung kailangan
+                if (typeof lastTurnControllerUid !== 'undefined') {
                     lastTurnControllerUid = localPlayerUid;
-                    
-                    // I-update ang game state sa Firestore
-                    // Siguraduhin na ang 'gameId' ay available sa scope na ito
-                    updateDoc(doc(db, "games", gameId), { 
-                        lastShot: shotData, 
-                        turnInProgress: true, 
-                        lastTurnController: localPlayerUid 
-                    }).then(() => {
-                        console.log("✅ Shot synced to Firestore!");
-                    });
-
-                } catch (error) {
-                    console.error("Error sending shot data:", error);
-                    // Kung nag-error, hayaan mong makatira ulit (revert state)
-                    gameState = 'aiming'; 
-                    cueStick.visible = true;
-                    if(cueStickElement) cueStickElement.style.display = 'block';
                 }
+
+                // Inalis ang try-catch dahil async promise na ito na walang 'await'
+                updateDoc(doc(db, "games", roomId), { 
+                    lastShot: shotData, 
+                    turnInProgress: true, 
+                    lastTurnController: localPlayerUid 
+                })
+                .then(() => {
+                    console.log("✅ Shot synced to Firestore!");
+                })
+                .catch((error) => {
+                    console.error("❌ Error sending shot data:", error);
+                    // HINDI TAYO MAG-REVERT SA 'AIMING' DITO.
+                    // Bakit? Dahil natawag na ang applyShot() sa itaas at
+                    // gumugulong na ang bola. Kung ibabalik mo sa 'aiming',
+                    // lilitaw ang tako kahit gumagalaw pa ang cue ball at 
+                    // masisira ang physics loop.
+                });
             }
         }
     }
+    
     requestAnimationFrame(animateLocalShot);
-
 }
+
 
 
 function applyShot(shotData) {
