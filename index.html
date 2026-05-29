@@ -7485,18 +7485,7 @@ document.getElementById('invite-game-select-close-btn').addEventListener('click'
     window.addEventListener('mousemove', handlePointerMove);
     window.addEventListener('touchmove', handlePointerMove, { passive: false });
 
-    // ▼▼▼ AI VOICE REMOVED (SILENT MODE) ▼▼▼
-
-// Ginawang empty para hindi mag-error ang laro
-const aiChatter = {}; 
-let isAiVoiceEnabled = false;
-
-function getAiChatMessage(event, lang = 'tl') { return ""; }
-function aiDisplayMessage(message) { return; /* Do nothing */ }
-function toggleAiVoice() { return; /* Do nothing */ }
-function updateVoiceButtonIcon() { return; /* Do nothing */ }
-
-// ▲▲▲ END OF SILENT MODE ▲▲▲
+    
     // Tutorial Button
     tutorialNextBtn.addEventListener('click', nextTutorialStep);
 
