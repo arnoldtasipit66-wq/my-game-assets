@@ -9883,18 +9883,20 @@ async function cancelMatchmaking() {
         return;
     }
 
-                    // 5. ACTIVE GAMEPLAY UPDATES
-        // Pinalitan ang gameState ng data.status para hindi ma-skip ang sync!
-        if (data.status === 'playing') {
+                            // 5. ACTIVE GAMEPLAY UPDATES
+        // Pinalitan ang data.status ng data.gameState para basahin nang tama ang server!
+        if (data.gameState === 'playing') {
             
+            // Kapag turn ng kalaban at may ginawa siyang tira
             if (data.turnInProgress && data.lastShot && data.lastTurnController !== localPlayerUid) {
                 if (!chipsMoving && gameState === 'aiming') {
-                    // Para sigurado, i-lock agad sa shooting para di mag-doble
+                    // Para sigurado, i-lock agad sa 'shooting' para di mag-doble ang animation
                     gameState = 'shooting'; 
                     chipsMoving = true;
                     animateAndApplyShot(data.lastShot);
                 }
             }
+
 
             // --------------------------------------------------
 
