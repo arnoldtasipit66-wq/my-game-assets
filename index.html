@@ -6391,6 +6391,19 @@ tableSurfaceImage.src = 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my
         let vsScreenShownThisGame = false;
         // === END PLAYER NAME UPDATE ===
 
+        // ▼▼▼ AI VOICE REMOVED (SILENT MODE) ▼▼▼
+
+// Ginawang empty para hindi mag-error ang laro
+const aiChatter = {}; 
+let isAiVoiceEnabled = false;
+
+function getAiChatMessage(event, lang = 'tl') { return ""; }
+function aiDisplayMessage(message) { return; /* Do nothing */ }
+function toggleAiVoice() { return; /* Do nothing */ }
+function updateVoiceButtonIcon() { return; /* Do nothing */ }
+
+// ▲▲▲ END OF SILENT MODE ▲▲▲
+
         function init() {
     // 1. Sabihin sa Telegram na ready na ang app
     if (window.Telegram && window.Telegram.WebApp) {
