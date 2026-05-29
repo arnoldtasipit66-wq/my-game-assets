@@ -6346,9 +6346,9 @@ ghostHand = document.getElementById('ghost-hand'),
               CUE_CHIP_MASS = 6.5,     // Bigat ng Cue Chip (mas mabigat)
               OBJECT_CHIP_MASS = 2.5,  // Bigat ng Object Chip (mas magaan)
               
-              COLLISION_FRICTION = 1, // 0 = Walang preno sa banggaan, 1 = Sobrang preno
+              COLLISION_FRICTION = 0.1, // 0 = Walang preno sa banggaan, 1 = Sobrang preno
        
-              FRICTION_PER_SECOND = 0.2, // <-- ITO ANG PALIT SA 'FRICTION'
+              FRICTION_PER_SECOND = 0.1, // <-- ITO ANG PALIT SA 'FRICTION'
               MIN_VELOCITY = 5.0, // <-- ITO ANG PALIT SA 'MIN_VELOCITY'
               MIN_ROTATION_SPEED = 0.01, 
               ROTATION_SPEED = 0.001,
@@ -6357,10 +6357,10 @@ ghostHand = document.getElementById('ghost-hand'),
         // START: SPINNING CHIP UPDATE (Nagdagdag ng spin friction)
         const SPIN_FRICTION_PER_SECOND = 0.15;
 // Idagdag mo ito para gumana ang Pektus sa Pader
-const RAIL_KICK_FACTOR = 1.5; // 0.2 = Sakto lang, 0.5 = Sobrang lakas kumabig
+const RAIL_KICK_FACTOR = 0.5; // 0.2 = Sakto lang, 0.5 = Sobrang lakas kumabig
         const WALL_SPIN_FACTOR = 0.005; // Lakas ng spin galing sa pader
         const COLLISION_SPIN_FACTOR = 0.03; // Lakas ng spin galing sa banggaan
-        const COLLISION_FRICTION_FACTOR = 0.01; // Mababang friction para madulas (Iwas hatak pabalik)
+        const COLLISION_FRICTION_FACTOR = 0.001; // Mababang friction para madulas (Iwas hatak pabalik)
 
         let scale = 1, table = { width: 0, height: 0 }, chips = [], holes = [], cueStick = { angle: 0, length: 10000, visible: true, power: 0, pullback: 0 }, gameState = 'menu', gameMode = 'ai-classic', playerTurn = true, colorsAssigned = false, playerChipsType = null, opponentChipsType = null, canMoveCueBall = false, chipsMoving = false, chipsPocketedInTurn = [], firstChipHitInTurn = null, isPoweringUp = false, isAimingOnCanvas = false, isDraggingCueBall = false, difficulty = 'pro', deck = [], playerHand = [], opponentHand = [], originalPlayerHand = [], originalOpponentHand = [], selectedGameConfig = {}, isBreakShot = false, pektusOffset = { x: 0, y: 0 }, shotPektusOffset = { x: 0, y: 0 }, isDraggingPektusDot = false, isRotatingLeft = false, isRotatingRight = false, isInvalidPlacement = false, player61Score = 0, opponent61Score = 0, lowestChipNumber = 1, aiConsecutivePots = 0;
 let currentShotStats = { Power: 2, Aim: 3, Spin: 1 }; 
