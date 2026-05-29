@@ -6348,8 +6348,8 @@ ghostHand = document.getElementById('ghost-hand'),
               
               COLLISION_FRICTION = 0.1, // 0 = Walang preno sa banggaan, 1 = Sobrang preno
        
-              FRICTION_PER_SECOND = 0.1, // <-- ITO ANG PALIT SA 'FRICTION'
-              MIN_VELOCITY = 5.0, // <-- ITO ANG PALIT SA 'MIN_VELOCITY'
+              FRICTION_PER_SECOND = 0.3, // <-- ITO ANG PALIT SA 'FRICTION'
+              MIN_VELOCITY = 10.0, // <-- ITO ANG PALIT SA 'MIN_VELOCITY'
               MIN_ROTATION_SPEED = 0.01, 
               ROTATION_SPEED = 0.001,
               TOUCH_AIM_SENSITIVITY = 0.00001;
@@ -6357,8 +6357,8 @@ ghostHand = document.getElementById('ghost-hand'),
         // START: SPINNING CHIP UPDATE (Nagdagdag ng spin friction)
         const SPIN_FRICTION_PER_SECOND = 0.15;
 // Idagdag mo ito para gumana ang Pektus sa Pader
-const RAIL_KICK_FACTOR = 0.5; // 0.2 = Sakto lang, 0.5 = Sobrang lakas kumabig
-        const WALL_SPIN_FACTOR = 0.005; // Lakas ng spin galing sa pader
+const RAIL_KICK_FACTOR = 0.3; // 0.2 = Sakto lang, 0.5 = Sobrang lakas kumabig
+        const WALL_SPIN_FACTOR = 0.03; // Lakas ng spin galing sa pader
         const COLLISION_SPIN_FACTOR = 0.03; // Lakas ng spin galing sa banggaan
         const COLLISION_FRICTION_FACTOR = 0.001; // Mababang friction para madulas (Iwas hatak pabalik)
 
