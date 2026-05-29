@@ -9877,16 +9877,19 @@ async function cancelMatchmaking() {
         return;
     }
 
-            // 5. ACTIVE GAMEPLAY UPDATES
-        if (gameState === 'playing') {
+                    // 5. ACTIVE GAMEPLAY UPDATES
+        // Pinalitan ang gameState ng data.status para hindi ma-skip ang sync!
+        if (data.status === 'playing') {
             
-            // --- 1. BAGONG DAGDAG: SYNC ANG TIRA NG KALABAN ---
-            // Kapag may turnInProgress at hindi ikaw ang tumira, i-play ang animation ng kalaban!
             if (data.turnInProgress && data.lastShot && data.lastTurnController !== localPlayerUid) {
                 if (!chipsMoving && gameState === 'aiming') {
+                    // Para sigurado, i-lock agad sa shooting para di mag-doble
+                    gameState = 'shooting'; 
+                    chipsMoving = true;
                     animateAndApplyShot(data.lastShot);
                 }
             }
+
             // --------------------------------------------------
 
             // --- AI TAKEOVER ---
