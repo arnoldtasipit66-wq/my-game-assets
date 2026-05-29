@@ -5980,6 +5980,23 @@ let db, auth, rtdb, firebaseInitialized = false, isAuthReady = false;
 window.localPlayerUid = null; // Idagdag ito
 window.db = null;             // Idagdag ito
 
+                // ▼▼▼ AI SILENT MODE (LITERAL TOP LEVEL FUNCTIONS) ▼▼▼
+        window.isAiVoiceEnabled = false;
+        window.aiChatter = {};
+
+        function getAiChatMessage(event, lang = 'tl') { return ""; }
+        function aiDisplayMessage(message) { return; }
+        function toggleAiVoice() { return; }
+        function updateVoiceButtonIcon() { return; }
+
+        // I-attach din sa window para sa HTML inline onclick buttons
+        window.getAiChatMessage = getAiChatMessage;
+        window.aiDisplayMessage = aiDisplayMessage;
+        window.toggleAiVoice = toggleAiVoice;
+        window.updateVoiceButtonIcon = updateVoiceButtonIcon;
+        // ▲▲▲ END OF SILENT MODE ▲▲▲
+
+
         // --- 3. FIREBASE INITIALIZATION AT LOGIN ---
 
 // Ang totoong config ng iyong Firebase project
