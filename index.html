@@ -5945,16 +5945,16 @@ div.game-card .card-title {
     box-shadow: 0 0px 0 #000, inset 0 2px 2px rgba(255,255,255,0.2) !important;
 }
  
-/* =========================================
-   🎛️ AESTHETIC LEFT SIDE BUTTONS (SUPER OVERRIDE) 🎛️
-========================================= */
 
-/* 1. Basagin ang limitasyon kahit hindi sila <button> tag */
-#settings-button, #shop-button, #pektus-button, #spin-button, #exit-button, #quit-button,
-[onclick*="etting"], [onclick*="hop"], [onclick*="ektus"], [onclick*="pin"], [onclick*="xit"], [onclick*="uit"] {
+
+/* 1. Basagin ang limitasyon at patayin ang kulay Violet */
+[id*="setting"], [id*="Setting"], [onclick*="setting"], [onclick*="Setting"],
+[id*="shop"], [id*="Shop"], [onclick*="shop"], [onclick*="Shop"],
+[id*="pektus"], [id*="Pektus"], [onclick*="pektus"], [onclick*="Pektus"], [id*="spin"], [id*="Spin"], [onclick*="spin"], [onclick*="Spin"],
+[id*="exit"], [id*="Exit"], [onclick*="exit"], [onclick*="Exit"], [id*="quit"], [id*="Quit"], [onclick*="quit"], [onclick*="Quit"] {
     width: 45px !important;
     height: 45px !important;
-    border-radius: 12px !important; /* Hugis modern app button */
+    border-radius: 12px !important; 
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -5964,67 +5964,45 @@ div.game-card .card-title {
     color: white !important;
     text-shadow: 2px 2px 0px rgba(0,0,0,0.5) !important;
     z-index: 9999 !important;
-    opacity: 1 !important;
-    background-color: transparent !important; /* Reset old backgrounds */
+    background-color: transparent !important; /* Ito ang papatay sa violet background */
 }
 
 /* Pag pinindot (Lulubog) */
-#settings-button:active, #shop-button:active, #pektus-button:active, #spin-button:active, #exit-button:active, #quit-button:active,
-[onclick*="etting"]:active, [onclick*="hop"]:active, [onclick*="ektus"]:active, [onclick*="pin"]:active, [onclick*="xit"]:active, [onclick*="uit"]:active {
+[id*="setting"]:active, [id*="Setting"]:active, [onclick*="setting"]:active, [onclick*="Setting"]:active,
+[id*="shop"]:active, [id*="Shop"]:active, [onclick*="shop"]:active, [onclick*="Shop"]:active,
+[id*="pektus"]:active, [id*="spin"]:active, [onclick*="spin"]:active,
+[id*="exit"]:active, [id*="quit"]:active, [onclick*="quit"]:active {
     transform: translateY(6px) !important;
 }
 
 /* 🛒 SHOP BUTTON (Premium Gold) */
-#shop-button, [onclick*="hop"] {
+[id*="shop"], [id*="Shop"], [onclick*="shop"], [onclick*="Shop"] {
     background: linear-gradient(180deg, #FFD700 0%, #B8860B 100%) !important;
     border: 2px solid #FFF8DC !important;
-    box-shadow: 
-        0 6px 0 #8B6508, 
-        0 10px 15px rgba(0,0,0,0.6), 
-        inset 0 2px 5px rgba(255,255,255,0.6) !important;
-}
-#shop-button:active, [onclick*="hop"]:active {
-    box-shadow: 0 0px 0 #8B6508, inset 0 2px 5px rgba(255,255,255,0.6) !important;
+    box-shadow: 0 6px 0 #8B6508, 0 10px 15px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.6) !important;
 }
 
-/* ⚙️ SETTINGS BUTTON (Steel/Silver - Paalam Violet!) */
-#settings-button, [onclick*="etting"] {
+/* ⚙️ SETTINGS BUTTON (Steel/Silver) */
+[id*="setting"], [id*="Setting"], [onclick*="setting"], [onclick*="Setting"] {
     background: linear-gradient(180deg, #A9A9A9 0%, #696969 100%) !important;
     border: 2px solid #D3D3D3 !important;
-    box-shadow: 
-        0 6px 0 #404040, 
-        0 10px 15px rgba(0,0,0,0.6), 
-        inset 0 2px 5px rgba(255,255,255,0.5) !important;
-}
-#settings-button:active, [onclick*="etting"]:active {
-    box-shadow: 0 0px 0 #404040, inset 0 2px 5px rgba(255,255,255,0.5) !important;
+    box-shadow: 0 6px 0 #404040, 0 10px 15px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.5) !important;
 }
 
 /* 🎱 PEKTUS / SPIN BUTTON (Neon Cyan) */
-#pektus-button, #spin-button, [onclick*="ektus"], [onclick*="pin"] {
+[id*="pektus"], [id*="Pektus"], [onclick*="pektus"], [onclick*="Pektus"], [id*="spin"], [id*="Spin"], [onclick*="spin"], [onclick*="Spin"] {
     background: linear-gradient(180deg, #00FFFF 0%, #008B8B 100%) !important;
     border: 2px solid #E0FFFF !important;
-    box-shadow: 
-        0 6px 0 #005555, 
-        0 10px 15px rgba(0,0,0,0.6), 
-        inset 0 2px 5px rgba(255,255,255,0.6) !important;
-}
-#pektus-button:active, #spin-button:active, [onclick*="ektus"]:active, [onclick*="pin"]:active {
-    box-shadow: 0 0px 0 #005555, inset 0 2px 5px rgba(255,255,255,0.6) !important;
+    box-shadow: 0 6px 0 #005555, 0 10px 15px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.6) !important;
 }
 
 /* ❌ EXIT / QUIT BUTTON (Danger Red) */
-#exit-button, #quit-button, [onclick*="xit"], [onclick*="uit"] {
+[id*="exit"], [id*="Exit"], [onclick*="exit"], [onclick*="Exit"], [id*="quit"], [id*="Quit"], [onclick*="quit"], [onclick*="Quit"] {
     background: linear-gradient(180deg, #FF4500 0%, #8B0000 100%) !important;
     border: 2px solid #FF6347 !important;
-    box-shadow: 
-        0 6px 0 #5C0000, 
-        0 10px 15px rgba(0,0,0,0.6), 
-        inset 0 2px 5px rgba(255,255,255,0.5) !important;
+    box-shadow: 0 6px 0 #5C0000, 0 10px 15px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.5) !important;
 }
-#exit-button:active, #quit-button:active, [onclick*="xit"]:active, [onclick*="uit"]:active {
-    box-shadow: 0 0px 0 #5C0000, inset 0 2px 5px rgba(255,255,255,0.5) !important;
-}
+
 
         
 </style>
