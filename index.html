@@ -5841,6 +5841,111 @@ div#player-info, div#opponent-info {
         0 0 15px rgba(0, 255, 127, 0.5) !important;
 }
 
+       /* =========================================
+   🎮 AESTHETIC LOBBY & GAME MODES (FIXED IDs) 🎮
+========================================= */
+
+/* --- 1. LOBBY PROFILE & COINS (Sa Taas) --- */
+div.profile-section {
+    background: linear-gradient(145deg, rgba(26, 26, 46, 0.95), rgba(22, 33, 62, 1)) !important;
+    border: 2px solid #FFD700 !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.6), inset 0 0 10px rgba(255, 215, 0, 0.2) !important;
+    border-radius: 40px !important;
+}
+div.profile-section .player-name-display {
+    font-family: 'Luckiest Guy', cursive !important;
+    background: linear-gradient(to bottom, #FFFFFF 0%, #FFD700 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    filter: drop-shadow(2px 2px 0px #000) !important;
+    font-size: 1.3em !important;
+    letter-spacing: 1px !important;
+}
+div.coin-pill {
+    background: linear-gradient(145deg, rgba(10, 40, 20, 0.95), rgba(0, 20, 10, 1)) !important;
+    border: 2px solid #00FF7F !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.6), inset 0 0 10px rgba(0, 255, 127, 0.2) !important;
+    color: #00FF7F !important;
+    font-family: 'Luckiest Guy', cursive !important;
+    text-shadow: 2px 2px 0 #000 !important;
+    border-radius: 40px !important;
+}
+
+/* --- 2. LOBBY BIG CARDS (Play Online & Free Match) --- */
+div.game-card {
+    border-radius: 30px !important;
+    border: 3px solid rgba(255,255,255,0.5) !important;
+    box-shadow: 0 10px 0 rgba(0,0,0,0.6), 0 20px 30px rgba(0,0,0,0.5) !important;
+    transition: all 0.1s ease-in-out !important;
+}
+div.game-card:active {
+    transform: translateY(10px) !important;
+    box-shadow: 0 0px 0 rgba(0,0,0,0.6), 0 5px 10px rgba(0,0,0,0.5) !important;
+}
+div.game-card.primary-card {
+    background: linear-gradient(180deg, #1E90FF 0%, #0000CD 100%) !important;
+    border-color: #87CEFA !important;
+}
+div.game-card.secondary-card {
+    background: linear-gradient(180deg, #32CD32 0%, #008000 100%) !important;
+    border-color: #98FB98 !important;
+}
+div.game-card .card-title {
+    font-family: 'Luckiest Guy', cursive !important;
+    font-size: 2.2em !important;
+    text-shadow: 3px 3px 0px #000 !important;
+}
+
+/* --- 3. GAME MODE BUTTONS (Poker, Straight, 61 Ball) --- */
+
+/* Hugis Pill at 3D Effect para sa lahat ng Game Mode buttons */
+#ai-menu .menu-button, #online-game-select .menu-button, #invite-game-select .menu-button {
+    font-family: 'Luckiest Guy', cursive !important;
+    font-size: 1.4rem !important;
+    padding: 15px 20px !important;
+    border-radius: 40px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    transition: all 0.1s ease-in-out !important;
+    transform: none !important; /* Reset existing transform */
+}
+
+/* POKER BUTTONS (Sapphire Blue) */
+#ai-menu #ai-poker-button, #online-game-select #online-poker-button, #invite-game-select #invite-poker-button {
+    background: linear-gradient(180deg, #1E90FF 0%, #0000CD 100%) !important;
+    border: 2px solid #87CEFA !important;
+    box-shadow: 0 8px 0 #00008B, 0 15px 20px rgba(0,0,0,0.5), inset 0 2px 2px rgba(255,255,255,0.4) !important;
+    color: white !important;
+    text-shadow: 2px 2px 0px #000 !important;
+}
+
+/* STRAIGHT BALL BUTTONS (Emerald Green) */
+#ai-menu #ai-straight-ball-button, #online-game-select #online-straight-ball-button, #invite-game-select #invite-straight-ball-button {
+    background: linear-gradient(180deg, #32CD32 0%, #008000 100%) !important;
+    border: 2px solid #98FB98 !important;
+    box-shadow: 0 8px 0 #006400, 0 15px 20px rgba(0,0,0,0.5), inset 0 2px 2px rgba(255,255,255,0.4) !important;
+    color: white !important;
+    text-shadow: 2px 2px 0px #000 !important;
+}
+
+/* 61 BALL BUTTONS (Blazing Orange) */
+#ai-menu #ai-61-button, #online-game-select #online-61-button, #invite-game-select #invite-61-button {
+    background: linear-gradient(180deg, #FF8C00 0%, #FF4500 100%) !important;
+    border: 2px solid #FFDAB9 !important;
+    box-shadow: 0 8px 0 #8B2500, 0 15px 20px rgba(0,0,0,0.5), inset 0 2px 2px rgba(255,255,255,0.4) !important;
+    color: white !important;
+    text-shadow: 2px 2px 0px #000 !important;
+}
+
+/* Active Press Effect para lulubog yung mga buttons pag pinindot */
+#ai-menu #ai-poker-button:active, #online-game-select #online-poker-button:active, #invite-game-select #invite-poker-button:active,
+#ai-menu #ai-straight-ball-button:active, #online-game-select #online-straight-ball-button:active, #invite-game-select #invite-straight-ball-button:active,
+#ai-menu #ai-61-button:active, #online-game-select #online-61-button:active, #invite-game-select #invite-61-button:active {
+    transform: translateY(8px) !important;
+    box-shadow: 0 0px 0 #000, inset 0 2px 2px rgba(255,255,255,0.2) !important;
+}
+ 
+
         
 </style>
 </head>
