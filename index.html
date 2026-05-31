@@ -10175,6 +10175,30 @@ async function cancelMatchmaking() {
                             // 5. ACTIVE GAMEPLAY UPDATES
         // Pinalitan ang data.status ng data.gameState para basahin nang tama ang server!
         if (data.gameState === 'playing') {
+
+                    // --- 💡 BAGONG DAGDAG: LIVE AIM SYNC (Para sumabay ang galaw ng tako ng kalaban) ---
+            if (!isMyTurnOnline && data.liveAimData && data.liveAimData.uid !== localPlayerUid) {
+                if (gameState === 'aiming' && !chipsMoving && !data.turnInProgress) {
+                    cueStick.angle = data.liveAimData.angle;
+                    
+                    // Ipakita yung pag-atras ng tako niya habang humihila ng lakas
+                    if (data.liveAimData.power && data.liveAimData.power > 0) {
+                        const safeScale = typeof scale !== 'undefined' ? scale : 1;
+                        cueStick.pullback = -(data.liveAimData.power / 100) * 30 * safeScale;
+                    } else {
+                        cueStick.pullback = 0;
+                    }
+
+                    if (data.liveAimData.pektus) pektusOffset = data.liveAimData.pektus;
+                    
+                    cueStick.visible = true;
+                    if (typeof cueStickElement !== 'undefined' && cueStickElement) {
+                        cueStickElement.style.display = 'block';
+                    }
+                }
+            }
+            // -----------------------------------------------------------
+
             
             // Kapag turn ng kalaban at may ginawa siyang tira
             if (data.turnInProgress && data.lastShot && data.lastTurnController !== localPlayerUid) {
