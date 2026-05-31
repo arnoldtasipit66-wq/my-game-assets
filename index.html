@@ -8049,9 +8049,9 @@ function drawChips() {
         // === RING LIGHT / HIGHLIGHT ===
         const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
         if (isMyTurn && (gameState === 'aiming' || (gameState === 'moving' && canMoveCueBall)) && chip.inPlay && legalTargetChipIds.has(chip.id)) {
-            const pulse = Math.abs(Math.sin(performance.now() * 0.001));
+            const pulse = Math.abs(Math.sin(performance.now() * 0.002));
             const alpha = pulse * 0.7 + 0.3;
-            const ringWidth = 1.0 * scale;
+            const ringWidth = 2.5 * scale;
             const glowRadius = 0 * scale;
             const ringColor = `rgba(255, 255, 255, ${alpha})`;
             const glowColor = `rgba(255, 255, 255, ${alpha * 0.7})`;
