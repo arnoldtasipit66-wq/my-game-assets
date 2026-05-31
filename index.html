@@ -9564,30 +9564,55 @@ function applyShot(shotData) {
     const cueChip = chips[0];
     if (!cueChip || !cueChip.inPlay) return;
 
-    const stats = shotData.cueStats || (typeof getCurrentCueStats === 'function' ? getCurrentCueStats() : { Power: 1, Aim: 1, Spin: 1 });
+    // --- 1. ANTI-NaN: Siguraduhing may stats kahit mag-error ang server ---
+    let stats = shotData.cueStats;
+    if (!stats && typeof getCurrentCueStats === 'function') {
+        stats = getCurrentCueStats();
+    }
+    if (!stats) {
+        stats = { Power: 2, Aim: 3, Spin: 1 };
+    }
+
+    // Basahin nang tama kahit malaki (Power) o maliit (power) ang text
+    const statPower = (stats.Power !== undefined) ? stats.Power : (stats.power || 2);
+    const statSpin = (stats.Spin !== undefined) ? stats.Spin : (stats.spin || 1);
+
     if (typeof currentShotStats !== 'undefined') currentShotStats = stats;
     
-    const powerBonus = (stats.Power - 2) * 0.05;
-    
-    // 💡 DITO ANG FIX: Nilagyan natin ng default multiplier kung sakaling nawawala
-    const multiplier = (typeof VELOCITY_MULTIPLIER !== 'undefined') ? VELOCITY_MULTIPLIER : 1.2;
-    const finalPowerMultiplier = multiplier * (1 + powerBonus);
+    // --- 2. ANTI-NaN: Ibalik ang original na bilis (60) ---
+    const powerBonus = (statPower - 2) * 0.05;
+    // DITO NAAYOS ANG PAG-FREEZE: Ibinalik natin sa 60 ang default speed!
+    const baseMultiplier = (typeof VELOCITY_MULTIPLIER !== 'undefined') ? VELOCITY_MULTIPLIER : 60; 
+    const finalPowerMultiplier = baseMultiplier * (1 + powerBonus);
 
+    // --- 3. ANTI-NaN: Pektus at Spin ---
     shotPektusOffset = shotData.pektus || { x: 0, y: 0 };
+    const safePektusX = isNaN(shotPektusOffset.x) ? 0 : shotPektusOffset.x;
     
-    const spinMultiplier = 1 + (stats.Spin / 5);
-    cueChip.currentSideSpin = (shotPektusOffset.x * 35) * spinMultiplier;
+    const spinMultiplier = 1 + (statSpin / 5);
+    cueChip.currentSideSpin = (safePektusX * 35) * spinMultiplier;
     
-    cueChip.vx = Math.cos(shotData.angle) * shotData.power * finalPowerMultiplier;
-    cueChip.vy = Math.sin(shotData.angle) * shotData.power * finalPowerMultiplier;
+    // --- 4. ANTI-NaN: Final Force Calculation ---
+    const safeAngle = isNaN(shotData.angle) ? 0 : shotData.angle;
+    const safeShotPower = isNaN(shotData.power) ? 20 : shotData.power;
+
+    const vx = Math.cos(safeAngle) * safeShotPower * finalPowerMultiplier;
+    const vy = Math.sin(safeAngle) * safeShotPower * finalPowerMultiplier;
+    
+    // I-apply sa Cue Ball (Sasaluhin kung magka-error ang math para DI MAWALA ang bola)
+    cueChip.vx = isNaN(vx) ? 0 : vx;
+    cueChip.vy = isNaN(vy) ? 0 : vy;
     
     chipsMoving = true;
     gameState = 'shooting';
 
     if (typeof isOnlineGame !== 'undefined' && isOnlineGame) {
-        lastTurnControllerUid = shotData.uid;
+        if (typeof lastTurnControllerUid !== 'undefined') {
+            lastTurnControllerUid = shotData.uid;
+        }
     }
 }
+
         async function handleRematchRequest() { 
     // =========================================================
     // PART A: LOGIC PARA SA BOT / AI (OFFLINE)
