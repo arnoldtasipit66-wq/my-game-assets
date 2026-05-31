@@ -9451,15 +9451,12 @@ function checkWinCondition() {
 async function shoot(shotPowerValue) {
     if (gameState !== 'aiming' || chipsMoving) return;
     
-    // --- 1. ANTI-NaN GUARDS ---
-    // Kung hindi number ang pumasok (e.g. click event) o undefined, 
-    // kunin ang power mula sa mismong cueStick.
+    // --- ANTI-NaN GUARDS ---
     let safePower = typeof shotPowerValue === 'number' ? shotPowerValue : (cueStick.power || 20);
     if (isNaN(safePower)) safePower = 20;
 
     let safeAngle = cueStick.angle || 0;
     if (isNaN(safeAngle)) safeAngle = 0;
-    // --------------------------
 
     const powerNormalized = (safePower - 2) / 40; 
     
@@ -9489,8 +9486,6 @@ async function shoot(shotPowerValue) {
     let startTime = null;
     const animationDuration = 100;
     const startPullback = cueStick.pullback || 0;
-    
-    // Safety check sa 'scale' variable para hindi mag-NaN ang pullback
     const safeScale = (typeof scale !== 'undefined' && !isNaN(scale)) ? scale : 1;
     const endPullback = -30 * safeScale;
 
@@ -9504,23 +9499,20 @@ async function shoot(shotPowerValue) {
         } else {
             // ANIMATION DONE
             cueStick.pullback = 0;
-            cueStick.visible = false;
-            if (typeof cueStickElement !== 'undefined' && cueStickElement) {
-                cueStickElement.style.display = 'none';
-            }
+            
+            // DITO YUNG FIX: Tinanggal na natin yung nagpapa-crash na cueStickElement
+            cueStick.visible = false; 
 
-            // APPLY SHOT LOCALLY
+            // 1. APPLY SHOT LOCALLY (Hindi na ito mapipigilan ngayon!)
             try {
                 if (typeof applyShot === 'function') {
                     applyShot(shotData);
-                } else {
-                    console.error("❌ Nawawala ang applyShot function!");
                 }
             } catch (err) {
-                console.error("❌ Error sa applyShot (pero hindi mabubura ang balls):", err);
+                console.error("❌ Error sa applyShot:", err);
             }
 
-            // SYNC SA DATABASE
+            // 2. SYNC SA DATABASE
             if (typeof isOnlineGame !== 'undefined' && isOnlineGame) {
                 try {
                     let roomId = null;
@@ -9542,12 +9534,10 @@ async function shoot(shotPowerValue) {
                             turnInProgress: true, 
                             lastTurnController: localPlayerUid,
                             chips: exportedChips
-                        }).catch((error) => {
-                            console.error("❌ Error sa Firebase updateDoc:", error);
-                        });
+                        }).catch((error) => console.error("Firebase Sync Error:", error));
                     }
                 } catch (syncErr) {
-                    console.error("❌ Error sa pag-prepare ng sync data:", syncErr);
+                    console.error("Sync Prepare Error:", syncErr);
                 }
             }
         }
