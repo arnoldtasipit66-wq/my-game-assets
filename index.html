@@ -5697,6 +5697,150 @@ div#player-info, div#opponent-info {
     align-self: flex-start !important; /* Kung sakaling nasa flexbox sila */
 }
 
+        /* =========================================
+   🎮 AESTHETIC MAIN MENU & POPUPS 🎮
+========================================= */
+
+/* --- 1. MAIN MENU TOP BAR (Profile Info) --- */
+#menu-header, .menu-header, #top-bar-menu, #menu-top-bar {
+    background: linear-gradient(145deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 1) 100%) !important;
+    border-bottom: 2px solid rgba(255, 215, 0, 0.4) !important;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 0 0 25px 25px !important; /* Pakurba sa ilalim */
+    padding: 10px 15px !important;
+}
+
+/* Pangalan sa Menu */
+#menu-player-name, .profile-name, #main-menu-name {
+    font-family: 'Luckiest Guy', cursive !important;
+    font-size: 1.6rem !important;
+    background: linear-gradient(to bottom, #FFFFFF 0%, #FFD700 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    filter: drop-shadow(2px 2px 0px #000) !important;
+    letter-spacing: 1.5px !important;
+}
+
+/* Pera/Coins sa Menu */
+#menu-player-coins, .profile-coins, #main-menu-coins {
+    font-family: 'Luckiest Guy', cursive !important;
+    color: #00FF7F !important; /* Spring Green */
+    text-shadow: 2px 2px 0 #000, 0 0 10px rgba(0, 255, 127, 0.5) !important;
+    font-size: 1.2rem !important;
+    background: rgba(0,0,0,0.6) !important;
+    padding: 4px 12px !important;
+    border-radius: 20px !important;
+    border: 1px solid #008000 !important;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5) !important;
+}
+
+/* Avatar sa Menu */
+#menu-player-avatar, .profile-avatar, #main-menu-avatar {
+    border: 3px solid #FFD700 !important;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
+    border-radius: 50% !important;
+}
+
+/* --- 2. GAME MODE BUTTONS (3D Pop) --- */
+/* Pangkalahatang hugis ng Menu Buttons */
+#menu-screen button, .menu-buttons button, .mode-btn {
+    font-family: 'Luckiest Guy', cursive !important;
+    font-size: 1.4rem !important;
+    padding: 15px 20px !important;
+    margin: 12px auto !important;
+    border-radius: 40px !important; /* Hugis Pill */
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    color: white !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    transition: all 0.1s ease-in-out !important;
+    width: 85% !important;
+    max-width: 320px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+/* Pag pinindot ang buttons (Lulubog) */
+#menu-screen button:active, .menu-buttons button:active, .mode-btn:active {
+    transform: translateY(8px) !important;
+    box-shadow: 0 0px 0 #000, inset 0 2px 2px rgba(255,255,255,0.2) !important;
+}
+
+/* 🔵 PLAY ONLINE (Sapphire Blue) */
+#play-online-btn, button[onclick*="Online"], button[onclick*="online"] {
+    background: linear-gradient(180deg, #1E90FF 0%, #0000CD 100%) !important;
+    box-shadow: 0 8px 0 #00008B, 0 15px 20px rgba(0,0,0,0.5), inset 0 2px 2px rgba(255,255,255,0.4) !important;
+    text-shadow: 2px 2px 0px #000 !important;
+}
+
+/* 🟢 PLAY BOT (Emerald Green) */
+#play-bot-btn, button[onclick*="Bot"], button[onclick*="bot"] {
+    background: linear-gradient(180deg, #32CD32 0%, #008000 100%) !important;
+    box-shadow: 0 8px 0 #006400, 0 15px 20px rgba(0,0,0,0.5), inset 0 2px 2px rgba(255,255,255,0.4) !important;
+    text-shadow: 2px 2px 0px #000 !important;
+}
+
+/* 💖 PLAY FRIEND (Neon Pink) */
+#play-friend-btn, button[onclick*="Friend"], button[onclick*="friend"] {
+    background: linear-gradient(180deg, #FF1493 0%, #C71585 100%) !important;
+    box-shadow: 0 8px 0 #8B0A50, 0 15px 20px rgba(0,0,0,0.5), inset 0 2px 2px rgba(255,255,255,0.4) !important;
+    text-shadow: 2px 2px 0px #000 !important;
+}
+
+/* 🟠 FREE PLAY (Blazing Orange) */
+#free-play-btn, button[onclick*="Free"], button[onclick*="free"] {
+    background: linear-gradient(180deg, #FF8C00 0%, #FF4500 100%) !important;
+    box-shadow: 0 8px 0 #8B2500, 0 15px 20px rgba(0,0,0,0.5), inset 0 2px 2px rgba(255,255,255,0.4) !important;
+    text-shadow: 2px 2px 0px #000 !important;
+}
+
+/* --- 3. POPUPS & MODALS (Settings, Profile Edit, Shop) --- */
+.modal-content, #profile-modal .modal-content, #settings-modal .modal-content {
+    background: linear-gradient(145deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 1) 100%) !important;
+    border: 2px solid #FFD700 !important;
+    border-radius: 30px !important;
+    box-shadow: 
+        0 15px 40px rgba(0,0,0,0.9), 
+        inset 0 0 30px rgba(255,215,0,0.1) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+/* Modal Titles */
+.modal-content h2, .modal-content h3 {
+    font-family: 'Luckiest Guy', cursive !important;
+    color: #FFD700 !important;
+    text-shadow: 2px 2px 0 #000 !important;
+    letter-spacing: 1.5px !important;
+    text-transform: uppercase !important;
+}
+
+/* Text Inputs sa loob ng Modal (Gagawing astig na dark box) */
+.modal-content input[type="text"], .modal-content input[type="number"] {
+    background: rgba(0,0,0,0.6) !important;
+    border: 2px solid #4CAF50 !important;
+    color: #FFF !important;
+    font-family: 'Nunito', sans-serif !important;
+    font-weight: 900 !important;
+    font-size: 1.1rem !important;
+    border-radius: 15px !important;
+    padding: 12px !important;
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.7) !important;
+    text-align: center !important;
+}
+
+/* Pag nag-type ka sa input (Iilaw ng Green) */
+.modal-content input[type="text"]:focus, .modal-content input[type="number"]:focus {
+    outline: none !important;
+    border-color: #00FF7F !important;
+    box-shadow: 
+        inset 0 3px 6px rgba(0,0,0,0.7), 
+        0 0 15px rgba(0, 255, 127, 0.5) !important;
+}
+
         
 </style>
 </head>
