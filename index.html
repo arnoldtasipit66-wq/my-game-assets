@@ -9564,27 +9564,27 @@ function applyShot(shotData) {
     const cueChip = chips[0];
     if (!cueChip || !cueChip.inPlay) return;
 
-    const stats = shotData.cueStats || getCurrentCueStats();
-    currentShotStats = stats;
-
+    const stats = shotData.cueStats || (typeof getCurrentCueStats === 'function' ? getCurrentCueStats() : { Power: 1, Aim: 1, Spin: 1 });
+    if (typeof currentShotStats !== 'undefined') currentShotStats = stats;
+    
     const powerBonus = (stats.Power - 2) * 0.05;
-    const finalPowerMultiplier = VELOCITY_MULTIPLIER * (1 + powerBonus);
+    
+    // 💡 DITO ANG FIX: Nilagyan natin ng default multiplier kung sakaling nawawala
+    const multiplier = (typeof VELOCITY_MULTIPLIER !== 'undefined') ? VELOCITY_MULTIPLIER : 1.2;
+    const finalPowerMultiplier = multiplier * (1 + powerBonus);
 
     shotPektusOffset = shotData.pektus || { x: 0, y: 0 };
     
-    // ▼▼▼ DITO TAYO MAGPAPALIT PARA LUMAKAS ANG SPIN ▼▼▼
-    const spinMultiplier = 1 + (stats.Spin / 5); 
+    const spinMultiplier = 1 + (stats.Spin / 5);
+    cueChip.currentSideSpin = (shotPektusOffset.x * 35) * spinMultiplier;
     
-    // Gawing * 35 (Dati ay * 20). Ito ang "Starting Spin Power".
-    cueChip.currentSideSpin = (shotPektusOffset.x * 35) * spinMultiplier; 
-    // ▲▲▲ ▲▲▲
-
     cueChip.vx = Math.cos(shotData.angle) * shotData.power * finalPowerMultiplier;
     cueChip.vy = Math.sin(shotData.angle) * shotData.power * finalPowerMultiplier;
     
     chipsMoving = true;
     gameState = 'shooting';
-    if (isOnlineGame) {
+
+    if (typeof isOnlineGame !== 'undefined' && isOnlineGame) {
         lastTurnControllerUid = shotData.uid;
     }
 }
