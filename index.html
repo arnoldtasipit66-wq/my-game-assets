@@ -5946,39 +5946,36 @@ div.game-card .card-title {
 }
  
 /* =========================================
-   🎛️ AESTHETIC LEFT SIDE BUTTONS 🎛️
+   🎛️ AESTHETIC LEFT SIDE BUTTONS (SUPER OVERRIDE) 🎛️
 ========================================= */
 
-/* 1. Pangkalahatang Hugis (Squircle / Rounded Square) */
-button[id*="setting"], button[onclick*="etting"],
-button[id*="shop"], button[onclick*="hop"],
-button[id*="pektus"], button[onclick*="ektus"], button[id*="spin"],
-button[id*="exit"], button[onclick*="xit"], button[id*="quit"], button[onclick*="uit"] {
-    width: 48px !important;
-    height: 48px !important;
-    border-radius: 15px !important; /* Hugis modern app button */
+/* 1. Basagin ang limitasyon kahit hindi sila <button> tag */
+#settings-button, #shop-button, #pektus-button, #spin-button, #exit-button, #quit-button,
+[onclick*="etting"], [onclick*="hop"], [onclick*="ektus"], [onclick*="pin"], [onclick*="xit"], [onclick*="uit"] {
+    width: 45px !important;
+    height: 45px !important;
+    border-radius: 12px !important; /* Hugis modern app button */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-size: 1.5rem !important; /* Palakihin ang emoji/icon */
-    margin-bottom: 12px !important; /* Espasyo sa pagitan nila */
+    font-size: 1.5rem !important; 
+    margin-bottom: 12px !important; 
     transition: all 0.1s ease-in-out !important;
-    backdrop-filter: blur(5px) !important;
     color: white !important;
     text-shadow: 2px 2px 0px rgba(0,0,0,0.5) !important;
-    z-index: 99 !important;
+    z-index: 9999 !important;
+    opacity: 1 !important;
+    background-color: transparent !important; /* Reset old backgrounds */
 }
 
 /* Pag pinindot (Lulubog) */
-button[id*="setting"]:active, button[onclick*="etting"]:active,
-button[id*="shop"]:active, button[onclick*="hop"]:active,
-button[id*="pektus"]:active, button[onclick*="ektus"]:active, button[id*="spin"]:active,
-button[id*="exit"]:active, button[onclick*="xit"]:active, button[id*="quit"]:active, button[onclick*="uit"]:active {
+#settings-button:active, #shop-button:active, #pektus-button:active, #spin-button:active, #exit-button:active, #quit-button:active,
+[onclick*="etting"]:active, [onclick*="hop"]:active, [onclick*="ektus"]:active, [onclick*="pin"]:active, [onclick*="xit"]:active, [onclick*="uit"]:active {
     transform: translateY(6px) !important;
 }
 
 /* 🛒 SHOP BUTTON (Premium Gold) */
-button[id*="shop"], button[onclick*="hop"] {
+#shop-button, [onclick*="hop"] {
     background: linear-gradient(180deg, #FFD700 0%, #B8860B 100%) !important;
     border: 2px solid #FFF8DC !important;
     box-shadow: 
@@ -5986,12 +5983,12 @@ button[id*="shop"], button[onclick*="hop"] {
         0 10px 15px rgba(0,0,0,0.6), 
         inset 0 2px 5px rgba(255,255,255,0.6) !important;
 }
-button[id*="shop"]:active, button[onclick*="hop"]:active {
+#shop-button:active, [onclick*="hop"]:active {
     box-shadow: 0 0px 0 #8B6508, inset 0 2px 5px rgba(255,255,255,0.6) !important;
 }
 
 /* ⚙️ SETTINGS BUTTON (Steel/Silver - Paalam Violet!) */
-button[id*="setting"], button[onclick*="etting"] {
+#settings-button, [onclick*="etting"] {
     background: linear-gradient(180deg, #A9A9A9 0%, #696969 100%) !important;
     border: 2px solid #D3D3D3 !important;
     box-shadow: 
@@ -5999,12 +5996,12 @@ button[id*="setting"], button[onclick*="etting"] {
         0 10px 15px rgba(0,0,0,0.6), 
         inset 0 2px 5px rgba(255,255,255,0.5) !important;
 }
-button[id*="setting"]:active, button[onclick*="etting"]:active {
+#settings-button:active, [onclick*="etting"]:active {
     box-shadow: 0 0px 0 #404040, inset 0 2px 5px rgba(255,255,255,0.5) !important;
 }
 
 /* 🎱 PEKTUS / SPIN BUTTON (Neon Cyan) */
-button[id*="pektus"], button[onclick*="ektus"], button[id*="spin"] {
+#pektus-button, #spin-button, [onclick*="ektus"], [onclick*="pin"] {
     background: linear-gradient(180deg, #00FFFF 0%, #008B8B 100%) !important;
     border: 2px solid #E0FFFF !important;
     box-shadow: 
@@ -6012,12 +6009,12 @@ button[id*="pektus"], button[onclick*="ektus"], button[id*="spin"] {
         0 10px 15px rgba(0,0,0,0.6), 
         inset 0 2px 5px rgba(255,255,255,0.6) !important;
 }
-button[id*="pektus"]:active, button[onclick*="ektus"]:active, button[id*="spin"]:active {
+#pektus-button:active, #spin-button:active, [onclick*="ektus"]:active, [onclick*="pin"]:active {
     box-shadow: 0 0px 0 #005555, inset 0 2px 5px rgba(255,255,255,0.6) !important;
 }
 
 /* ❌ EXIT / QUIT BUTTON (Danger Red) */
-button[id*="exit"], button[onclick*="xit"], button[id*="quit"], button[onclick*="uit"] {
+#exit-button, #quit-button, [onclick*="xit"], [onclick*="uit"] {
     background: linear-gradient(180deg, #FF4500 0%, #8B0000 100%) !important;
     border: 2px solid #FF6347 !important;
     box-shadow: 
@@ -6025,9 +6022,10 @@ button[id*="exit"], button[onclick*="xit"], button[id*="quit"], button[onclick*=
         0 10px 15px rgba(0,0,0,0.6), 
         inset 0 2px 5px rgba(255,255,255,0.5) !important;
 }
-button[id*="exit"]:active, button[onclick*="xit"]:active, button[id*="quit"]:active, button[onclick*="uit"]:active {
+#exit-button:active, #quit-button:active, [onclick*="xit"]:active, [onclick*="uit"]:active {
     box-shadow: 0 0px 0 #5C0000, inset 0 2px 5px rgba(255,255,255,0.5) !important;
 }
+
 
         
 </style>
