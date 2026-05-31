@@ -12652,41 +12652,31 @@ async function cancelOnlineGame() {
         console.error("Failed to reset game for rematch:", error); 
     } 
 }
-        function sendLiveAimData() {
-    // 1. Safety Checks (Wag galawin - ito yung dati)
-    if (!isOnlineGame || !isMyTurnOnline || !gameId || table.width === 0) return;
+        let lastAimSyncTime = 0;
+function sendLiveAimData() {
+    if (typeof isOnlineGame === 'undefined' || !isOnlineGame || !isMyTurnOnline) return;
+    
+    let roomId = null;
+    if (typeof currentRoomId !== 'undefined') roomId = currentRoomId;
+    else if (typeof gameId !== 'undefined') roomId = gameId;
 
-    // Throttling (Para hindi bawat millisecond ay nagpapadala)
+    if (!roomId) return;
+
     const now = Date.now();
-    if (now - lastAimUpdateTime < AIM_UPDATE_INTERVAL) return;
-    lastAimUpdateTime = now;
-
-    const cueChip = chips.find(c => c.id === 0);
-    if (!cueChip) return;
-
-    // 2. Ihanda ang Data (Wag galawin - ito yung dati)
-    const dataToSend = {
-        angle: cueStick.angle,
-        cueBallX: cueChip.x / canvas.width,
-        cueBallY: cueChip.y / canvas.height,
-        pektusX: pektusOffset.x,
-        pektusY: pektusOffset.y,
-        pullback: cueStick.pullback, // Sinama natin ang hatak
-        sender: localPlayerUid
-    };
-
-    // 3. PADALAHIN SA RTDB (Ito ang Bago!)
-    // Dati: updateDoc(...)
-    // Ngayon: Gagamit na tayo ng 'set' sa RTDB path na 'gameData/GAME_ID/liveAim'
-    
-    // Gumawa ng reference (address) kung saan ise-save
-    const aimRef = ref(rtdb, `gameData/${gameId}/liveAim`);
-    
-    // I-save ang data
-    set(aimRef, dataToSend).catch((err) => {
-        console.warn("Aim sync error:", err);
-    });
+    // 💡 FIX: Sync every 100ms para iwas lag sa internet pero smooth ang galaw sa friend mo
+    if (now - lastAimSyncTime > 100) { 
+        lastAimSyncTime = now;
+        updateDoc(doc(db, "games", roomId), {
+            liveAimData: {
+                angle: cueStick.angle || 0,
+                power: cueStick.power || 0,
+                pektus: pektusOffset || {x: 0, y: 0},
+                uid: localPlayerUid
+            }
+        }).catch(() => {}); // Tahimik na ignore pag bumagal sandali ang net
+    }
 }
+
 // Variable para pwede nating patayin ang listener pagtapos ng game
 let unsubscribeAimListener = null; 
 
