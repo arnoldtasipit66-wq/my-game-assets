@@ -5311,6 +5311,117 @@ div#opponent-info.hud-active {
     pointer-events: none;
     animation: fadeIn 0.3s ease-out;
 }
+
+        /* =========================================
+   🏆 AESTHETIC GAME OVER BUTTONS & TEXT 🏆
+========================================= */
+
+/* Common Style para sa lahat ng Game Over buttons */
+#rematch-button, #ai-rematch-button, #back-to-menu-button {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1.2rem;
+    padding: 12px 25px;
+    margin: 10px 5px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: white;
+    transition: all 0.1s ease-in-out;
+    outline: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* 🏆 REMATCH BUTTONS (Gold Theme) */
+#rematch-button, #ai-rematch-button {
+    background: linear-gradient(180deg, #FFD700 0%, #D4AF37 100%);
+    color: #4A3000;
+    text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.4);
+    box-shadow: 
+        0 6px 0 #997A00, 
+        0 10px 15px rgba(0, 0, 0, 0.4), 
+        inset 0 2px 2px rgba(255, 255, 255, 0.5);
+    border: 1px solid #FFFDE7;
+}
+
+#rematch-button:active, #ai-rematch-button:active {
+    transform: translateY(6px);
+    box-shadow: 
+        0 0px 0 #997A00, 
+        0 4px 6px rgba(0, 0, 0, 0.4),
+        inset 0 2px 2px rgba(255, 255, 255, 0.5);
+}
+
+/* 🪵 BACK TO MENU BUTTON (Wood Theme) */
+#back-to-menu-button {
+    background: linear-gradient(180deg, #6B4226 0%, #4A2E1B 100%);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    box-shadow: 
+        0 6px 0 #2A1A0F, 
+        0 10px 15px rgba(0, 0, 0, 0.4), 
+        inset 0 2px 2px rgba(255, 255, 255, 0.1);
+    border: 1px solid #A0522D;
+}
+
+#back-to-menu-button:active {
+    transform: translateY(6px);
+    box-shadow: 
+        0 0px 0 #2A1A0F, 
+        0 4px 6px rgba(0, 0, 0, 0.4),
+        inset 0 2px 2px rgba(255, 255, 255, 0.1);
+}
+
+/* --- WIN & LOSE TEXT ANIMATIONS --- */
+.win-text {
+    font-family: 'Luckiest Guy', cursive !important;
+    font-size: 4rem !important;
+    color: #FFD700 !important; /* Gold */
+    text-transform: uppercase;
+    text-shadow: 
+        0 6px 0 #B8860B, 
+        0 10px 15px rgba(0,0,0,0.8), 
+        0 0 20px rgba(255, 215, 0, 0.8) !important;
+    animation: popWin 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+}
+
+.lose-text {
+    font-family: 'Luckiest Guy', cursive !important;
+    font-size: 4rem !important;
+    color: #FF4C4C !important; /* Red/Crimson */
+    text-transform: uppercase;
+    text-shadow: 
+        0 6px 0 #8B0000, 
+        0 10px 15px rgba(0,0,0,0.8), 
+        0 0 20px rgba(255, 76, 76, 0.6) !important;
+    animation: shakeLose 0.5s ease-in-out forwards !important;
+}
+
+.draw-text {
+    font-family: 'Luckiest Guy', cursive !important;
+    font-size: 4rem !important;
+    color: #AAAAAA !important; /* Gray */
+    text-transform: uppercase;
+    text-shadow: 0 6px 0 #555555, 0 10px 15px rgba(0,0,0,0.8) !important;
+}
+
+@keyframes popWin {
+    0% { transform: scale(0.1); opacity: 0; }
+    80% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes shakeLose {
+    0% { transform: translateX(0) scale(0.5); opacity: 0; }
+    20% { transform: translateX(-15px) scale(1.1); opacity: 1; }
+    40% { transform: translateX(15px) scale(1); }
+    60% { transform: translateX(-15px); }
+    80% { transform: translateX(15px); }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
         
 </style>
 </head>
