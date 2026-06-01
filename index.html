@@ -8748,61 +8748,34 @@ function drawParticles() {
 }
 
         // =========================================
-// 💬 FLOATING TEXT SYSTEM (POP-UP POINTS)
+// 💬 HTML FLOATING TEXT SYSTEM (Lulusot sa Kahoy!)
 // =========================================
-let floatingTexts = [];
-
 function spawnFloatingText(x, y, text, color) {
-    floatingTexts.push({
-        x: x, y: y,
-        text: text,
-        color: color || '#00FF7F', // Neon Green default
-        alpha: 1.0,
-        vy: -40, // Bilis ng pag-angat pataas
-        life: 1.5 // 1.5 seconds bago mawala
-    });
-}
-
-function updateFloatingTexts(dt) {
-    for (let i = floatingTexts.length - 1; i >= 0; i--) {
-        let ft = floatingTexts[i];
-        ft.y += ft.vy * dt;
-        ft.life -= dt;
-        ft.alpha = Math.max(0, ft.life / 1.5); // Unti-unting magfe-fade
-        if (ft.life <= 0) floatingTexts.splice(i, 1);
-    }
-}
-
-function drawFloatingTexts() {
-    if (floatingTexts.length === 0) return;
+    // 1. Gumawa ng text element
+    const floatDiv = document.createElement('div');
+    floatDiv.className = 'floating-point-text';
+    floatDiv.textContent = text;
+    floatDiv.style.color = color || '#00FF7F';
     
-    ctx.save(); 
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+    // 2. Hanapin ang eksaktong posisyon sa screen ng butas (Hole)
+    const canvasRect = canvas.getBoundingClientRect();
+    const scaleX = canvasRect.width / canvas.width;
+    const scaleY = canvasRect.height / canvas.height;
     
-    floatingTexts.forEach(ft => {
-        ctx.globalAlpha = ft.alpha;
-        
-        // 1. PINALAKI ANG FONT (Gagawing 30 size)
-        ctx.font = `bold ${30 * scale}px 'Luckiest Guy', cursive`; 
-        
-        // 2. MAS MAKAPAL NA ANINO (Para hindi lamunin ng kulay ng mesa)
-        ctx.shadowColor = "rgba(0,0,0,0.8)";
-        ctx.shadowBlur = 8;
-        ctx.shadowOffsetX = 3;
-        ctx.shadowOffsetY = 3;
-        
-        // 3. KULAY NG TEXT (Neon Green o Red)
-        ctx.fillStyle = ft.color;
-        
-        // 4. PUTING BORDER SA PALIGID NG TEXT (Para mas lutang)
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 2 * scale;
-        
-        ctx.strokeText(ft.text, ft.x, ft.y);
-        ctx.fillText(ft.text, ft.x, ft.y);
-    });
-    ctx.restore();
+    // I-convert ang posisyon sa mesa papunta sa posisyon sa screen ng phone
+    const screenX = canvasRect.left + (x * scaleX);
+    const screenY = canvasRect.top + (y * scaleY);
+    
+    floatDiv.style.left = `${screenX}px`;
+    floatDiv.style.top = `${screenY}px`;
+    
+    // 3. Ilagay sa pinakalabas ng page (Body) para hindi matakpan ng kahit ano
+    document.body.appendChild(floatDiv);
+    
+    // 4. Burahin kusa pagkatapos ng animation (2 seconds)
+    setTimeout(() => {
+        floatDiv.remove();
+    }, 2000);
 }
 
 
