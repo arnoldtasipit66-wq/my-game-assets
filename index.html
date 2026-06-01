@@ -5977,12 +5977,23 @@ div.game-card .card-title {
 ========================================= */
 #winner-text {
     font-family: 'Luckiest Guy', cursive !important;
-    font-size: 5rem !important; /* Sobrang Laki */
+    font-size: 3.5rem !important; /* Pinaliit mula 5rem */
     text-transform: uppercase !important;
-    letter-spacing: 4px !important;
+    letter-spacing: 3px !important;
     margin-bottom: 10px !important;
     line-height: 1.1 !important;
+    white-space: normal !important; /* Papayagang bumaba sa next line */
+    width: 100% !important;
+    text-align: center !important;
 }
+
+/* 📱 FIX PARA SA LANDSCAPE MOBILE (Nakahigang phone) */
+@media (max-height: 550px) {
+    #winner-text {
+        font-size: 2.2rem !important; /* Sakto na sa landscape */
+    }
+}
+
 
 .win-text-super {
     color: transparent !important; 
