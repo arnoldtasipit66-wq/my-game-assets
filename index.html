@@ -16841,70 +16841,55 @@ function showPotPopup(amount) {
     }, 2000);
 }
 
-        // =========================================
-    // 🎡 SPIN WHEEL SOUND EFFECT ENGINE 🎡
-    // =========================================
-    let spinTickSynth;
-    let isSpinSoundActive = false;
+// =========================================
+// 🎡 SPIN WHEEL SOUND EFFECT ENGINE 🎡
+// =========================================
+let isSpinSoundActive = false;
 
-    // 1. I-setup ang tunog ng "Tik" (Kapareho ng tunog ng Wheel of Fortune)
-    function initSpinTickSound() {
-        if (!spinTickSynth && typeof Tone !== 'undefined') {
-            spinTickSynth = new Tone.MembraneSynth({
-                pitchDecay: 0.001,
-                octaves: 1.2,
-                oscillator: { type: "square" },
-                envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.01 }
-            }).toDestination();
-            spinTickSynth.volume.value = -12; // Sakto lang, hindi masakit sa tenga
-        }
-    }
+async function playWheelSpinSound(durationInSeconds) {
+    // Siguraduhing naka-ON na ang audio bago tumunog
+    if (!audioInitialized) await initAudio();
+    if (!spinTickSynth || isSpinSoundActive) return; 
+    
+    isSpinSoundActive = true;
 
-    // 2. Ang Engine na magpapabagal ng tunog ("Tik... tik..... tik")
-    function playWheelSpinSound(durationInSeconds) {
-        // Siguraduhing naka-ON na ang audio bago tumunog
-        if (!audioInitialized && typeof initAudio === 'function') initAudio();
-        initSpinTickSound();
+    let startTime = Date.now();
+    let durationMs = durationInSeconds * 1000;
+    let tickDelay = 20; // Sobrang bilis sa umpisa
+
+    function playTick() {
+        let elapsed = Date.now() - startTime;
         
-        if (isSpinSoundActive) return; // Wag patungan kung umiikot pa
-        isSpinSoundActive = true;
-
-        let startTime = Date.now();
-        let durationMs = durationInSeconds * 1000;
-        let tickDelay = 20; // Sobrang bilis sa umpisa
-
-        function playTick() {
-            let elapsed = Date.now() - startTime;
-            
-            // Pag tapos na ang oras, hinto na at tumunog ng "Ting!" (Panalo)
-            if (elapsed >= durationMs) {
-                isSpinSoundActive = false;
-                if (typeof uiSynth !== 'undefined') uiSynth.triggerAttackRelease("C5", "8n");
-                return;
-            }
-            
-            // Tumunog ng "Tik!"
-            if (spinTickSynth) spinTickSynth.triggerAttackRelease("C4", "64n");
-            
-            // Easing Math: Papabagal nang papabagal ang tunog (Friction effect)
-            let progress = elapsed / durationMs;
-            tickDelay = 20 + Math.pow(progress, 3) * 600; // Mula 20ms aabot sa 620ms
-            
-            setTimeout(playTick, tickDelay);
+        // Pag tapos na ang oras, hinto na at tumunog ng "Ting!" (Panalo)
+        if (elapsed >= durationMs) {
+            isSpinSoundActive = false;
+            if (uiSynth) uiSynth.triggerAttackRelease("C6", "4n"); // Mas mataas na Ting!
+            return;
         }
         
-        playTick();
+        // Tumunog ng "Tik!"
+        spinTickSynth.triggerAttackRelease("C4", "64n");
+        
+        // Easing Math: Papabagal nang papabagal ang tunog (Friction effect)
+        let progress = elapsed / durationMs;
+        tickDelay = 20 + Math.pow(progress, 3) * 600; // Mula 20ms aabot sa 620ms
+        
+        setTimeout(playTick, tickDelay);
     }
+    
+    playTick();
+}
 
-    // 3. Ikabit ang tunog sa Spin Button
-    const spinBtnElem = document.getElementById('spin-btn');
-    if (spinBtnElem) {
-        spinBtnElem.addEventListener('click', () => {
-            // Ilang segundo ba umiikot ang roleta mo? (Default: 5 seconds)
-            // Palitan mo ang "5" kung mas mahaba o maiksi ang ikot ng roleta mo.
-            playWheelSpinSound(5); 
-        });
-    }
+// Ikabit ang tunog sa Spin Button
+const spinBtnElem = document.getElementById('spin-btn');
+if (spinBtnElem) {
+    spinBtnElem.addEventListener('click', async () => {
+        // Ilang segundo ba umiikot ang roleta mo? (Default: 5 seconds)
+        // Palitan mo ang "5" kung mas mahaba o maiksi ang ikot ng roleta mo.
+        playWheelSpinSound(5); 
+    });
+}
+
 
 </script>
                               <div id="message-box"></div>
