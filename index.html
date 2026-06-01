@@ -6036,6 +6036,139 @@ div.game-card .card-title {
     100% { transform: translateX(0); opacity: 1; }
 }
 
+        /* =========================================
+   🚀 EPIC AESTHETIC PRELOADER STYLES 🚀
+========================================= */
+#preloader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at center, #111122 0%, #05050a 100%) !important;
+    z-index: 99999; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+#preloader-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.preloader-content {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+}
+
+/* 👑 PINOY POOL TITLE (3D Gold Gradient) */
+.preloader-title {
+    font-family: 'Luckiest Guy', cursive !important;
+    font-size: 5.5rem !important; 
+    margin: 0 0 10px 0 !important;
+    letter-spacing: 5px !important;
+    text-transform: uppercase !important;
+    
+    background: linear-gradient(to bottom, #FFFFFF 0%, #FFD700 80%, #FFA500 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    
+    filter: drop-shadow(0px 8px 0px #8B6508) drop-shadow(0 15px 30px rgba(255, 215, 0, 0.5)) !important;
+    animation: floatTitle 3s ease-in-out infinite !important;
+}
+
+/* 🌀 GLOWING NEON SPINNER */
+.loader-spinner {
+    width: 70px !important;
+    height: 70px !important;
+    border: 6px solid rgba(0, 229, 255, 0.1) !important;
+    border-top-color: #00E5FF !important;
+    border-radius: 50% !important;
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.4), inset 0 0 15px rgba(0, 229, 255, 0.2) !important;
+    animation: spinFast 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite !important;
+}
+
+/* 🔄 LOADING TEXT (Pulsing Cyan) */
+#loading-text {
+    font-family: 'Nunito', sans-serif !important;
+    color: #00E5FF !important;
+    font-size: 1.3rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    text-shadow: 0 0 10px rgba(0, 229, 255, 0.8) !important;
+    animation: pulseText 1.5s infinite alternate !important;
+}
+
+/* 🟢 CLICK ANYWHERE TO START (Full Screen Invisible Button) */
+#start-game-btn {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: transparent !important; 
+    border: none !important;
+    box-shadow: none !important;
+    
+    color: #00FF7F !important; 
+    font-family: 'Luckiest Guy', cursive !important;
+    font-size: 2.5rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 3px !important;
+    text-shadow: 2px 2px 0px #000, 0 0 20px rgba(0, 255, 127, 0.8) !important;
+    
+    z-index: 100000 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-end !important; 
+    padding-bottom: 15vh !important; 
+    
+    animation: pulseStartText 1.5s infinite alternate !important; 
+}
+
+#start-game-btn:active {
+    transform: scale(0.98) !important;
+    box-shadow: none !important;
+    animation: none !important;
+}
+
+/* =========================================
+   🎬 ANIMATION KEYFRAMES 
+========================================= */
+@keyframes floatTitle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); filter: drop-shadow(0px 20px 0px #8B6508) drop-shadow(0 20px 40px rgba(255, 215, 0, 0.7)); }
+}
+@keyframes spinFast {
+    to { transform: rotate(360deg); }
+}
+@keyframes pulseText {
+    from { opacity: 0.5; filter: brightness(0.8); }
+    to { opacity: 1; filter: brightness(1.2); text-shadow: 0 0 20px #00E5FF; }
+}
+@keyframes pulseStartText {
+    from { transform: scale(1); opacity: 0.6; filter: brightness(0.8); }
+    to { transform: scale(1.05); opacity: 1; filter: brightness(1.2); text-shadow: 2px 2px 0px #000, 0 0 30px #00FF7F; }
+}
+
+/* =========================================
+   📱 FIX PARA SA LANDSCAPE MOBILE
+========================================= */
+@media (max-height: 500px) {
+    .preloader-title { font-size: 3.5rem !important; margin-bottom: 5px !important; }
+    .loader-spinner { width: 50px !important; height: 50px !important; border-width: 4px !important; }
+    .preloader-content { gap: 15px; }
+    #start-game-btn { font-size: 1.8rem !important; padding-bottom: 10vh !important; }
+}
+
         
 </style>
 </head>
