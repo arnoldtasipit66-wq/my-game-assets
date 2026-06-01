@@ -6253,24 +6253,25 @@ div.game-card .card-title {
 .floating-point-text {
     position: absolute;
     font-family: 'Luckiest Guy', cursive;
-    font-size: 35px; /* Pinalaki pa natin */
+    font-size: 35px;
     font-weight: bold;
     text-shadow: 3px 3px 0px rgba(0,0,0,0.8), 0 0 15px currentColor;
-    -webkit-text-stroke: 1px white; /* Puting border */
+    -webkit-text-stroke: 1px white; 
     pointer-events: none;
-    z-index: 999999 !important; /* Pinakamataas para di matakpan ng kahoy */
+    z-index: 999999 !important; 
     
-    /* Animation: Aangat ng 60px habang nagfe-fade */
-    animation: floatUpFade 2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    /* BINAGO: Naging 3.5s ang tagal ng animation */
+    animation: floatUpFade 3.5s ease-out forwards;
     transform: translate(-50%, -50%); 
 }
 
+/* BINAGO: Tatagal siya ng matagal sa 80% bago tuluyang mag-fade out */
 @keyframes floatUpFade {
     0% { opacity: 0; margin-top: 20px; transform: translate(-50%, -50%) scale(0.5); }
-    15% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    10% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    80% { opacity: 1; margin-top: -50px; transform: translate(-50%, -50%) scale(1); } 
     100% { opacity: 0; margin-top: -80px; transform: translate(-50%, -50%) scale(1); }
 }
-
 
         
 </style>
