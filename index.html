@@ -8750,26 +8750,36 @@ function updateFloatingTexts(dt) {
 
 function drawFloatingTexts() {
     if (floatingTexts.length === 0) return;
-    ctx.save();
+    
+    ctx.save(); 
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     
     floatingTexts.forEach(ft => {
         ctx.globalAlpha = ft.alpha;
-        ctx.font = `${20 * scale}px 'Luckiest Guy', cursive`;
         
-        // 3D Drop Shadow / Outline
-        ctx.shadowColor = "black";
-        ctx.shadowBlur = 4;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
+        // 1. PINALAKI ANG FONT (Gagawing 30 size)
+        ctx.font = `bold ${30 * scale}px 'Luckiest Guy', cursive`; 
         
-        // Kulay ng Text
+        // 2. MAS MAKAPAL NA ANINO (Para hindi lamunin ng kulay ng mesa)
+        ctx.shadowColor = "rgba(0,0,0,0.8)";
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetX = 3;
+        ctx.shadowOffsetY = 3;
+        
+        // 3. KULAY NG TEXT (Neon Green o Red)
         ctx.fillStyle = ft.color;
+        
+        // 4. PUTING BORDER SA PALIGID NG TEXT (Para mas lutang)
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2 * scale;
+        
+        ctx.strokeText(ft.text, ft.x, ft.y);
         ctx.fillText(ft.text, ft.x, ft.y);
     });
     ctx.restore();
 }
+
 
 
         function update(timestamp) { // <-- Ito na 'yung bago, na may (timestamp)
