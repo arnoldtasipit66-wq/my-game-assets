@@ -8750,6 +8750,33 @@ function drawParticles() {
                 maxLoops--; // <--- DINAGDAG
             }
 
+                    // --- 🌠 METEOR TRAILS GENERATOR ---
+            if (chipsMoving) {
+                chips.forEach(chip => {
+                    if (chip.inPlay && !chip.isPocketing) {
+                        let speed = Math.sqrt(chip.vx*chip.vx + chip.vy*chip.vy);
+                        if (speed > 15) { 
+                            let trailColor = chip.id === 0 ? '0, 255, 255' : '255, 69, 0'; 
+                            if (Math.random() < 0.6) { 
+                                particles.push({
+                                    x: chip.x + (Math.random()-0.5)*10, 
+                                    y: chip.y + (Math.random()-0.5)*10,
+                                    vx: -chip.vx * 0.05, 
+                                    vy: -chip.vy * 0.05,
+                                    radius: (Math.random() * 4 + 2) * scale,
+                                    color: trailColor,
+                                    alpha: 0.7,
+                                    decay: 2 + Math.random() 
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+            // I-galaw ang mga particles
+            updateParticles(deltaTime / 1000);
+
+
             // 5. I-drawing ang resulta (kahit gaano kabilis ang screen)
             draw();
             
