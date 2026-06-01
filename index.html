@@ -6171,6 +6171,82 @@ div.game-card .card-title {
     #start-game-btn { font-size: 1.8rem !important; padding-bottom: 10vh !important; }
 }
 
+        /* =========================================
+   🎡 AESTHETIC LUCKY SPIN WHEEL 🎡
+========================================= */
+
+/* 1. Ang mismong Wheel (Gagawing may makapal na Gold Border at Glow) */
+#spin-wheel-canvas {
+    border-radius: 50% !important;
+    border: 8px solid #FFD700 !important;
+    box-shadow: 
+        0 0 30px rgba(255, 215, 0, 0.6), 
+        inset 0 0 20px rgba(0,0,0,0.8) !important;
+}
+
+/* 2. Ang Pointer sa Taas (Pinalaki at pinakinang ng Neon Red) */
+#spin-wheel-canvas + div {
+    border-top-color: #FF3333 !important; 
+    filter: drop-shadow(0 4px 4px rgba(0,0,0,0.8)) drop-shadow(0 -5px 15px rgba(255, 51, 51, 0.8)) !important;
+    transform: translateX(-50%) scale(1.3) !important; 
+    top: -22px !important;
+}
+
+/* 3. Ang Gitnang 8-Ball (Gagawing 3D Black/Gold Metallic Ball) */
+#spin-wheel-canvas + div + div {
+    background: radial-gradient(circle at 30% 30%, #444, #000) !important; 
+    border: 3px solid #FFD700 !important; 
+    color: white !important;
+    box-shadow: 
+        0 5px 10px rgba(0,0,0,0.8),
+        inset 0 2px 5px rgba(255,255,255,0.4) !important;
+    font-size: 24px !important;
+    transform: translate(-50%, -50%) scale(1.4) !important; 
+}
+
+/* 4. Ang SPIN Button (3D Emerald Arcade Button gaya ng Start) */
+#spin-btn {
+    background: linear-gradient(180deg, #32CD32 0%, #008000 100%) !important; 
+    border: 3px solid #98FB98 !important;
+    color: #FFF !important;
+    font-family: 'Luckiest Guy', cursive !important;
+    font-size: 2rem !important;
+    letter-spacing: 3px !important;
+    border-radius: 50px !important;
+    padding: 15px 50px !important;
+    box-shadow: 
+        0 10px 0 #004d00, 
+        0 15px 25px rgba(0,0,0,0.6), 
+        inset 0 4px 5px rgba(255,255,255,0.6) !important;
+    text-shadow: 2px 2px 0px #000, 0 0 15px rgba(255,255,255,0.5) !important;
+    transition: all 0.1s ease-in-out !important;
+}
+
+/* Lulubog pag pinindot ang Spin */
+#spin-btn:active {
+    transform: translateY(10px) !important;
+    box-shadow: 0 0px 0 #004d00, inset 0 4px 5px rgba(255,255,255,0.6) !important;
+}
+
+/* 5. Ang Status Text ("Spin to Win Coins!") */
+#spin-status-text {
+    font-family: 'Nunito', sans-serif !important;
+    font-size: 1.2rem !important;
+    color: #00E5FF !important; 
+    text-shadow: 0 0 10px rgba(0, 229, 255, 0.8) !important;
+    margin-top: 25px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+/* 📱 Landscape Mobile Fix para hindi sumabog ang button */
+@media (max-height: 550px) and (orientation: landscape) {
+    #spin-btn {
+        font-size: 1.5rem !important;
+        padding: 10px 40px !important;
+    }
+}
+
         
 </style>
 </head>
