@@ -8856,7 +8856,7 @@ function draw() {
         // --- I-DRAWING ANG MGA SPARKS AT TRAILS ---
     drawParticles();
         // --- I-DRAWING ANG MGA FLOATING TEXT ---
-    drawFloatingTexts();
+    
 
 
     
@@ -8868,6 +8868,7 @@ function draw() {
         drawCueStick(); 
     } 
 updateAndDrawFireworks();
+    drawFloatingTexts();
 }
 
 function toggleMusic() { const isMuted = backgroundPlaylist[0].muted; backgroundPlaylist.forEach(player => { player.muted = !isMuted; }); muteButton.textContent = isMuted ? "🎵" : "🔇"; }
