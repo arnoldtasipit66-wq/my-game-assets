@@ -7327,7 +7327,8 @@ let currentShotStats = { Power: 2, Aim: 3, Spin: 1 };
 let fireworks = [];
         
         let audioInitialized = false, chipCollisionSynth, pocketSynth, uiSynth, cueHitSynth, cushionSynth;
-        let aimingSynth, powerSynth; // BAGONG synths
+let aimingSynth, powerSynth, spinTickSynth; // Dinagdag ang spinTickSynth
+
         let lastCollisionSoundTime = -1, lastCushionSoundTime = -1, lastAimSoundTime = -1, buttonSoundPlaying = false;
         let isPowerSoundPlaying = false;
         const AIM_SOUND_INTERVAL = 80; // Gaano kadalas tutunog ang aiming sound (milliseconds)
