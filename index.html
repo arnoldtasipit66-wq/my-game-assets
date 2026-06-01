@@ -7506,36 +7506,33 @@ async function endGame(winnerTextMessage, finalGameData = null) {
     updateCurrencyDisplay();
     updateLegalTargetChips();
 
-            // --- VISUALS (REFACTORED PARA SA AESTHETIC TEXT) ---
-        let finalWinnerText = winnerTextMessage;
-        
-        // Linisin ang mga lumang manual styles para CSS natin ang gumana
-        winnerText.style.color = "";
-        winnerText.style.textShadow = "";
-        winnerText.className = ""; // I-reset ang class
-        
-        // I-apply ang bagong CSS classes
-        if (winnerTextMessage.includes("You Win") || winnerTextMessage.includes("Opponent Forfeited")) {
-            winnerText.className = "win-text";
-            if (winnerTextMessage.includes("Opponent Forfeited")) {
-                finalWinnerText = "OPPONENT<br>FORFEITED";
-            }
-        } else if (winnerTextMessage.includes("You Lose") || winnerTextMessage.includes("You Forfeited")) {
-            winnerText.className = "lose-text";
-            if (winnerTextMessage.includes("You Forfeited")) {
-                finalWinnerText = "YOU<br>FORFEITED";
-            }
-        } else if (winnerTextMessage.includes("Draw")) {
-            winnerText.className = "draw-text";
-            finalWinnerText = "DRAW GAME";
+                // --- VISUALS (SUPER AESTHETIC WIN/LOSE TEXT) ---
+    let finalWinnerText = winnerTextMessage;
+    
+    winnerText.style.color = "";
+    winnerText.style.textShadow = "";
+    winnerText.className = ""; 
+    
+    if (winnerTextMessage.includes("You Win") || winnerTextMessage.includes("Opponent Forfeited")) {
+        winnerText.className = "win-text-super";
+        if (winnerTextMessage.includes("Opponent Forfeited")) {
+            finalWinnerText = "OPPONENT<br>FORFEITED";
         }
+    } else if (winnerTextMessage.includes("You Lose") || winnerTextMessage.includes("You Forfeited")) {
+        winnerText.className = "lose-text-super";
+        if (winnerTextMessage.includes("You Forfeited")) {
+            finalWinnerText = "YOU<br>FORFEITED";
+        }
+    } else if (winnerTextMessage.includes("Draw")) {
+        winnerText.className = "draw-text-super";
+        finalWinnerText = "DRAW GAME";
+    }
 
-        // Ilagay ang text sa screen
-        if (gameMode.includes('61-ball')) {
-            winnerText.innerHTML = `${finalWinnerText}<br><div style="font-size: 0.4em; margin-top: 10px; color: #eee; font-weight: normal; text-shadow: 2px 2px 0px #000;">${player61Score} - ${opponent61Score}</div>`;
-        } else {
-            winnerText.innerHTML = finalWinnerText;
-        }
+    if (gameMode.includes('61-ball')) {
+        winnerText.innerHTML = `${finalWinnerText}<br><div style="font-size: 0.4em; margin-top: 10px; color: #fff; text-shadow: 2px 2px 0px #000; filter: none;">${player61Score} - ${opponent61Score}</div>`;
+    } else {
+        winnerText.innerHTML = finalWinnerText;
+    }
 
     
     // --- ITO ANG PART NA DAPAT MONG I-UPDATE ---
