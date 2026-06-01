@@ -8670,6 +8670,17 @@ function playCoinSound() {
         async function playCushionSound(speed) { if (!audioInitialized) await initAudio(); if (!audioInitialized) return; const now = Tone.now(); if (now <= lastCushionSoundTime) return; lastCushionSoundTime = now + 0.03; const volume = -12 + Math.min(1, speed / 15) * 8; const note = speed > 10 ? 'C2' : 'D1'; cushionSynth.volume.value = volume; cushionSynth.triggerAttackRelease(note, '16n', now); }
         async function playCueHitSound(power) { if (!audioInitialized) await initAudio(); if (!audioInitialized) return; const now = Tone.now(); const volume = -6 + (power * 6); const note = 'C4'; cueHitSynth.volume.value = volume; cueHitSynth.triggerAttack(note, now); }
         async function playPocketSound() { if (!audioInitialized) await initAudio(); if (!audioInitialized) return; pocketSynth.triggerAttackRelease("0.2"); }
+                        // --- 💬 POP-UP FLOATING TEXT ---
+                if (chip.id === 0) {
+                    // Puti ang nahulog (Scratch)
+                    spawnFloatingText(pocket.x, pocket.y, "SCRATCH!", "#FF3333");
+                } else {
+                    // Mga colored balls
+                    let messages = ["NICE SHOT!", "+50", "BOOM!", "AWESOME!"];
+                    let randomMsg = messages[Math.floor(Math.random() * messages.length)];
+                    spawnFloatingText(pocket.x, pocket.y, randomMsg, "#00FF7F");
+                }
+
         // =========================================
 // ✨ PARTICLE SYSTEM (SPARKS & TRAILS) ✨
 // =========================================
