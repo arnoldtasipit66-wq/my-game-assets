@@ -8559,6 +8559,15 @@ document.getElementById('invite-game-select-close-btn').addEventListener('click'
                 powerSynth.volume.value = -15; // Medyo mahina para hindi masakit sa tenga
                 // --- End BAGONG Synths ---
 
+                        // --- TUNOG NG ROLETA (Tik-tik-tik) ---
+                spinTickSynth = new Tone.MembraneSynth({
+                    pitchDecay: 0.001,
+                    octaves: 1.2,
+                    oscillator: { type: "square" },
+                    envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.01 }
+                }).toDestination();
+                spinTickSynth.volume.value = -12; // Sakto lang, hindi masakit sa tenga
+
 
                 audioInitialized = true;
                 console.log("Tone.js audio context started successfully.");
