@@ -9470,45 +9470,35 @@ function showAestheticMessage(text, type = 'info') {
     }, 2500);
 }
 
-  // ▼▼▼ UPDATED MESSAGE BOX (WITH FILTER & AESTHETIC ROUTER) ▼▼▼
+  // ▼▼▼ THE ULTIMATE AESTHETIC MESSAGE ROUTER ▼▼▼
 function showMessage(msg, duration = 2000) {
-    // 1. BLACKLIST: Mga salitang BAWAL ipakita
-    if (msg.includes("Your turn") || msg.includes("'s turn") || msg.includes("You break") || msg.includes("'s break") || msg.includes("Opponent will break")) {
-        return; 
-    }
-
-    // 2. AESTHETIC ROUTER: Saluhin ang FOUL at BALL IN HAND
     const lowerMsg = msg.toLowerCase();
     
+    // 1. FOUL MESSAGES (Red Shake)
     if (lowerMsg.includes("foul")) {
-        // Linisin ang dahilan (e.g. "Scratch!", "Wrong ball hit.")
         let cleanReason = msg.replace(/⚠️/g, '').replace(/Opponent Foul!/ig, '').replace(/Foul!/ig, '').trim();
         let title = lowerMsg.includes("opponent") ? "OPPONENT FOUL!" : "FOUL!";
-        
-        // I-pop up as Red Shake Animation
         showAestheticMessage(`${title}<br><span style='font-size: 0.4em; color: #FFAAAA; text-shadow: 2px 2px 0 #000;'>${cleanReason}</span>`, "foul");
         return; 
     }
     
-    if (lowerMsg.includes("ball in hand")) {
-        showAestheticMessage(`BALL IN HAND`, "info");
+    // 2. TURN & BREAK MESSAGES (Gold Pop)
+    if (lowerMsg.includes("turn") || lowerMsg.includes("break")) {
+        let cleanMsg = msg.replace(/!/g, '').replace(/'s/g, '').trim();
+        showAestheticMessage(cleanMsg, "turn");
         return;
     }
 
-    // 3. NORMAL TEXT (Para sa ibang info gaya ng "Not enough coins")
-    messageBox.innerHTML = msg; 
-    messageBox.style.display = 'block';
+    // 3. WARNINGS (Orange Glow)
+    if (lowerMsg.includes("mixed") || lowerMsg.includes("not enough") || lowerMsg.includes("error") || lowerMsg.includes("scratch")) {
+        showAestheticMessage(msg, "warning");
+        return;
+    }
     
-    messageBox.style.animation = 'none';
-    messageBox.offsetHeight; /* trigger reflow */
-    messageBox.style.animation = 'fadeIn 0.3s';
-
-    setTimeout(() => {
-        if (messageBox.innerHTML === msg) {
-            messageBox.style.display = 'none';
-        }
-    }, duration);
+    // 4. ALL OTHER INFO (Cyan Glow)
+    showAestheticMessage(msg, "info");
 }
+
 
         function resetChipStateForReturn(chip) { if (!chip) return; chip.inPlay = true; chip.isPocketing = false; chip.pocketingProgress = 0; chip.pocketingHole = null; chip.vx = 0; chip.vy = 0; chip.rotation = 0; chip.rotationSpeed = 0; } // Dinagdag ang reset sa rotation
         async function handleTurnEnd() { if (isOnlineGame && lastTurnControllerUid !== localPlayerUid) { return; } if (isProcessingTurnEnd) return; isProcessingTurnEnd = true; if (gameMode.includes('poker')) await handlePokerTurnEnd(); else if (gameMode.includes('straight-ball')) await handleStraightBallTurnEnd(); else if (gameMode.includes('61-ball')) await handle61BallTurnEnd(); isProcessingTurnEnd = false; }
