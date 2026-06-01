@@ -537,10 +537,12 @@ background-image: url('https://i.imgur.com/Wg3y3Zn.jpeg');
     .shop-buy-button.equipped { background-color: #6c757d; cursor: not-allowed; opacity: 0.7; background-image: none; }
     .shop-buy-button.disabled { background-color: #dc3545; cursor: not-allowed; opacity: 0.7; background-image: none; }
     
-    #cue-stick-element {
-        display: none; position: absolute; pointer-events: none; z-index: 30;
+        #cue-stick-element {
+        display: none; position: absolute; pointer-events: none; 
+        z-index: 9999999 !important; /* PINAKAMATAAS SA LAHAT! */
         transform-origin: 100% 50%; filter: drop-shadow(2px 2px 5px rgba(0,0,0,0.5));
     }
+
 
     #game-wrapper {
     position: absolute; /* Gawing absolute para hindi maapektuhan ng iba */
