@@ -5945,6 +5945,73 @@ div.game-card .card-title {
     box-shadow: 0 0px 0 #000, inset 0 2px 2px rgba(255,255,255,0.2) !important;
 }
  
+/* =========================================
+   ✨ NEW AESTHETIC MESSAGES (TURN, WARNING) ✨
+========================================= */
+.floating-message.turn {
+    color: #FFD700;
+    text-shadow: 0 6px 0 #B8860B, 0 10px 15px rgba(0,0,0,0.8), 0 0 20px rgba(255, 215, 0, 0.9);
+    animation: popAndFadeInfo 2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.floating-message.warning {
+    color: #FF8C00;
+    text-shadow: 0 6px 0 #8B4500, 0 10px 15px rgba(0,0,0,0.8), 0 0 20px rgba(255, 140, 0, 0.9);
+    animation: popAndFadeInfo 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* =========================================
+   🏆 SUPER AESTHETIC YOU WIN / YOU LOSE 🏆
+========================================= */
+#winner-text {
+    font-family: 'Luckiest Guy', cursive !important;
+    font-size: 5rem !important; /* Sobrang Laki */
+    text-transform: uppercase !important;
+    letter-spacing: 4px !important;
+    margin-bottom: 10px !important;
+    line-height: 1.1 !important;
+}
+
+.win-text-super {
+    color: transparent !important; 
+    background: linear-gradient(to bottom, #FFFFFF 0%, #00FF7F 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    filter: drop-shadow(0 8px 0 #006400) drop-shadow(0 0 30px rgba(0, 255, 127, 0.8)) !important;
+    animation: superPopWin 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+}
+
+.lose-text-super {
+    color: transparent !important; 
+    background: linear-gradient(to bottom, #FFFFFF 0%, #FF3333 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    filter: drop-shadow(0 8px 0 #8B0000) drop-shadow(0 0 30px rgba(255, 51, 51, 0.8)) !important;
+    animation: superShakeLose 0.8s ease-in-out forwards !important;
+}
+
+.draw-text-super {
+    color: transparent !important; 
+    background: linear-gradient(to bottom, #FFFFFF 0%, #AAAAAA 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    filter: drop-shadow(0 8px 0 #555555) drop-shadow(0 0 20px rgba(170, 170, 170, 0.8)) !important;
+    animation: superPopWin 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+}
+
+@keyframes superPopWin {
+    0% { transform: scale(0.1) rotate(-10deg); opacity: 0; }
+    60% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes superShakeLose {
+    0% { transform: translateX(0) scale(0.5); opacity: 0; }
+    20% { transform: translateX(-15px) scale(1.1); opacity: 1; }
+    40% { transform: translateX(15px) scale(1); }
+    60% { transform: translateX(-15px); }
+    80% { transform: translateX(15px); }
+    100% { transform: translateX(0); opacity: 1; }
+}
 
         
 </style>
