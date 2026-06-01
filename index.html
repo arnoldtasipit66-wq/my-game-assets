@@ -6219,15 +6219,19 @@ div.game-card .card-title {
 
 <div id="preloader-overlay">
     <div class="preloader-content">
-        <h1 class="preloader-title">PINOY POOL</h1>
+        <!-- Dinagdag ang MONSTER at nilagyan ng line break para sakto sa gitna -->
+        <h1 class="preloader-title">PINOY POOL<br><span style="color: #FF4500; filter: drop-shadow(0 5px 0 #8B0000);">MONSTER</span></h1>
+        
         <div class="loader-spinner"></div>
         <div id="loading-text">Loading Assets... 0%</div>
         
-        <button id="start-game-btn" class="menu-button" style="display: none; font-size: 1.5em; padding: 15px 40px;">
-            TAP TO START
+        <!-- Binago ang text at tatanggalin natin ang background nito sa CSS -->
+        <button id="start-game-btn" style="display: none;">
+            CLICK ANYWHERE TO START
         </button>
     </div>
 </div>
+
 
     <!-- MOVED: Fullscreen button is now outside the game wrapper to be always visible -->
   
