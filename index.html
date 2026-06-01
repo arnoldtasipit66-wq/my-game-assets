@@ -9532,13 +9532,25 @@ function updateChipPositions(dt_sec) {
                     }
                     // ▲▲▲ END FIX ▲▲▲
 
-                    if (distToHole < effectiveHoleRadius) { 
-                        playPocketSound(); 
-                        chip.isPocketing = true; 
-                        chip.pocketingHole = hole; 
-                        
-                        chip.vx = chip.vx * 0.1; 
-                        chip.vy = chip.vy * 0.1;
+                        if (distToHole < effectiveHoleRadius) {
+        playPocketSound();
+        chip.isPocketing = true;
+        chip.pocketingHole = hole;
+        
+        // --- 💬 POP-UP FLOATING TEXT ---
+        if (chip.id === 0) {
+            // Puti ang nahulog (Scratch)
+            spawnFloatingText(hole.x, hole.y, "SCRATCH!", "#FF3333");
+        } else {
+            // Mga colored balls
+            let messages = ["NICE SHOT!", "+50", "BOOM!", "AWESOME!"];
+            let randomMsg = messages[Math.floor(Math.random() * messages.length)];
+            spawnFloatingText(hole.x, hole.y, randomMsg, "#00FF7F");
+        }
+        
+        chip.vx = chip.vx * 0.1;
+        chip.vy = chip.vy * 0.1;
+
                         chip.rotationSpeed = (Math.random() - 0.5) * 0.2; 
                         
                         if (!chipsPocketedInTurn.find(p => p.id === chip.id)) chipsPocketedInTurn.push(chip); 
