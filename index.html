@@ -5565,7 +5565,7 @@ div#opponent-info.hud-active {
 }
 
         /* =========================================
-   ✨ AESTHETIC IN-GAME FLOATING MESSAGES ✨
+   ✨ NEW AESTHETIC MESSAGES (TURN, WARNING) ✨
 ========================================= */
 .floating-message {
     position: fixed;
@@ -5573,14 +5573,26 @@ div#opponent-info.hud-active {
     left: 50%;
     transform: translate(-50%, -50%) scale(0);
     font-family: 'Luckiest Guy', cursive;
-    font-size: 3.5rem;
+    
+    /* 🛠️ MGA BINAGO: Pinaliit at pinayagang mag-wrap ang text */
+    font-size: 2.2rem !important; 
+    white-space: normal !important; /* Hahayaan niyang bumaba sa next line */
+    width: 90vw !important; /* 90% lang ng screen ang sakop para hindi lumagpas */
+    max-width: 600px !important;
+    
     text-align: center;
     text-transform: uppercase;
-    z-index: 999999; /* Pinaka-ibabaw */
+    z-index: 999999; 
     pointer-events: none;
-    white-space: nowrap;
     opacity: 0;
-    line-height: 1.1;
+    line-height: 1.2;
+}
+
+/* 📱 FIX PARA SA LANDSCAPE MOBILE (Nakakiling na phone) */
+@media (max-height: 500px) {
+    .floating-message {
+        font-size: 1.8rem !important; /* Sakto lang na laki pag landscape */
+    }
 }
 
 .floating-message.foul {
