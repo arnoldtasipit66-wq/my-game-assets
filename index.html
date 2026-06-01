@@ -8715,6 +8715,56 @@ function drawParticles() {
     ctx.restore();
 }
 
+        // =========================================
+// 💬 FLOATING TEXT SYSTEM (POP-UP POINTS)
+// =========================================
+let floatingTexts = [];
+
+function spawnFloatingText(x, y, text, color) {
+    floatingTexts.push({
+        x: x, y: y,
+        text: text,
+        color: color || '#00FF7F', // Neon Green default
+        alpha: 1.0,
+        vy: -40, // Bilis ng pag-angat pataas
+        life: 1.5 // 1.5 seconds bago mawala
+    });
+}
+
+function updateFloatingTexts(dt) {
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        let ft = floatingTexts[i];
+        ft.y += ft.vy * dt;
+        ft.life -= dt;
+        ft.alpha = Math.max(0, ft.life / 1.5); // Unti-unting magfe-fade
+        if (ft.life <= 0) floatingTexts.splice(i, 1);
+    }
+}
+
+function drawFloatingTexts() {
+    if (floatingTexts.length === 0) return;
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    
+    floatingTexts.forEach(ft => {
+        ctx.globalAlpha = ft.alpha;
+        ctx.font = `${20 * scale}px 'Luckiest Guy', cursive`;
+        
+        // 3D Drop Shadow / Outline
+        ctx.shadowColor = "black";
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        
+        // Kulay ng Text
+        ctx.fillStyle = ft.color;
+        ctx.fillText(ft.text, ft.x, ft.y);
+    });
+    ctx.restore();
+}
+
+
         function update(timestamp) { // <-- Ito na 'yung bago, na may (timestamp)
             
             // Kung 'di pa nagsisimula, set mo ang lastTime
