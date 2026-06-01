@@ -8842,8 +8842,7 @@ function drawFloatingTexts() {
             }
             // I-galaw ang mga particles
             updateParticles(deltaTime / 1000);
-                        // I-galaw ang floating text
-            updateFloatingTexts(deltaTime / 1000);
+                        
 
 
 
@@ -8878,7 +8877,7 @@ function draw() {
         drawCueStick(); 
     } 
 updateAndDrawFireworks();
-    drawFloatingTexts();
+    
 }
 
 function toggleMusic() { const isMuted = backgroundPlaylist[0].muted; backgroundPlaylist.forEach(player => { player.muted = !isMuted; }); muteButton.textContent = isMuted ? "🎵" : "🔇"; }
