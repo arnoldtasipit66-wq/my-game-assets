@@ -9045,114 +9045,99 @@ function drawBackgroundLayer() {
     }
 }
 
-function drawChips() {
-    chips.forEach(chip => {
-        if (chip.inPlay) {
-            let displayRadius = chip.radius;
+// START: BAGONG drawChips() - Acrylic Style + Ring Light
+function drawChips() { 
+    // Ang global shadow mo ay para sa "drop shadow" sa felt
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'; 
+    ctx.shadowBlur = 6 * scale; 
+    ctx.shadowOffsetX = 3 * scale; 
+    ctx.shadowOffsetY = 4 * scale; 
+    
+    chips.forEach(chip => { 
+        if (chip.inPlay) { 
+            let displayRadius = chip.radius; 
+            if (chip.isPocketing) { 
+                displayRadius *= (1 - chip.pocketingProgress); 
+            } 
             
-            // Animation kapag nahuhulog sa butas
-            if (chip.isPocketing) {
-                displayRadius *= (1 - chip.pocketingProgress);
-            }
-
-            // SAVE STATE 1: Para sa Translation/Rotation
-            ctx.save(); 
-            ctx.translate(chip.x, chip.y); 
-
-            // --- STEP A: FAKE SHADOW ---
-            if (!chip.isPocketing) { 
-                ctx.beginPath();
-                ctx.arc(3 * scale, 4 * scale, displayRadius, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; 
-                ctx.fill();
-            }
-
-            // --- STEP B: ROTATION ---
+            ctx.save(); // Save ang state (walang translation/rotation)
+            ctx.translate(chip.x, chip.y); // 1. Pumunta sa pwesto ng chip
+            
+            // 2. I-apply ang Rotation
             ctx.rotate(chip.rotation);
-
-            // --- STEP C: DRAWING ---
-            if (chip.id === 0) {
-                // === CUE CHIP (TIRADOR) ===
-                ctx.beginPath();
-                ctx.arc(0, 0, displayRadius, 0, Math.PI * 2);
+            
+            // 3. Iguhit ang Picha (na umiikot na)
+            if (chip.id === 0) { 
+                // --- CUE CHIP (TIRADOR) DESIGN ---
+                // Base (Itim/Gold)
+                ctx.beginPath(); 
+                ctx.arc(0, 0, displayRadius, 0, Math.PI * 2); 
                 ctx.fillStyle = '#FFD700'; 
-                ctx.fill();
+                ctx.fill(); 
+                
+                // Mga guhit (Concentric circles)
+                ctx.strokeStyle = '#424242'; // Dark gray para sa guhit
+                ctx.lineWidth = 1.5 * scale; 
+                
+                ctx.beginPath(); 
+                ctx.arc(0, 0, displayRadius * 0.8, 0, Math.PI * 2); 
+                ctx.stroke(); 
 
-                // Mga guhit ng Tirador
-                ctx.strokeStyle = '#424242';
-                ctx.lineWidth = 1.5 * scale;
-                ctx.beginPath(); ctx.arc(0, 0, displayRadius * 0.8, 0, Math.PI * 2); ctx.stroke();
-                ctx.beginPath(); ctx.arc(0, 0, displayRadius * 0.5, 0, Math.PI * 2); ctx.stroke();
-                ctx.beginPath(); ctx.arc(0, 0, displayRadius * 0.2, 0, Math.PI * 2); ctx.fillStyle = '#303030'; ctx.fill();
+                ctx.beginPath(); 
+                ctx.arc(0, 0, displayRadius * 0.5, 0, Math.PI * 2); 
+                ctx.stroke(); 
 
-            } else {
-                // === OBJECT CHIP (PICHA) ===
-                const acrylicThickness = displayRadius * 0.15;
+                ctx.beginPath(); 
+                ctx.arc(0, 0, displayRadius * 0.2, 0, Math.PI * 2); 
+                ctx.fillStyle = '#303030'; // Mas lighter gray sa gitna
+                ctx.fill(); 
+
+            } else { 
+                // --- OBJECT CHIP (PICHA) ACRYLIC DESIGN ---
+                const acrylicThickness = displayRadius * 0.15; // Gaano kakapal ang clear part
                 const coloredRadius = displayRadius - acrylicThickness;
 
-                // 1. Outer Acrylic Edge (Gawing GOLD #FFD700)
+                // 3a. Outer Acrylic Edge (Stroke lang)
                 ctx.beginPath(); 
-                ctx.arc(0, 0, displayRadius - (acrylicThickness / 3), 0, Math.PI * 2);
-                
-                // DITO BINAGO: Ginawang Gold ang border
-                ctx.strokeStyle = '#FFD700'; 
-                
+                ctx.arc(0, 0, displayRadius - (acrylicThickness / 3), 0, Math.PI * 2); // Bahagyang mas maliit
+                ctx.strokeStyle = 'rgba(255,255,0, 0.9)'; // Transparent white border
                 ctx.lineWidth = acrylicThickness * 0.8; 
                 ctx.stroke(); 
 
-                // 2. Inner Colored Area (Red 1-6, Blue 7-12)
-                let finalColor = chip.color; 
-                if (chip.id >= 1 && chip.id <= 6) finalColor = '#C62828'; 
-                else if (chip.id >= 7 && chip.id <= 12) finalColor = '#1565C0'; 
-
+                 // Inner shadow for depth illusion inside acrylic
                 ctx.beginPath();
-                ctx.arc(0, 0, coloredRadius, 0, Math.PI * 2);
-                ctx.fillStyle = finalColor;
-                ctx.fill();
-
-                // Glossy Inner Stroke
-                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-                ctx.lineWidth = 1;
+                ctx.arc(0, 0, displayRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.lineWidth = acrylicThickness * 0.3;
                 ctx.stroke();
 
-                // 3. Numero (BIGGER FONTS)
-                if (chip.id) {
-                    ctx.save(); 
+                // 3b. Inner Colored Area
+                ctx.beginPath(); 
+                ctx.arc(0, 0, coloredRadius, 0, Math.PI * 2); 
+                ctx.fillStyle = chip.color; // Kulay ng picha
+                ctx.fill(); 
 
-                    // DITO BINAGO: Pinalaki ang multiplier mula 1.1 -> 1.4
-                    ctx.font = `900 ${coloredRadius * 1.4}px "Arial Black", "Impact", sans-serif`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-
-                    const textOffsetY = coloredRadius * 0.1; 
-
-                    // Outline
-                    ctx.strokeStyle = 'black';
-                    ctx.lineWidth = coloredRadius * 0.15; 
-                    ctx.lineJoin = 'round'; 
-                    ctx.strokeText(chip.id, 0, textOffsetY);
-
-                    // Fill
-                    ctx.fillStyle = 'white';
-                    ctx.fillText(chip.id, 0, textOffsetY);
-
-                    // Special Case: Labels for 6 & 9
-                    if (chip.id === 6 || chip.id === 9) {
-                        const labelText = chip.id === 6 ? "SIX" : "NINE";
-                        ctx.font = `bold ${coloredRadius * 0.25}px Arial, sans-serif`;
-                        ctx.lineWidth = coloredRadius * 0.05;
-                        // Adjusted position para di tumama sa malaking number
-                        ctx.strokeText(labelText, 0, coloredRadius * 0.75); 
-                        ctx.fillText(labelText, 0, coloredRadius * 0.75);
-                    }
+                // 3c. Numero
+                if(chip.id) { 
+                    ctx.fillStyle = 'white'; 
+                    ctx.font = `bold ${coloredRadius * 1.5}px 'Nunito', sans-serif`; // Base sa colored radius ang laki
+                    ctx.textAlign = 'center'; 
+                    ctx.textBaseline = 'middle'; 
                     
-                    ctx.restore(); 
-                }
+                    // Text shadow para mas kitang-kita
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    ctx.shadowBlur = 1 * scale;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 1 * scale;
+                    ctx.fillText(chip.id, 0, 1 * scale); // Bahagyang offset pababa
+                    ctx.shadowColor = 'transparent'; // Reset shadow for next elements
+                } 
             } 
-
-            ctx.restore(); // RESTORE STATE
+            
+            ctx.restore(); // Ibabalik lahat (translation at rotation)
         } 
-
+        
+        
         // === RING LIGHT / HIGHLIGHT ===
         const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
         if (isMyTurn && (gameState === 'aiming' || (gameState === 'moving' && canMoveCueBall)) && chip.inPlay && legalTargetChipIds.has(chip.id)) {
