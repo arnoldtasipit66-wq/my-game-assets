@@ -11624,10 +11624,11 @@ function updateInfoBox() {
             appId: "1:1003592334290:web:2982cdc8691e8ef7c6260b" 
         }; 
 
-        const app = initializeApp(firebaseConfig); 
-        db = getFirestore(app); 
-        auth = getAuth(app); 
-        rtdb = getDatabase(app); 
+        // MAGIC WORD: Nilagyan ng window. sa unahan
+        const app = window.initializeApp(firebaseConfig); 
+        db = window.getFirestore(app); 
+        auth = window.getAuth(app); 
+        rtdb = window.getDatabase(app); 
         
         signInPlayer(); 
         firebaseInitialized = true; 
