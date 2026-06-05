@@ -9006,6 +9006,19 @@ function drawBackgroundLayer() {
         backgroundCtx.fillStyle = tintToUse;
         backgroundCtx.fillRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
     }
+        // =========================================
+    // 🌑 VIGNETTE EFFECT (Madilim na Gilid ng Table)
+    // =========================================
+    const vignette = backgroundCtx.createRadialGradient(
+        backgroundCanvas.width / 2, backgroundCanvas.height / 2, backgroundCanvas.height * 0.2, // Gitna (Maliwanag)
+        backgroundCanvas.width / 2, backgroundCanvas.height / 2, backgroundCanvas.width * 0.7   // Palabas sa Gilid (Madilim)
+    );
+    vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');    // Walang anino sa gitna
+    vignette.addColorStop(1, 'rgba(0, 0, 0, 0.75)'); // 75% ang dilim sa mga kanto
+    backgroundCtx.fillStyle = vignette;
+    backgroundCtx.fillRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
+    // =========================================
+
     
     const shadowColor = 'rgba(0, 0, 0, 0.5)'; 
     const shadowWidth = 10; 
