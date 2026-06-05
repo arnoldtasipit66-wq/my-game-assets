@@ -13674,10 +13674,10 @@ function listenToRealtimeAiming(gameId) {
                 
                 // Set Online sa Firestore
                 updateDoc(firestoreGameDocRef, { [`players.${localPlayerId}.status`]: 'online' }).catch(e=>{});
-                onDisconnect(firestoreGameDocRef).update({ [`players.${localPlayerId}.status`]: 'disconnected' }).catch(e=>{});
             }
         }, { onlyOnce: true });
     }
+
 
     // 3. GAME UPDATE LISTENER (Main Loop)
     unsubscribeGameListener = onSnapshot(doc(db, "games", gameId), (doc) => { 
