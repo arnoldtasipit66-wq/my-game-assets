@@ -9097,7 +9097,7 @@ function drawBackgroundLayer() {
     }
 }
 
-// START: BAGONG drawChips() - Dilaw na Gilid + Dilaw na Tirador
+// START: BAGONG drawChips() - Manipis na Dilaw na Gilid + Malaking Numero
 function drawChips() { 
     // Global drop shadow sa ibabaw ng table
     ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'; 
@@ -9141,7 +9141,7 @@ function drawChips() {
                 ctx.beginPath(); ctx.arc(0, 0, displayRadius * 0.15, 0, Math.PI * 2); ctx.fill();
 
             } else { 
-                // --- SOLID PLASTIC CHIPS NA MAY DILAW NA GILID ---
+                // --- SOLID PLASTIC CHIPS (MANIPIS NA DILAW NA GILID) ---
                 
                 // 1. Base Dilaw na Gilid (Yellow Rim)
                 ctx.beginPath(); 
@@ -9149,28 +9149,28 @@ function drawChips() {
                 ctx.fillStyle = '#FFD700'; // Solid Yellow rim
                 ctx.fill(); 
 
-                // 2. Outer Highlight sa dilaw (Para magmukhang bilugan at makinis ang gilid)
+                // 2. Outer Highlight sa dilaw (Para magmukhang bilugan)
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius - (displayRadius * 0.05), 0, Math.PI * 2);
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
                 ctx.lineWidth = displayRadius * 0.1;
                 ctx.stroke();
 
-                // 3. Inner Solid Color (Ang totoong kulay ng picha na medyo maliit)
-                const innerColorRadius = displayRadius * 0.72; // Laki ng kulay sa gitna
+                // 3. Inner Solid Color (PINALAKI NATIN PARA MANIPIS ANG RIM)
+                const innerColorRadius = displayRadius * 0.86; // Mula 0.72, naging 0.86!
                 ctx.beginPath(); 
                 ctx.arc(0, 0, innerColorRadius, 0, Math.PI * 2); 
                 ctx.fillStyle = chip.color; 
                 ctx.fill(); 
 
-                // 4. Inner Groove (Yung anino ng paglubog sa pagitan ng kulay at dilaw na gilid)
+                // 4. Inner Groove (Yung anino ng paglubog sa gitna)
                 ctx.beginPath();
                 ctx.arc(0, 0, innerColorRadius, 0, Math.PI * 2);
                 ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)'; // Dark shadow para lumubog
-                ctx.lineWidth = displayRadius * 0.08;
+                ctx.lineWidth = displayRadius * 0.06; // Pininipisan din natin nang konti yung anino
                 ctx.stroke();
 
-                // 5. Numero (Puting solid na may itim na anino para laging basa)
+                // 5. Numero (Mas malaki na ngayon dahil malaki ang innerColorRadius)
                 if(chip.id) { 
                     ctx.fillStyle = 'white'; 
                     ctx.font = `bold ${innerColorRadius * 1.3}px 'Nunito', sans-serif`; 
@@ -9190,7 +9190,7 @@ function drawChips() {
             ctx.restore(); 
         } 
         
-        // === START: RING LIGHT REQUEST (Retained) ===
+        // === START: RING LIGHT REQUEST ===
         const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
         
         if (isMyTurn && (gameState === 'aiming' || (gameState ==='moving' && canMoveCueBall)) && chip.inPlay && legalTargetChipIds.has(chip.id)) {
@@ -9198,7 +9198,6 @@ function drawChips() {
             const alpha = pulse * 0.7 + 0.3; 
             const ringWidth = 2.5 * scale;
             const glowRadius = 7 * scale;
-            // Pinalitan ko ng Light Blue ang glow para di mag-blend sa dilaw na picha!
             const ringColor = `rgba(0, 200, 255, ${alpha})`; 
             const glowColor = `rgba(0, 200, 255, ${alpha * 0.7})`; 
 
