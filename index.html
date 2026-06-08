@@ -9006,23 +9006,7 @@ function drawBackgroundLayer() {
         backgroundCtx.fillStyle = tintToUse;
         backgroundCtx.fillRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
     }
-        // ==========================================
-    // === : SPOTLIGHT EFFECT ===
-    const centerX = backgroundCanvas.width / 2;
-    const centerY = backgroundCanvas.height / 2;
-    const innerRadius = backgroundCanvas.height * 0.4; 
-    const outerRadius = backgroundCanvas.width * 0.6; 
-    const gradient = backgroundCtx.createRadialGradient(
-        centerX, centerY, innerRadius, 
-        centerX, centerY, outerRadius  
-    );
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)'); 
-    gradient.addColorStop(0.8, 'rgba(0, 0, 0, 0.3)');
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.6)'); 
-    backgroundCtx.fillStyle = gradient;
-    backgroundCtx.fillRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
-    // === END: SPOTLIGHT EFFECT ===
-    // ==========================================
+        
     
     
     const shadowColor = 'rgba(0, 0, 0, 0.5)'; 
