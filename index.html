@@ -9097,7 +9097,7 @@ function drawBackgroundLayer() {
     }
 }
 
-// START: BAGONG drawChips() - Solid Classic Style (Tulad sa Picture)
+// START: BAGONG drawChips() - Dilaw na Gilid + Dilaw na Tirador
 function drawChips() { 
     // Global drop shadow sa ibabaw ng table
     ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'; 
@@ -9117,14 +9117,20 @@ function drawChips() {
             ctx.rotate(chip.rotation);
             
             if (chip.id === 0) { 
-                // --- CUE CHIP (TIRADOR) DESIGN ---
-                // Kulay garing (Ivory/White) na may itim na linya
+                // --- CUE CHIP (TIRADOR) - BUONG DILAW ---
                 ctx.beginPath(); 
                 ctx.arc(0, 0, displayRadius, 0, Math.PI * 2); 
-                ctx.fillStyle = '#FDF5E6'; 
+                ctx.fillStyle = '#FFD700'; // Solid Yellow
                 ctx.fill(); 
                 
-                // Mga guhit ng tirador
+                // Outer Highlight para magmukhang makinis
+                ctx.beginPath();
+                ctx.arc(0, 0, displayRadius - (displayRadius * 0.05), 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.lineWidth = displayRadius * 0.1;
+                ctx.stroke();
+
+                // Mga guhit ng tirador (Itim)
                 ctx.strokeStyle = '#333333'; 
                 ctx.lineWidth = displayRadius * 0.08; 
                 ctx.beginPath(); ctx.arc(0, 0, displayRadius * 0.75, 0, Math.PI * 2); ctx.stroke();
@@ -9135,33 +9141,39 @@ function drawChips() {
                 ctx.beginPath(); ctx.arc(0, 0, displayRadius * 0.15, 0, Math.PI * 2); ctx.fill();
 
             } else { 
-                // --- SOLID PLASTIC / WOOD CHIPS (Gaya ng sa picture) ---
+                // --- SOLID PLASTIC CHIPS NA MAY DILAW NA GILID ---
                 
-                // 1. Base Solid Color
+                // 1. Base Dilaw na Gilid (Yellow Rim)
                 ctx.beginPath(); 
                 ctx.arc(0, 0, displayRadius, 0, Math.PI * 2); 
-                ctx.fillStyle = chip.color; 
+                ctx.fillStyle = '#FFD700'; // Solid Yellow rim
                 ctx.fill(); 
 
-                // 2. Outer Highlight (Para magmukhang bilugan at makinis ang gilid)
+                // 2. Outer Highlight sa dilaw (Para magmukhang bilugan at makinis ang gilid)
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius - (displayRadius * 0.05), 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
                 ctx.lineWidth = displayRadius * 0.1;
                 ctx.stroke();
 
-                // 3. Inner Groove (Yung anino ng paglubog sa gitna ng picha)
-                const innerRadius = displayRadius * 0.68;
+                // 3. Inner Solid Color (Ang totoong kulay ng picha na medyo maliit)
+                const innerColorRadius = displayRadius * 0.72; // Laki ng kulay sa gitna
+                ctx.beginPath(); 
+                ctx.arc(0, 0, innerColorRadius, 0, Math.PI * 2); 
+                ctx.fillStyle = chip.color; 
+                ctx.fill(); 
+
+                // 4. Inner Groove (Yung anino ng paglubog sa pagitan ng kulay at dilaw na gilid)
                 ctx.beginPath();
-                ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)'; // Dark shadow para lumubog
+                ctx.arc(0, 0, innerColorRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)'; // Dark shadow para lumubog
                 ctx.lineWidth = displayRadius * 0.08;
                 ctx.stroke();
 
-                // 4. Numero (Puting solid na may itim na anino para laging basa)
+                // 5. Numero (Puting solid na may itim na anino para laging basa)
                 if(chip.id) { 
                     ctx.fillStyle = 'white'; 
-                    ctx.font = `bold ${innerRadius * 1.3}px 'Nunito', sans-serif`; 
+                    ctx.font = `bold ${innerColorRadius * 1.3}px 'Nunito', sans-serif`; 
                     ctx.textAlign = 'center'; 
                     ctx.textBaseline = 'middle'; 
                     
@@ -9178,30 +9190,36 @@ function drawChips() {
             ctx.restore(); 
         } 
         
-        
-
-        // === RING LIGHT / HIGHLIGHT ===
+        // === START: RING LIGHT REQUEST (Retained) ===
         const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
-        if (isMyTurn && (gameState === 'aiming' || (gameState === 'moving' && canMoveCueBall)) && chip.inPlay && legalTargetChipIds.has(chip.id)) {
-            const pulse = Math.abs(Math.sin(performance.now() * 0.002));
-            const alpha = pulse * 0.7 + 0.3;
+        
+        if (isMyTurn && (gameState === 'aiming' || (gameState ==='moving' && canMoveCueBall)) && chip.inPlay && legalTargetChipIds.has(chip.id)) {
+            const pulse = Math.abs(Math.sin(performance.now() * 0.004)); 
+            const alpha = pulse * 0.7 + 0.3; 
             const ringWidth = 2.5 * scale;
-            const glowRadius = 0 * scale;
-            const ringColor = `rgba(255, 255, 255, ${alpha})`;
-            const glowColor = `rgba(255, 255, 255, ${alpha * 0.7})`;
+            const glowRadius = 7 * scale;
+            // Pinalitan ko ng Light Blue ang glow para di mag-blend sa dilaw na picha!
+            const ringColor = `rgba(0, 200, 255, ${alpha})`; 
+            const glowColor = `rgba(0, 200, 255, ${alpha * 0.7})`; 
 
             ctx.save();
             ctx.shadowColor = glowColor;
             ctx.shadowBlur = glowRadius;
+            
             ctx.beginPath();
-            ctx.arc(chip.x, chip.y, chip.radius + ringWidth + (2 * scale), 0, Math.PI * 2);
+            ctx.arc(chip.x, chip.y, chip.radius + ringWidth + (2*scale), 0, Math.PI * 2); 
             ctx.strokeStyle = ringColor;
             ctx.lineWidth = ringWidth;
-            ctx.stroke();
-            ctx.restore();
+            ctx.stroke(); 
+            ctx.restore(); 
         }
-    });
+        // === END: RING LIGHT REQUEST ===
+        
+    }); 
+    ctx.shadowColor = 'transparent'; 
 }
+// END: BAGONG drawChips()
+
         
 function drawCueStick() {
     // 1. Check kung dapat ipakita ang tako
