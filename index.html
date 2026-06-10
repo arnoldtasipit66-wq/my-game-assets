@@ -9173,17 +9173,23 @@ function drawChips() {
             
             ctx.restore(); 
         } 
-        
-        // === START: RING LIGHT REQUEST ===
+                // === START: RING LIGHT REQUEST ===
         const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
         
         if (isMyTurn && (gameState === 'aiming' || (gameState ==='moving' && canMoveCueBall)) && chip.inPlay && legalTargetChipIds.has(chip.id)) {
-            const pulse = Math.abs(Math.sin(performance.now() * 0.004)); 
+            
+            // ⏱️ PINABAGAL NA TIBOK: 
+            // Pinalitan ko ang 0.004 at ginawang 0.0015 para mas smooth at relax ang blink
+            const pulse = Math.abs(Math.sin(performance.now() * 0.0015)); 
+            
             const alpha = pulse * 0.7 + 0.3; 
             const ringWidth = 2.5 * scale;
             const glowRadius = 7 * scale;
-            const ringColor = `rgba(0, 200, 255, ${alpha})`; 
-            const glowColor = `rgba(0, 200, 255, ${alpha * 0.7})`; 
+            
+            // ⚪ PUTING KULAY: 
+            // Pinalitan ang (0, 200, 255) ng (255, 255, 255) na siyang code ng solid white
+            const ringColor = `rgba(255, 255, 255, ${alpha})`; 
+            const glowColor = `rgba(255, 255, 255, ${alpha * 0.7})`; 
 
             ctx.save();
             ctx.shadowColor = glowColor;
@@ -9197,7 +9203,7 @@ function drawChips() {
             ctx.restore(); 
         }
         // === END: RING LIGHT REQUEST ===
-        
+    
     }); 
     ctx.shadowColor = 'transparent'; 
 }
