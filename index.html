@@ -7415,7 +7415,52 @@ tableSurfaceImage.src = 'https://raw.githubusercontent.com/arnoldtasipit66-wq/my
         let vsScreenShownThisGame = false;
         // === END PLAYER NAME UPDATE ===
 
-        
+   // ==========================================
+// 🌐 AUTO-RECONNECT & OFFLINE HANDLERS
+// ==========================================
+let isFirebaseInitialized = false; 
+
+window.addEventListener('online', async () => {
+    console.log("Internet Restored!");
+    
+    // Ipakita sa player na online na ulit
+    showMessage("Naka-connect na ulit! Naglo-load ng online features...", 3000);
+
+    // 1. I-load ulit ang mga sira o hindi nag-load na images
+    reloadBrokenImages();
+
+    // 2. I-initialize ang Audio kung sakaling hindi nag-load kanina
+    if (typeof audioInitialized !== 'undefined' && !audioInitialized) {
+        try {
+            await initAudio();
+            console.log("Audio initialized after reconnect.");
+        } catch (e) {
+            console.log("Di pa rin ma-load ang audio:", e);
+        }
+    }
+
+    // 3. I-connect sa Firebase para sa Online Multiplayer at Data Saving
+    if (!isFirebaseInitialized && typeof initializeFirebase === 'function') {
+        initializeFirebase();
+        isFirebaseInitialized = true;
+        console.log("Firebase connected after reconnect.");
+    }
+});
+
+window.addEventListener('offline', () => {
+    showMessage("Nawala ang internet! AI Mode na lang muna.", 4000);
+});
+
+function reloadBrokenImages() {
+    const images = document.querySelectorAll('img');
+    images.forEach(img => {
+        if (!img.complete || img.naturalHeight === 0) {
+            const currentSrc = img.src;
+            img.src = ''; 
+            img.src = currentSrc; 
+        }
+    });
+        }     
 
         function init() {
     // 1. Sabihin sa Telegram na ready na ang app
