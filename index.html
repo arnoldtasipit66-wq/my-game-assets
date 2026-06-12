@@ -7469,22 +7469,58 @@ function reloadBrokenImages() {
         window.Telegram.WebApp.expand(); // Para mag-fullscreen sa Telegram
     }
     
+    resizeCanvas();
+
+    // --- MGA BAGONG DAGDAG ---
+    loadCurrency(); // I-load ang pera ng player
+    loadInventory(); // I-load ang mga nabiling tako
+    loadPlayerStats();
+    applyEquippedItems(); // I-apply agad yung naka-equip na tako
+    const isReturningPlayer = loadPlayerName(); // I-load ang pangalan
+    // --- END NG DAGDAG ---
+
+    // 🔴 OFFLINE BYPASS LOGIC 🔴
+    if (!navigator.onLine) {
+        console.log("Walang internet! Bypassing straight to lobby...");
+
+        // Itago agad ang preloader gamit ang hidden class na ginawa mo sa CSS
+        const preloader = document.getElementById('preloader-overlay');
+        if (preloader) preloader.classList.add('hidden');
+
+        // Itago ang start overlay kung sakaling lumabas
+        const startOverlay = document.getElementById('start-overlay');
+        if (startOverlay) startOverlay.classList.remove('show');
+
+        // I-setup pa rin ang mga buttons para makapaglaro vs AI
+        setupEventListeners(isReturningPlayer);
+
+        // Buksan agad ang lobby
+        showLobbyUI();
+        history.replaceState({ modal: 'lobby' }, 'Lobby', '#lobby');
+
+        // Ipakita ang aesthetic warning message mo
+        setTimeout(() => {
+            showMessage("OFFLINE MODE: AI Match Only", 3000);
+        }, 500);
+
+        // Patakbuhin ang game loop kahit walang Firebase
+        requestAnimationFrame(update);
+        
+        return; // Pigilan ang pag-load ng Firebase para iwas hang/error
+    }
+
+    // 🟢 NORMAL ONLINE FLOW 🟢
+    setupEventListeners(isReturningPlayer);
     
-            resizeCanvas();
-
-            // --- MGA BAGONG DAGDAG ---
-            loadCurrency(); // I-load ang pera ng player
-            loadInventory(); // I-load ang mga nabiling tako
-            loadPlayerStats();
-            applyEquippedItems(); // I-apply agad yung naka-equip na tako
-            const isReturningPlayer = loadPlayerName(); // I-load ang pangalan
-            // --- END NG DAGDAG ---
-
-            setupEventListeners(isReturningPlayer); // <-- NAGBAGO ITO!
-            initializeFirebase();
-            history.replaceState({ modal: 'start' }, 'Start', '#start');
-            requestAnimationFrame(update); // Ito na ang magsisimula ng game loop
-        }
+    // Check para hindi ma-doble ang init ng Firebase
+    if (typeof initializeFirebase === 'function') {
+        initializeFirebase();
+        isFirebaseInitialized = true; // Set flag to true!
+    }
+    
+    history.replaceState({ modal: 'start' }, 'Start', '#start');
+    requestAnimationFrame(update); // Ito na ang magsisimula ng game loop
+}
 
 // --- NEW PEKTUS MODAL LOGIC (FIXED) ---
 
