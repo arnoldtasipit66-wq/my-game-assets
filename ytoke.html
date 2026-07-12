@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
+
+    <title>KARAOKE🎤</title>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+    <style>
+        /* --- NATIVE APP RESET --- */
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            -webkit-touch-callout: none; 
+            outline: none; 
+        }
+
+        /* NATIVE FEEL SA BUONG APP MALIBAN SA INPUT */
+        body { 
+            margin: 0; padding: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            color: #ffffff; 
+            height: 100vh; 
+            overflow: hidden; 
+            overflow-x: hidden; 
+            max-width: 100vw;
+            background: #0f1115; 
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* LIGTAS NA INPUT PARA HINDI BUMALIKTAD ANG TEXT SA ANDROID */
+        input { 
+            -webkit-user-select: text !important; 
+            user-select: text !important; 
+        }
+
+        /* --- SLEEK PANELS --- */
+        .glass-panel {
+            background: #1a1d24; 
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05); 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* --- MENU & MODAL --- */
+        #menu-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; z-index: 9999; position: relative; }
+        
+        .main-title { color: #0ea5e9; margin-bottom: 40px; font-size: 38px; font-weight: 900; letter-spacing: -0.5px; }
+
+        .menu-btn { 
+            padding: 18px 24px; margin: 8px; font-size: 15px; 
+            border-radius: 14px; cursor: pointer; width: 85%; max-width: 320px; 
+            font-weight: 700; border: none; 
+            transition: all 0.1s ease; position: relative; top: 0;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        
+        .btn-solo { background: #0ea5e9 !important; color: white !important; border: none !important; border-bottom: 6px solid #0369a1 !important; }
+        .btn-solo:active { top: 6px; border-bottom: 0px solid #0369a1 !important; margin-bottom: 14px; }
+        .btn-host { background: #e11d48 !important; color: white !important; border: none !important; border-bottom: 6px solid #9f1239 !important; }
+        .btn-host:active { top: 6px; border-bottom: 0px solid #9f1239 !important; margin-bottom: 14px; }
+        .btn-remote { background: #9333ea !important; color: white !important; border: none !important; border-bottom: 6px solid #6b21a8 !important; }
+        .btn-remote:active { top: 6px; border-bottom: 0px solid #6b21a8 !important; margin-bottom: 14px; }
+
+        #room-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 17, 21, 0.95); z-index: 10000; justify-content: center; align-items: center; }
+        .modal-content { padding: 30px; text-align: center; width: 85%; max-width: 320px; background: #1a1d24; border-radius: 24px; border: 1px solid rgba(14, 165, 233, 0.3); }
+        .modal-content input { width: 100%; padding: 16px; font-size: 28px; text-align: center; letter-spacing: 6px; margin-bottom: 20px; border-radius: 14px; border: none; font-weight: bold; background: #0f1115; color: #0ea5e9; transition: background 0.3s; }
+        .modal-content input:focus { background: #14171d; }
+
+        /* --- APP LAYOUT --- */
+        #app-screen { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; }
+
+        #left-panel { flex: 0 0 60%; max-width: 60%; padding: 5px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-right: 1px solid rgba(255,255,255,0.05); position: relative; min-width: 0; }
+        
+        /* DEFAULT RIGHT PANEL - Nilagyan ng min-height: 0 para gumana ang scroll */
+        #right-panel { flex: 0 0 40%; max-width: 40%; display: flex; flex-direction: column; padding: 15px; min-width: 0; min-height: 0; position: relative; z-index: 50; background: linear-gradient(145deg, #0f1115 0%, #07192f 100%); }
+        
+        /* COLUMN WRAPPERS */
+        #remote-left-col { display: none; }
+        /* Dinagdag ang min-height: 0 dito para hindi lumagpas sa screen! */
+        #remote-right-col { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
+
+        #room-code-display { display: none; position: absolute; top: 15px; left: 15px; z-index: 100; padding: 8px 16px; font-size: 14px; color: #0ea5e9; font-weight: bold; align-items: center; background: rgba(14, 165, 233, 0.1); border-radius: 20px; }
+
+        #player-wrapper { position: relative; width: 100%; max-height: 48vh; aspect-ratio: 16/9; flex-shrink: 0; min-height: 0; overflow: hidden; transition: all 0.3s ease; background: #000; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #player-wrapper.fullscreen-mode { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; max-width: none !important; max-height: none !important; z-index: 10000; border: none; border-radius: 0; margin: 0; aspect-ratio: auto; }
+
+        #ytplayer { width: 100%; height: 100%; border: none; }
+        #click-shield { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; }
+        #exit-fs-btn { display: none; position: absolute; top: 20px; right: 20px; z-index: 20; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 20px; padding: 10px 16px; font-size: 13px; font-weight: bold; cursor: pointer; backdrop-filter: blur(5px); }
+
+        /* --- TACTILE PLAYER CONTROLS --- */
+        #controls { margin-top: 5px; display: flex; flex-direction: column; gap: 8px; width: 100%; }
+        #controls .controls-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; width: 100%; }
+        
+        #remote-controls { display: flex; flex-direction: column; width: 100%; gap: 10px; }
+        #remote-controls .controls-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+
+        .control-btn { padding: 12px 18px; color: white !important; cursor: pointer; font-size: 13px; font-weight: 700; border-radius: 12px; border: none; transition: all 0.1s ease; position: relative; top: 0; text-transform: capitalize; letter-spacing: 0.5px; }
+
+        .btn-back { background: #f43f5e !important; border-bottom: 5px solid #be123c !important; }
+        .btn-back:active { top: 5px; border-bottom: 0px solid #be123c !important; margin-bottom: 5px; }
+        .btn-restart { background: #f59e0b !important; border-bottom: 5px solid #b45309 !important; }
+        .btn-restart:active { top: 5px; border-bottom: 0px solid #b45309 !important; margin-bottom: 5px; }
+        .btn-play { background: #0ea5e9 !important; border-bottom: 5px solid #0369a1 !important; }
+        .btn-play:active { top: 5px; border-bottom: 0px solid #0369a1 !important; margin-bottom: 5px; }
+        .btn-next { background: #8b5cf6 !important; border-bottom: 5px solid #5b21b6 !important; }
+        .btn-next:active { top: 5px; border-bottom: 0px solid #5b21b6 !important; margin-bottom: 5px; }
+        .btn-fs { background: #64748b !important; border-bottom: 5px solid #334155 !important; }
+        .btn-fs:active { top: 5px; border-bottom: 0px solid #334155 !important; margin-bottom: 5px; }
+
+        /* --- VOLUME CONTROLS --- */
+        .vol-wrapper { width: 44px; display: flex; flex-direction: column; align-items: center; background: #1a1d24; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden; position: absolute; top: 50%; transform: translateY(-50%); z-index: 100; }
+        .vol-wrapper.closed { justify-content: center; height: 46px; }
+        .vol-wrapper.open { justify-content: flex-start; background: #161920; border-color: #0ea5e9; height: 100%; }
+
+        .vol-slider { -webkit-appearance: none; appearance: none; background: linear-gradient(to right, #0ea5e9 100%, #272a33 100%); border-radius: 2px; outline: none; }
+        .vol-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #0ea5e9; cursor: pointer; box-shadow: 0 0 10px rgba(14, 165, 233, 0.6); }
+
+        .vol-vertical { width: 100px; height: 4px; transform: rotate(-90deg); transform-origin: center; }
+        .vol-horizontal { width: 100%; height: 6px; }
+
+        .remote-vol-container { width: 100%; display: flex; align-items: center; justify-content: space-between; background: #1a1d24; padding: 15px; border-radius: 12px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.05); gap: 10px; }
+
+        /* --- TABS SYSTEM --- */
+        .tabs-header { display: flex; gap: 5px; margin-bottom: 15px; background: #1a1d24; padding: 5px; border-radius: 12px; flex-shrink: 0; }
+        .tab-btn { flex: 1; padding: 12px 5px; cursor: pointer; transition: all 0.1s ease; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; background: transparent !important; border: none !important; border-bottom: 5px solid transparent !important; color: #71717a !important; border-radius: 10px; position: relative; top: 0; }
+        .tab-btn.active { background: #0ea5e9 !important; border-bottom: 5px solid #0369a1 !important; color: white !important; }
+        .tab-btn:active { top: 5px; border-bottom: 0px transparent !important; margin-bottom: 5px; }
+        /* Dinagdag ang min-height: 0 dito! */
+        .tab-content { display: none; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
+        .tab-content.active { display: flex; }
+
+        /* --- SEARCH BAR --- */
+        .search-container { display: flex; gap: 8px; margin-bottom: 15px; flex-shrink: 0; }
+        #searchInput { flex: 1; min-width: 0; width: 100%; padding: 14px 16px; border-radius: 12px; border: none; font-size: 15px; background: #1a1d24; color: white; outline: none; transition: 0.3s; }
+        #searchInput:focus { background: #272a33; }
+        .search-btn { background: #0ea5e9 !important; color: white !important; padding: 0 20px; border: none !important; border-bottom: 5px solid #0369a1 !important; border-radius: 12px; font-weight: bold; transition: all 0.1s; position: relative; top: 0; }
+        .search-btn:active { top: 5px; border-bottom: 0px solid #0369a1 !important; margin-bottom: 5px; }
+
+        /* --- LIST ITEMS --- */
+        /* Dinagdag ang touch-action: pan-y at min-height: 0 para sa scrolling & drag fix */
+        .song-list { list-style: none; padding: 10px; margin: 0; display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; background: rgba(14, 165, 233, 0.03); border: 1px solid rgba(14, 165, 233, 0.15); border-radius: 16px; box-shadow: inset 0 0 20px rgba(0,0,0,0.4); touch-action: pan-y; }
+        
+        .song-list li { padding: 10px; display: flex; align-items: center; font-size: 14px; border-radius: 12px; background: #1a1d24; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.15s ease; touch-action: pan-y; }
+        .song-list li:active { background: #272a33; transform: scale(0.97); border-color: #0ea5e9; }
+        .song-list li img { width: 65px; border-radius: 8px; margin-right: 12px; object-fit: cover; aspect-ratio: 16/9; box-shadow: 0 2px 5px rgba(0,0,0,0.3); cursor: pointer; }
+        .song-details { flex: 1; cursor: pointer; font-weight: 500; color: #e4e4e7; line-height: 1.4; }
+        .fav-icon { font-size: 20px; background: none; border: none; color: #71717a; padding: 5px; transition: transform 0.2s; cursor: pointer;}
+        .fav-icon:active { transform: scale(1.3); }
+        .del-icon { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: none; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; transition: background 0.15s; cursor: pointer; }
+        .del-icon:active { background: rgba(239, 68, 68, 0.2); }
+
+        ::-webkit-scrollbar { display: none; }
+
+        /* --- UI STATES --- */
+        .mode-host #vol-anchor { display: none !important; }
+        .mode-host #right-panel { display: none !important; }
+        .mode-host #controls { display: none !important; }
+        .mode-host #now-playing-banner { display: none !important; }
+        .mode-host #left-panel { flex: 1; max-width: 100%; padding: 0; border: none; background: transparent; }
+        .mode-host #player-wrapper { height: 100vh; max-height: 100vh; border-radius: 0; border: none; box-shadow: none; }
+        .mode-host #room-code-display { display: flex; }
+        
+        .mode-remote #left-panel { display: none !important; }
+        
+        /* REMOTE LAYOUT */
+        .mode-remote #right-panel { flex: 1; max-width: 100% !important; flex-direction: row; gap: 15px; }
+        .mode-remote #remote-left-col {
+            display: flex;
+            flex: 0 0 35%; 
+            max-width: 35%;
+            flex-direction: column;
+            justify-content: center;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            padding-right: 15px;
+        }
+        .mode-remote .control-btn { width: 100%; padding: 14px; font-size: 14px; }
+            
+        /* --- DRAG & DROP --- */
+        #queue-list li { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+        .solid-drag-item { opacity: 1 !important; background: #1a1d24 !important; transform: scale(1.02) !important; box-shadow: 0 10px 20px rgba(0,0,0,0.5) !important; z-index: 9999 !important; border-radius: 12px; border: 2px solid #0ea5e9 !important; }
+        .empty-placeholder { opacity: 0 !important; }
+        
+        @keyframes spinLoading { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="room-modal">
+        <div class="modal-content glass-panel">
+            <h2 style="color: #ffffff; margin-top: 0; font-size: 20px;">Link to TV</h2>
+            <p style="color: #71717a; font-size: 13px; margin-bottom: 20px;">Enter 4-digit code</p>
+            <input type="number" id="roomCodeInput" placeholder="0000">
+            <button class="menu-btn btn-host" style="width: 100%; margin: 10px 0;" onclick="joinRoom()">JOIN</button>
+            <button class="menu-btn" style="width: 100%; margin: 0; background: transparent; color: #71717a;" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <div id="menu-screen">
+        <h1 class="main-title">KARAOKE🎤</h1>
+        <button class="menu-btn btn-solo glass-panel" onclick="startApp('solo')">Solo Mode</button>
+        <button class="menu-btn btn-host glass-panel" onclick="startApp('host')">TV Host Mode</button>
+        <button class="menu-btn btn-remote glass-panel" onclick="openRemoteModal()">Remote Control</button>
+    </div>
+
+    <div id="app-screen">
+        <!-- LEFT PANEL (TV / SOLO) -->
+        <div id="left-panel">
+            <div id="room-code-display">
+                <span id="room-text">ROOM: 0000</span>
+                <span onclick="backToMenu()" style="margin-left: 15px; cursor: pointer; color: #ef4444;">✖ Leave</span>
+            </div>
+            
+            <div id="video-and-vol-container" style="display: flex; width: 100%; gap: 12px; align-items: stretch; position: relative;">
+                
+                <div id="player-wrapper" style="flex: 1; min-width: 0;">
+                    <div id="ytplayer"></div>
+                    <div id="click-shield" ondblclick="toggleFullscreen()"></div> 
+                    <button id="exit-fs-btn" onclick="toggleFullscreen()">Back to Menu</button>
+                </div>
+                
+                <div id="vol-anchor" style="width: 44px; position: relative; display: flex; justify-content: center; align-items: center;">
+                    <div class="vol-wrapper closed" id="volSidebar">
+                        <div id="vol-toggle-btn" onclick="toggleVolume()" style="cursor: pointer; font-size: 18px; display: flex; justify-content: center; align-items: center; height: 44px; width: 100%; transition: 0.2s; color: #0ea5e9;" title="Volume">
+                            🔊
+                        </div>
+                        <div id="vol-controls-inner" style="display: none; flex-direction: column; align-items: center; width: 100%; flex: 1; justify-content: space-evenly; padding-bottom: 12px;">
+                            <span onclick="adjustVolume(10); startVolumeTimer()" style="cursor: pointer; font-size: 16px; padding: 6px; color: #a1a1aa;">➕</span>
+                            <div style="height: 110px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                                <input type="range" class="vol-slider vol-vertical" min="0" max="100" value="100" 
+                                    onmousedown="clearTimeout(volTimer)" ontouchstart="clearTimeout(volTimer)" 
+                                    onmouseup="syncVolumeToFirebase(this.value); startVolumeTimer()" 
+                                    ontouchend="syncVolumeToFirebase(this.value); startVolumeTimer()"
+                                    onchange="syncVolumeToFirebase(this.value)" oninput="updateVolumeUI(this.value); startVolumeTimer()">
+                            </div>
+                            <span onclick="adjustVolume(-10); startVolumeTimer()" style="cursor: pointer; font-size: 16px; padding: 6px; color: #a1a1aa;">➖</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="now-playing-banner" style="display: none; width: calc(100% - 52px); align-self: flex-start; padding: 10px; margin-top: 10px; border-radius: 12px; align-items: center; gap: 12px; background: #1a1d24;">
+                <img id="np-thumb" src="" style="width: 50px; border-radius: 8px;">
+                <div style="flex: 1; overflow: hidden; text-align: left;">
+                    <div style="font-size: 10px; color: #0ea5e9; font-weight: 700; text-transform: uppercase;">▶ Now Playing</div>
+                    <div id="np-title" style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; margin-top: 2px;"></div>
+                </div>
+            </div>
+
+            <div id="controls">
+                <div class="controls-row">
+                    <button onclick="backToMenu()" class="control-btn btn-back">Menu</button>
+                    <button onclick="sendControl('restart')" class="control-btn btn-restart">Restart</button>
+                    <button onclick="sendControl('toggle')" class="control-btn btn-play">Play / Pause</button>
+                    <button onclick="sendControl('next')" class="control-btn btn-next">Next</button>
+                    <button onclick="toggleFullscreen()" class="control-btn btn-fs">TV Mode</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div id="right-panel">
+            
+            <!-- LEFT COLUMN (REMOTE CONTROLS + VOLUME) -->
+            <div id="remote-left-col">
+                <div id="remote-controls">
+                    <div class="controls-row">
+                        <button onclick="backToMenu()" class="control-btn btn-back">Leave Room</button>
+                        <button onclick="sendControl('restart')" class="control-btn btn-restart">Restart Song</button>
+                        <button onclick="sendControl('toggle')" class="control-btn btn-play">Play / Pause</button>
+                        <button onclick="sendControl('next')" class="control-btn btn-next">Skip Next</button>
+                    </div>
+                    
+                    <div class="remote-vol-container">
+                        <span onclick="adjustVolume(-10)" style="cursor:pointer; font-size: 18px; color:#a1a1aa;">🔉</span>
+                        <input type="range" class="vol-slider vol-horizontal" min="0" max="100" value="100" 
+                            onmouseup="syncVolumeToFirebase(this.value)" ontouchend="syncVolumeToFirebase(this.value)"
+                            onchange="syncVolumeToFirebase(this.value)" oninput="updateVolumeUI(this.value)">
+                        <span onclick="adjustVolume(10)" style="cursor:pointer; font-size: 18px; color:#a1a1aa;">🔊</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RIGHT COLUMN (SEARCH + TABS) -->
+            <div id="remote-right-col">
+                <div class="tabs-header">
+                    <button class="tab-btn active" id="btn-search" onclick="switchTab('search')">Search</button>
+                    <button class="tab-btn" id="btn-queue" onclick="switchTab('queue')">Queue (<span id="q-count">0</span>)</button>
+                    <button class="tab-btn" id="btn-favs" onclick="switchTab('favs')">Favorites</button>
+                </div>
+
+                <div id="tab-search" class="tab-content active">
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="Search song title or artist...">
+                        <button class="search-btn" onclick="searchSong()">🔍</button>
+                    </div>
+                    <ul id="results" class="song-list"></ul>
+                </div>
+
+                <div id="tab-queue" class="tab-content">
+                    <ul id="queue-list" class="song-list"></ul>
+                </div>
+
+                <div id="tab-favs" class="tab-content">
+                    <ul id="favs-list" class="song-list"></ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBdW33Oq9Np2EzkTVE4zMY3yvn29Ra7jBU",
+            authDomain: "karyoke-6852b.firebaseapp.com",
+            databaseURL: "https://karyoke-6852b-default-rtdb.asia-southeast1.firebasedatabase.app", 
+            projectId: "karyoke-6852b",
+            storageBucket: "karyoke-6852b.firebasestorage.app",
+            messagingSenderId: "543610873575",
+            appId: "1:543610873575:web:6cb22608071c2b56d2a442"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        let ytApiReady = false;
+        let player = null;
+        let currentMode = null;
+        let currentRoom = '';
+        
+        let lastCommandTimestamp = '';
+        let songQueue = []; 
+        let favorites = JSON.parse(localStorage.getItem('videoke_favs')) || [];
+        let currentSearchResults = [];
+        let currentHostVideoId = '';
+        let volTimer;
+
+        function backToMain() {
+            const appScreen = document.getElementById('app-screen');
+            const playerWrapper = document.getElementById('player-wrapper');
+            
+            if (playerWrapper && playerWrapper.classList.contains('fullscreen-mode')) {
+                toggleFullscreen(); 
+                return "handled";
+            }
+            
+            if (appScreen && (appScreen.style.display === 'flex' || appScreen.style.display === 'block')) {
+                const searchTab = document.getElementById('tab-search');
+                const isSearchActive = searchTab && searchTab.classList.contains('active');
+                
+                if (currentMode !== 'host' && !isSearchActive) {
+                    switchTab('search'); 
+                    return "handled";
+                } else {
+                    backToMenu(); 
+                    return "handled";
+                }
+            } 
+            return "exit_app"; 
+        }
+
+        function onYouTubeIframeAPIReady() {
+            ytApiReady = true;
+            if (currentMode === 'solo' || currentMode === 'host') { initYouTubePlayer(); }
+        }
+
+        function initYouTubePlayer() {
+            if (ytApiReady && !player) {
+                player = new YT.Player('ytplayer', {
+                    height: '100%', width: '100%', videoId: '', 
+                    playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'modestbranding': 1, 'rel': 0, 'fs': 0, 'origin': window.location.origin },
+                    events: { 
+                        'onStateChange': onPlayerStateChange,
+                        'onError': onPlayerError 
+                    }
+                });
+            }
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === 0) {
+                if (currentMode === 'solo' || currentMode === 'host') { playNextSong(); }
+            }
+        }
+
+        function onPlayerError(event) {
+            if (currentMode === 'solo' || currentMode === 'host') { playNextSong(); }
+        }
+
+        function openRemoteModal() { document.getElementById('room-modal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('room-modal').style.display = 'none'; }
+        
+        function joinRoom() {
+            const code = document.getElementById('roomCodeInput').value;
+            if (code && code.length >= 4) {
+                currentRoom = code; closeModal(); startApp('remote');
+            } else { alert("Please enter a valid 4-digit code."); }
+        }
+
+        function startApp(mode) {
+            currentMode = mode;
+            document.getElementById('menu-screen').style.display = 'none';
+            document.getElementById('app-screen').style.display = 'flex'; 
+            renderFavs(); renderQueue(); 
+            
+            if (mode === 'solo' || mode === 'host') { if (ytApiReady) initYouTubePlayer(); }
+            
+            if (mode === 'host') {
+                document.getElementById('app-screen').classList.add('mode-host');
+                currentRoom = Math.floor(1000 + Math.random() * 9000).toString(); 
+                document.getElementById('room-text').innerText = "ROOM: " + currentRoom;
+                db.ref('rooms/' + currentRoom).set({ hostActive: true, queue: [] });
+                listenToFirebase(currentRoom); 
+            } 
+            else if (mode === 'remote') {
+                document.getElementById('app-screen').classList.add('mode-remote');
+                listenToFirebase(currentRoom); 
+            }
+        }
+
+        function backToMenu() {
+            if (player && player.pauseVideo) { player.pauseVideo(); } 
+            if (currentRoom) { 
+                if (currentMode === 'host') { db.ref('rooms/' + currentRoom).remove(); }
+                
+                const ref = db.ref('rooms/' + currentRoom);
+                ref.child('hostActive').off();
+                ref.child('queue').off();
+                ref.child('volume').off();
+                ref.child('control').off();
+                ref.child('nowPlaying').off();
+            }
+            
+            document.getElementById('app-screen').classList.remove('mode-host', 'mode-remote');
+            if (document.getElementById('player-wrapper').classList.contains('fullscreen-mode')) { toggleFullscreen(); }
+            
+            currentMode = null; currentRoom = ''; lastCommandTimestamp = '';
+            
+            document.getElementById('results').innerHTML = ''; 
+            document.getElementById('searchInput').value = '';
+            document.getElementById('app-screen').style.display = 'none';
+            document.getElementById('menu-screen').style.display = 'flex';
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+
+        function listenToFirebase(room) {
+            const roomRef = db.ref('rooms/' + room);
+
+            roomRef.child('hostActive').on('value', (snapshot) => {
+                if (!snapshot.exists() && currentMode === 'remote') {
+                    alert("Host closed the TV. Returning to Menu."); backToMenu(); 
+                }
+            });
+
+            roomRef.child('queue').on('value', (snapshot) => {
+                songQueue = snapshot.val() || [];
+                renderQueue();
+                if (currentMode === 'host' && player && songQueue.length > 0) {
+                    const state = player.getPlayerState();
+                    if (state === 0 || currentHostVideoId === '') { playNextSong(); }
+                }
+            });
+
+            roomRef.child('volume').on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    updateVolumeUI(snapshot.val());
+                }
+            });
+
+            roomRef.child('control').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data && data.time !== lastCommandTimestamp) {
+                    lastCommandTimestamp = data.time;
+                    if (currentMode === 'host' && player) {
+                        if (data.action === 'toggle') { (player.getPlayerState() === 1) ? player.pauseVideo() : player.playVideo(); }
+                        if (data.action === 'restart') { player.seekTo(0); player.playVideo(); }
+                        if (data.action === 'next') { playNextSong(); } 
+                        if (data.action === 'fullscreen') { toggleFullscreen(); } 
+                    }
+                }
+            });
+
+            roomRef.child('nowPlaying').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    if (currentMode === 'host' && data.videoId && player && player.loadVideoById) {
+                        if (data.videoId !== currentHostVideoId) {
+                            currentHostVideoId = data.videoId;
+                            player.loadVideoById(data.videoId);
+                        }
+                    }
+                    if (data.title && data.thumb) {
+                        document.getElementById('now-playing-banner').style.display = 'flex';
+                        document.getElementById('np-thumb').src = data.thumb;
+                        document.getElementById('np-title').innerText = data.title;
+                    }
+                } else {
+                    document.getElementById('now-playing-banner').style.display = 'none';
+                }
+            });
+        }
+
+        function addToQueue(event, vidId, encTitle, thumb) {
+            if (event) event.stopPropagation();
+            const title = decodeURIComponent(encTitle); 
+            songQueue.push({ videoId: vidId, title: title, thumb: thumb });
+            if (currentMode === 'remote' || currentMode === 'host') {
+                db.ref('rooms/' + currentRoom + '/queue').set(songQueue); 
+            } else {
+                renderQueue(); checkSoloAutoPlay();
+            }
+            if (event) { flyCard(event, 'btn-queue'); }
+        }
+
+        function checkSoloAutoPlay() {
+            if (currentMode === 'solo' && player && songQueue.length > 0) {
+                const state = player.getPlayerState();
+                if (state === 0 || currentHostVideoId === '') { playNextSong(); }
+            }
+        }
+
+        function playNextSong() {
+            if (songQueue.length > 0) {
+                const nextSong = songQueue.shift();
+                currentHostVideoId = nextSong.videoId; 
+
+                if (currentMode === 'host') {
+                    db.ref('rooms/' + currentRoom + '/queue').set(songQueue);
+                    db.ref('rooms/' + currentRoom + '/nowPlaying').set({
+                        videoId: nextSong.videoId,
+                        title: nextSong.title,
+                        thumb: nextSong.thumb
+                    });
+                    if(player) player.loadVideoById(nextSong.videoId);
+                } else if (currentMode === 'solo') {
+                    if(player) player.loadVideoById(nextSong.videoId);
+                    renderQueue();
+                    document.getElementById('now-playing-banner').style.display = 'flex';
+                    document.getElementById('np-thumb').src = nextSong.thumb;
+                    document.getElementById('np-title').innerText = nextSong.title;
+                }
+            } else {
+                currentHostVideoId = ''; 
+                if (currentMode === 'host') {
+                    db.ref('rooms/' + currentRoom + '/nowPlaying').remove();
+                } else if (currentMode === 'solo') {
+                    document.getElementById('now-playing-banner').style.display = 'none';
+                }
+                if (player && player.stopVideo) player.stopVideo(); 
+            }
+        }
+
+        function removeQueueItem(index) {
+            songQueue.splice(index, 1);
+            if (currentMode === 'remote' || currentMode === 'host') {
+                db.ref('rooms/' + currentRoom + '/queue').set(songQueue); 
+            } else { renderQueue(); }
+        }
+
+        function renderQueue() {
+            document.getElementById('q-count').innerText = songQueue.length;
+            const qList = document.getElementById('queue-list');
+            qList.innerHTML = '';
+            if (songQueue.length === 0) { qList.innerHTML = '<li style="justify-content:center; color:#71717a; border:none; background:transparent;">Queue is empty.</li>'; return; }
+            songQueue.forEach((song, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <img src="${song.thumb}"> 
+                    <div class="song-details"><span>${index + 1}. ${song.title}</span></div>
+                    <button class="del-icon" onclick="removeQueueItem(${index})">Remove</button>
+                `;
+                qList.appendChild(li);
+            });
+        }
+
+        function toggleFavorite(event, vidId, encTitle, thumb) {
+            if (event) event.stopPropagation();
+            const title = decodeURIComponent(encTitle); 
+            const existsIndex = favorites.findIndex(f => f.videoId === vidId);
+            let isAdding = false;
+
+            if (existsIndex > -1) { 
+                favorites.splice(existsIndex, 1); 
+            } else { 
+                favorites.push({ videoId: vidId, title: title, thumb: thumb }); 
+                isAdding = true; 
+            }
+            localStorage.setItem('videoke_favs', JSON.stringify(favorites));
+            if (isAdding && event) { flyCard(event, 'btn-favs'); }
+            renderFavs(); renderSearch(currentSearchResults); 
+        }
+
+        function flyCard(event, targetTabId) {
+            const targetTab = document.getElementById(targetTabId);
+            const card = event.target ? event.target.closest('li') : null; 
+            if (!targetTab || !card) return;
+
+            const startRect = card.getBoundingClientRect();
+            const targetRect = targetTab.getBoundingClientRect();
+            const endX = targetRect.left + (targetRect.width / 2);
+            const endY = targetRect.top + (targetRect.height / 2);
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+
+            const flyingContainer = document.createElement('ul');
+            flyingContainer.className = 'song-list'; 
+            Object.assign(flyingContainer.style, {
+                position: 'fixed', left: `${centerX - (startRect.width / 2)}px`, top: `${centerY - (startRect.height / 2)}px`,
+                width: `${startRect.width}px`, height: `${startRect.height}px`, zIndex: '999999', pointerEvents: 'none',
+                background: 'transparent', border: 'none', boxShadow: 'none', padding: '0', margin: '0', overflow: 'visible'
+            });
+
+            const flyingCard = card.cloneNode(true);
+            const btn = flyingCard.querySelector('.fav-icon'); if (btn) btn.remove();
+            const delBtn = flyingCard.querySelector('.del-icon'); if (delBtn) delBtn.remove();
+
+            Object.assign(flyingCard.style, {
+                width: '100%', height: '100%', margin: '0', padding: '10px', backgroundColor: '#1a1d24', 
+                border: '2px solid #0ea5e9', borderRadius: '14px', opacity: '0', transform: 'scale(0.5)',
+                transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+            });
+            
+            flyingContainer.appendChild(flyingCard); document.body.appendChild(flyingContainer);
+
+            setTimeout(() => {
+                flyingCard.style.opacity = '1'; flyingCard.style.transform = 'scale(1.3)'; flyingCard.style.boxShadow = '0 40px 80px rgba(0,0,0,0.95)'; 
+            }, 10);
+
+            setTimeout(() => {
+                flyingContainer.style.transition = 'all 1.0s cubic-bezier(0.5, 0, 0.2, 1)'; flyingCard.style.transition = 'all 1.0s cubic-bezier(0.5, 0, 0.2, 1)';
+                flyingContainer.style.left = `${endX - (startRect.width / 2)}px`; flyingContainer.style.top = `${endY - (startRect.height / 2)}px`;
+                flyingCard.style.transform = 'scale(0.1)'; flyingCard.style.opacity = '0'; 
+            }, 800); 
+
+            setTimeout(() => {
+                flyingContainer.remove(); targetTab.style.transform = 'scale(1.15)'; 
+                setTimeout(() => { targetTab.style.transform = 'scale(1)'; }, 150);
+            }, 1800); 
+        }
+
+        function renderFavs() {
+            const fList = document.getElementById('favs-list');
+            fList.innerHTML = '';
+            if (favorites.length === 0) { fList.innerHTML = '<li style="justify-content:center; color:#71717a; border:none; background:transparent; box-shadow:none;">No favorites yet.</li>'; return; }
+            favorites.forEach(song => {
+                const safeTitle = encodeURIComponent(song.title).replace(/'/g, "%27");
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <img src="${song.thumb}" onclick="addToQueue(event, '${song.videoId}', '${safeTitle}', '${song.thumb}')"> 
+                    <div class="song-details" onclick="addToQueue(event, '${song.videoId}', '${safeTitle}', '${song.thumb}')"><span>${song.title}</span></div>
+                    <button class="fav-icon" onclick="toggleFavorite(event, '${song.videoId}', '${safeTitle}', '${song.thumb}')">❤️</button>
+                `;
+                fList.appendChild(li);
+            });
+        }
+
+        function sendControl(action) {
+            if (navigator.vibrate) { navigator.vibrate(20); } 
+            if (currentMode === 'remote' && currentRoom) {
+                db.ref('rooms/' + currentRoom + '/control').set({ 
+                    action: action, 
+                    time: Date.now() + "_" + Math.random() 
+                });
+            } else {
+                if (!player) return;
+                if (action === 'toggle') { (player.getPlayerState() === 1) ? player.pauseVideo() : player.playVideo(); }
+                if (action === 'restart') { player.seekTo(0); player.playVideo(); }
+                if (action === 'next') { playNextSong(); }
+                if (action === 'fullscreen') { toggleFullscreen(); }
+            }
+        }
+
+        async function searchSong() {
+            const query = document.getElementById('searchInput').value;
+            if (!query) return;
+            document.getElementById('searchInput').value = '';
+            const resultsList = document.getElementById('results');
+            
+            resultsList.innerHTML = `
+                <li style="justify-content: center; flex-direction: column; padding: 40px 10px; background: transparent;">
+                    <span style="color: #0ea5e9; font-size: 30px; animation: spinLoading 1s linear infinite; display: inline-block; margin-bottom: 10px;">⏳</span>
+                    <span style="color: #a1a1aa; font-size: 14px; font-weight: bold; letter-spacing: 1px;">Searching...</span>
+                </li>
+            `;
+
+            document.getElementById('searchInput').blur(); 
+            const cacheKey = btoa(query.toLowerCase().trim()); 
+            const cacheRef = db.ref('cache/' + cacheKey);
+            const snapshot = await cacheRef.once('value');
+            
+            if (snapshot.exists()) {
+                currentSearchResults = snapshot.val(); renderSearch(currentSearchResults); return;
+            }
+
+            try {
+                const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                if (data.items) {
+                    cacheRef.set(data.items); currentSearchResults = data.items; renderSearch(currentSearchResults); 
+                } else { 
+                    resultsList.innerHTML = '<li style="justify-content:center; color:#ef4444; background:transparent;">❌ No results found.</li>';
+                }
+            } catch (error) { 
+                resultsList.innerHTML = '<li style="justify-content:center; color:#ef4444; background:transparent;">⚠️ Network error.</li>';
+            }
+        }
+
+        function renderSearch(videos) {
+            const resultsList = document.getElementById('results');
+            resultsList.innerHTML = '';
+            videos.forEach(video => {
+                const vidId = video.id.videoId;
+                const safeTitle = encodeURIComponent(video.snippet.title).replace(/'/g, "%27"); 
+                const thumb = video.snippet.thumbnails.default.url;
+                const isFav = favorites.some(f => f.videoId === vidId) ? '❤️' : '🤍';
+                
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <img src="${thumb}" onclick="addToQueue(event, '${vidId}', '${safeTitle}', '${thumb}')"> 
+                    <div class="song-details" onclick="addToQueue(event, '${vidId}', '${safeTitle}', '${thumb}')"><span>${video.snippet.title}</span></div>
+                    <button class="fav-icon" onclick="toggleFavorite(event, '${vidId}', '${safeTitle}', '${thumb}')">${isFav}</button>
+                `;
+                resultsList.appendChild(li);
+            });
+        }
+
+        function toggleFullscreen() {
+            const wrapper = document.getElementById('player-wrapper');
+            const exitBtn = document.getElementById('exit-fs-btn');
+            
+            if (wrapper.classList.contains('fullscreen-mode')) {
+                wrapper.classList.remove('fullscreen-mode'); exitBtn.style.display = 'none'; 
+            } else {
+                wrapper.classList.add('fullscreen-mode'); exitBtn.style.display = 'block'; 
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const queueListEl = document.getElementById('queue-list');
+            
+            /* INI-ADJUST ANG SETTINGS PARA SMOOTH ANG DRAG SA ANDROID */
+            Sortable.create(queueListEl, {
+                animation: 150, 
+                delay: 150, 
+                delayOnTouchOnly: true, 
+                touchStartThreshold: 5, 
+                forceFallback: true, 
+                fallbackClass: "solid-drag-item", 
+                ghostClass: "empty-placeholder", 
+                scroll: true, 
+                scrollSensitivity: 80, 
+                scrollSpeed: 20,
+                onEnd: function (evt) {
+                    const movedSong = songQueue.splice(evt.oldIndex, 1)[0];
+                    songQueue.splice(evt.newIndex, 0, movedSong);
+                    if (currentMode === 'remote' || currentMode === 'host') {
+                        db.ref('rooms/' + currentRoom + '/queue').set(songQueue); 
+                    } else { renderQueue(); }
+                }
+            });
+        });
+
+        function updateVolumeUI(val) {
+            document.querySelectorAll('.vol-slider').forEach(el => {
+                if(el.value !== val) el.value = val;
+                el.style.background = `linear-gradient(to right, #0ea5e9 ${val}%, #272a33 ${val}%)`;
+            });
+            
+            if (currentMode === 'solo' && player && player.setVolume) {
+                player.setVolume(val);
+            }
+            if (currentMode === 'host' && player && player.setVolume) {
+                player.setVolume(val);
+            }
+        }
+
+        function syncVolumeToFirebase(val) {
+            if (currentMode === 'remote' || currentMode === 'host') {
+                db.ref('rooms/' + currentRoom + '/volume').set(val); 
+            }
+        }
+
+        function adjustVolume(amount) {
+            let currentVal = parseInt(document.querySelector('.vol-slider').value);
+            let newVal = currentVal + amount;
+            if (newVal > 100) newVal = 100;
+            if (newVal < 0) newVal = 0;
+            
+            updateVolumeUI(newVal);
+            syncVolumeToFirebase(newVal);
+        }
+
+        function toggleVolume() {
+            const sidebar = document.getElementById('volSidebar');
+            const controls = document.getElementById('vol-controls-inner');
+            const toggleBtn = document.getElementById('vol-toggle-btn');
+
+            if (sidebar.classList.contains('closed')) {
+                sidebar.classList.remove('closed'); sidebar.classList.add('open');
+                controls.style.display = 'flex'; toggleBtn.style.display = 'none'; 
+                startVolumeTimer(); 
+            } else { closeVolume(); }
+        }
+
+        function closeVolume() {
+            const sidebar = document.getElementById('volSidebar');
+            const controls = document.getElementById('vol-controls-inner');
+            const toggleBtn = document.getElementById('vol-toggle-btn');
+            
+            if(sidebar) {
+                sidebar.classList.remove('open'); sidebar.classList.add('closed');
+                controls.style.display = 'none'; toggleBtn.style.display = 'flex'; 
+                clearTimeout(volTimer);
+            }
+        }
+
+        function startVolumeTimer() {
+            clearTimeout(volTimer);
+            volTimer = setTimeout(() => { closeVolume(); }, 4000); 
+        }
+
+    </script>
+</body>
+</html>
