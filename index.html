@@ -9288,7 +9288,7 @@ function drawBackgroundLayer() {
     }
 }
 
-// START: BAGONG drawChips() - Optimized para Iwas Lag
+// START: BAGONG drawChips() - Aesthetic Wood Carrom Style (FIXED)
 function drawChips() {
     // TINANGGAL: Global drop shadow (Ito ang number 1 cause ng lag)
     ctx.shadowColor = 'transparent'; 
@@ -9296,9 +9296,10 @@ function drawChips() {
 
     chips.forEach(chip => {
         if (chip.inPlay) {
-            let displayRadius = chip.radius;
+            // FIXED 1: Siguraduhing hindi bababa sa 0.1 ang radius kahit kailan
+            let displayRadius = Math.max(0.1, chip.radius); 
             if (chip.isPocketing) {
-                displayRadius *= (1 - chip.pocketingProgress);
+                displayRadius = Math.max(0.1, displayRadius * (1 - chip.pocketingProgress));
             }
 
             ctx.save();
@@ -9306,99 +9307,136 @@ function drawChips() {
             ctx.rotate(chip.rotation);
 
             if (chip.id === 0) {
-                // --- CUE CHIP (TIRADOR) - BUONG DILAW ---
+                // --- CUE CHIP (PAMATO) - BUONG DARK WOOD ---
+                // 1. Base Dark Wood Color
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius, 0, Math.PI * 2);
-                ctx.fillStyle = '#E4B93D'; // Solid Yellow
+                ctx.fillStyle = '#2c1e16'; // Deep dark brown wood
                 ctx.fill();
 
-                // Outer Highlight para magmukhang makinis
+                // 2. Subtle Edge Highlight
+                // FIXED 2: Ginamitan ng multiplier (0.95) imbes na minus 1
                 ctx.beginPath();
-                ctx.arc(0, 0, displayRadius - (displayRadius * 0.05), 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-                ctx.lineWidth = displayRadius * 0.1;
+                ctx.arc(0, 0, displayRadius * 0.95, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = displayRadius * 0.05;
                 ctx.stroke();
 
-                // Mga guhit ng tirador (Itim)
-                ctx.strokeStyle = '#333333';
-                ctx.lineWidth = displayRadius * 0.08;
+                // 3. Outer Carved Groove
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius * 0.75, 0, Math.PI * 2);
+                ctx.strokeStyle = '#140c08'; // Very dark/blackish groove
+                ctx.lineWidth = displayRadius * 0.08;
                 ctx.stroke();
 
+                // 4. Inner Carved Groove
                 ctx.beginPath();
-                ctx.arc(0, 0, displayRadius * 0.4, 0, Math.PI * 2);
+                ctx.arc(0, 0, displayRadius * 0.45, 0, Math.PI * 2);
+                ctx.strokeStyle = '#140c08';
+                ctx.lineWidth = displayRadius * 0.08;
                 ctx.stroke();
 
-                // Pulang tuldok sa gitna
-                ctx.fillStyle = '#CC0000';
+                // 5. Center Raised Dot
                 ctx.beginPath();
-                ctx.arc(0, 0, displayRadius * 0.15, 0, Math.PI * 2);
+                ctx.arc(0, 0, displayRadius * 0.25, 0, Math.PI * 2);
+                ctx.fillStyle = '#36241a'; // Slightly lighter wood for the center pop
                 ctx.fill();
+                ctx.strokeStyle = '#140c08';
+                ctx.lineWidth = displayRadius * 0.04;
+                ctx.stroke();
+
             } else {
-                // --- SOLID PLASTIC CHIPS (MANIPIS NA DILAW NA GILID) ---
-                // 1. Base Dilaw na Gilid (Yellow Rim)
+                // --- OBJECT CHIPS (WOOD RIM + SOLID COLOR CENTER) ---
+                // 1. Dark Wood Outer Rim
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius, 0, Math.PI * 2);
-                ctx.fillStyle = '#E4B93D'; 
+                ctx.fillStyle = '#2c1e16'; // Deep dark brown wood
                 ctx.fill();
 
-                // 2. Outer Highlight
+                // 2. Edge Highlight
+                // FIXED 3: Ginamitan ng multiplier (0.95) imbes na minus 1
                 ctx.beginPath();
-                ctx.arc(0, 0, displayRadius - (displayRadius * 0.05), 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-                ctx.lineWidth = displayRadius * 0.1;
+                ctx.arc(0, 0, displayRadius * 0.95, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.lineWidth = displayRadius * 0.05;
                 ctx.stroke();
 
-                // 3. Inner Solid Color 
-                const innerColorRadius = displayRadius * 0.86; 
+                // 3. Inner Solid Color Resin/Plastic
+                const innerRadius = displayRadius * 0.72; // Mas makapal na wood rim
                 ctx.beginPath();
-                ctx.arc(0, 0, innerColorRadius, 0, Math.PI * 2);
-                ctx.fillStyle = chip.color;
+                ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
+                
+                // Adjust colors to match the vibrant red and blue from the image
+                if (chip.type === 'red' || chip.color === '#C8102E' || chip.color === '#FF0000') {
+                    ctx.fillStyle = '#E8351E'; // Bright orange-red
+                } else if (chip.type === 'blue' || chip.color === '#0033A0' || chip.color === '#0000FF') {
+                    ctx.fillStyle = '#1A36B8'; // Deep vibrant blue
+                } else {
+                    ctx.fillStyle = chip.color; // Fallback for 61-ball colors
+                }
                 ctx.fill();
 
-                // 4. Inner Groove
+                // 4. Inner Shadow (para mukhang nakalubog yung colored plastic sa kahoy)
                 ctx.beginPath();
-                ctx.arc(0, 0, innerColorRadius, 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)'; 
+                ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)'; 
                 ctx.lineWidth = displayRadius * 0.06; 
                 ctx.stroke();
 
-                // 5. Numero (Shadow tinanggal din para mas mabilis)
-                if(chip.id) {
+                // 5. Classic Number Text (White, Serif Font)
+                if (chip.id) {
                     ctx.fillStyle = 'white';
-                    ctx.font = `bold ${innerColorRadius * 1.3}px 'Nunito', sans-serif`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     
-                    // Simple text na lang, walang shadow Blur
-                    ctx.fillText(chip.id, 0, 1 * scale);
+                    let textYOffset = 1 * scale;
+                    
+                    // Special layout para sa 6 at 9
+                    if (chip.id === 6 || chip.id === 9) {
+                        textYOffset = -2 * scale; // Iangat ng konti ang number
+                        ctx.font = `bold ${innerRadius * 1.2}px 'Georgia', 'Times New Roman', serif`;
+                        ctx.fillText(chip.id, 0, textYOffset);
+
+                        // Isulat ang "SIX" o "NINE" sa ilalim
+                        ctx.font = `bold ${innerRadius * 0.3}px 'Georgia', 'Times New Roman', serif`;
+                        const subText = chip.id === 6 ? "SIX" : "NINE";
+                        ctx.fillText(subText, 0, textYOffset + (innerRadius * 0.75));
+                    } else {
+                        ctx.font = `bold ${innerRadius * 1.3}px 'Georgia', 'Times New Roman', serif`;
+                        ctx.fillText(chip.id, 0, textYOffset);
+                    }
                 }
             }
             ctx.restore();
 
-            // === START: RING LIGHT REQUEST (NO GLOW/BLUR) ===
+            // === START: RING LIGHT REQUEST (SAFE VERSION) ===
             const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
-            if (isMyTurn && (gameState === 'aiming' || (gameState ==='moving' && canMoveCueBall)) && chip.inPlay && legalTargetChipIds.has(chip.id)) {
+            
+            // FIXED 4: Nagdagdag ng safe check kung Set ba o Array ang data para iwas crash
+            if (isMyTurn && (gameState === 'aiming' || (gameState ==='moving' && canMoveCueBall)) && chip.inPlay && legalTargetChipIds) {
+                const isTarget = legalTargetChipIds instanceof Set ? legalTargetChipIds.has(chip.id) : legalTargetChipIds.includes(chip.id);
                 
-                const pulse = Math.abs(Math.sin(performance.now() * 0.0015));
-                const alpha = pulse * 0.7 + 0.3;
-                const ringWidth = 2.5 * scale;
-                const ringColor = `rgba(255, 255, 255, ${alpha})`;
+                if (isTarget) {
+                    const pulse = Math.abs(Math.sin(performance.now() * 0.0015));
+                    const alpha = pulse * 0.7 + 0.3;
+                    const ringWidth = 2.5 * scale;
+                    const ringColor = `rgba(255, 255, 255, ${alpha})`;
 
-                ctx.save();
-                // TINANGGAL: ctx.shadowBlur at ctx.shadowColor dito dahil sobrang bigat
-                ctx.beginPath();
-                ctx.arc(chip.x, chip.y, chip.radius + ringWidth + (2*scale), 0, Math.PI * 2);
-                ctx.strokeStyle = ringColor;
-                ctx.lineWidth = ringWidth;
-                ctx.stroke();
-                ctx.restore();
+                    ctx.save();
+                    ctx.beginPath();
+                    // Siguraduhing positive din ang arc ng ring light
+                    ctx.arc(chip.x, chip.y, Math.max(0.1, displayRadius + ringWidth + (2*scale)), 0, Math.PI * 2);
+                    ctx.strokeStyle = ringColor;
+                    ctx.lineWidth = ringWidth;
+                    ctx.stroke();
+                    ctx.restore();
+                }
             }
             // === END: RING LIGHT REQUEST ===
         }
     });
 }
+
 
 
         
