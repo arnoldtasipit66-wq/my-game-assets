@@ -9171,7 +9171,7 @@ function drawBackgroundLayer() {
 
 // START: BAGONG drawChips() - Optimized para Iwas Lag
 function drawChips() {
-    // TINANGGAL: Global drop shadow (Ito ang number 1 cause ng lag)
+    // Para iwas lag, tinanggal natin ang mabigat na global shadowBlur
     ctx.shadowColor = 'transparent'; 
     ctx.shadowBlur = 0;
 
@@ -9184,91 +9184,134 @@ function drawChips() {
 
             ctx.save();
             ctx.translate(chip.x, chip.y);
+
+            // ==========================================
+            // FAKE SHADOW (Iwas lag na anino)
+            // ==========================================
+            // Idodrawing natin ito BAGO umikot (rotate) ang bola para 
+            // laging nasa iisang direksyon (ibaba-kanan) ang anino.
+            ctx.beginPath();
+            ctx.arc(3 * scale, 4 * scale, displayRadius, 0, Math.PI * 2); // Offset ng anino
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Kulay ng anino (itim na medyo transparent)
+            ctx.fill();
+
             ctx.rotate(chip.rotation);
 
             if (chip.id === 0) {
-                // --- CUE CHIP (TIRADOR) - BUONG DILAW ---
+                // ==========================================
+                // PAMATO (CUE CHIP) - Dark Wood Carved Look
+                // ==========================================
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius, 0, Math.PI * 2);
-                ctx.fillStyle = '#FFD700'; // Solid Yellow
+                ctx.fillStyle = '#2c241b'; 
                 ctx.fill();
 
-                // Outer Highlight para magmukhang makinis
                 ctx.beginPath();
-                ctx.arc(0, 0, displayRadius - (displayRadius * 0.05), 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.arc(0, 0, displayRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = '#1a140f'; 
                 ctx.lineWidth = displayRadius * 0.1;
                 ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, displayRadius - (displayRadius*0.05), 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)'; 
+                ctx.lineWidth = displayRadius * 0.05;
+                ctx.stroke();
 
-                // Mga guhit ng tirador (Itim)
-                ctx.strokeStyle = '#333333';
+                const grooveColor = '#140e0a';
+                const highlightColor = 'rgba(255,255,255,0.08)';
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, displayRadius * 0.65, 0, Math.PI * 2);
+                ctx.strokeStyle = grooveColor;
                 ctx.lineWidth = displayRadius * 0.08;
+                ctx.stroke();
                 ctx.beginPath();
-                ctx.arc(0, 0, displayRadius * 0.75, 0, Math.PI * 2);
+                ctx.arc(0, 0, displayRadius * 0.65 - 1, 0, Math.PI * 2);
+                ctx.strokeStyle = highlightColor;
+                ctx.lineWidth = displayRadius * 0.02;
                 ctx.stroke();
 
                 ctx.beginPath();
-                ctx.arc(0, 0, displayRadius * 0.4, 0, Math.PI * 2);
+                ctx.arc(0, 0, displayRadius * 0.35, 0, Math.PI * 2);
+                ctx.strokeStyle = grooveColor;
+                ctx.lineWidth = displayRadius * 0.08;
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(0, 0, displayRadius * 0.35 - 1, 0, Math.PI * 2);
+                ctx.strokeStyle = highlightColor;
+                ctx.lineWidth = displayRadius * 0.02;
                 ctx.stroke();
 
-                // Pulang tuldok sa gitna
-                ctx.fillStyle = '#CC0000';
                 ctx.beginPath();
-                ctx.arc(0, 0, displayRadius * 0.15, 0, Math.PI * 2);
+                ctx.arc(0, 0, displayRadius * 0.2, 0, Math.PI * 2);
+                ctx.fillStyle = '#251e16';
                 ctx.fill();
+                ctx.strokeStyle = '#140e0a';
+                ctx.lineWidth = displayRadius * 0.04;
+                ctx.stroke();
+
             } else {
-                // --- SOLID PLASTIC CHIPS (MANIPIS NA DILAW NA GILID) ---
-                // 1. Base Dilaw na Gilid (Yellow Rim)
+                // ==========================================
+                // PICHA (OBJECT BALLS) - Wood Rim + Kulay
+                // ==========================================
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius, 0, Math.PI * 2);
-                ctx.fillStyle = '#FFD700'; 
+                ctx.fillStyle = '#3a2818'; 
                 ctx.fill();
 
-                // 2. Outer Highlight
                 ctx.beginPath();
-                ctx.arc(0, 0, displayRadius - (displayRadius * 0.05), 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.arc(0, 0, displayRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = '#1a110a';
                 ctx.lineWidth = displayRadius * 0.1;
                 ctx.stroke();
-
-                // 3. Inner Solid Color 
-                const innerColorRadius = displayRadius * 0.86; 
+                
                 ctx.beginPath();
-                ctx.arc(0, 0, innerColorRadius, 0, Math.PI * 2);
-                ctx.fillStyle = chip.color;
+                ctx.arc(0, 0, displayRadius - (displayRadius*0.05), 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx.lineWidth = displayRadius * 0.05;
+                ctx.stroke();
+
+                const innerRadius = displayRadius * 0.72; 
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
+                ctx.fillStyle = '#111'; 
                 ctx.fill();
 
-                // 4. Inner Groove
                 ctx.beginPath();
-                ctx.arc(0, 0, innerColorRadius, 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)'; 
+                ctx.arc(0, 0, innerRadius - (displayRadius * 0.02), 0, Math.PI * 2);
+                ctx.fillStyle = chip.color; 
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)'; 
                 ctx.lineWidth = displayRadius * 0.06; 
                 ctx.stroke();
 
-                // 5. Numero (Shadow tinanggal din para mas mabilis)
                 if(chip.id) {
                     ctx.fillStyle = 'white';
-                    ctx.font = `bold ${innerColorRadius * 1.3}px 'Nunito', sans-serif`;
+                    ctx.font = `bold ${innerRadius * 1.3}px Georgia, serif`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    
-                    // Simple text na lang, walang shadow Blur
-                    ctx.fillText(chip.id, 0, 1 * scale);
+                    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                    ctx.shadowBlur = 3;
+                    ctx.fillText(chip.id, 0, 2 * scale); 
+                    ctx.shadowBlur = 0; 
                 }
             }
             ctx.restore();
 
-            // === START: RING LIGHT REQUEST (NO GLOW/BLUR) ===
+            // --- RING LIGHT (Pag-aiming) ---
             const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
             if (isMyTurn && (gameState === 'aiming' || (gameState ==='moving' && canMoveCueBall)) && chip.inPlay && legalTargetChipIds.has(chip.id)) {
-                
                 const pulse = Math.abs(Math.sin(performance.now() * 0.0015));
                 const alpha = pulse * 0.7 + 0.3;
                 const ringWidth = 2.5 * scale;
                 const ringColor = `rgba(255, 255, 255, ${alpha})`;
 
                 ctx.save();
-                // TINANGGAL: ctx.shadowBlur at ctx.shadowColor dito dahil sobrang bigat
                 ctx.beginPath();
                 ctx.arc(chip.x, chip.y, chip.radius + ringWidth + (2*scale), 0, Math.PI * 2);
                 ctx.strokeStyle = ringColor;
@@ -9276,11 +9319,9 @@ function drawChips() {
                 ctx.stroke();
                 ctx.restore();
             }
-            // === END: RING LIGHT REQUEST ===
         }
     });
 }
-
 
         
 function drawCueStick() {
