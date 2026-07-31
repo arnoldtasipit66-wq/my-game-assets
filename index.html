@@ -9913,8 +9913,10 @@ function handleChipCollision(chip1, chip2) {
         chip1.rotationSpeed += (tangentialVelDiff * spinFactor);
         chip2.rotationSpeed -= (tangentialVelDiff * spinFactor);
 
-        // Kalkulahin ang "preno" galing sa pagkiskis
-        const frictionImpulse = tangentialVelDiff * (1.0 - COLLISION_FRICTION_FACTOR);
+                // Kalkulahin ang "preno" galing sa pagkiskis
+        // TAMA: Inalis ang '1.0 -' para maliit na friction lang ang ma-apply,
+        // kaya susunod na 100% ang picha sa yellow guideline!
+        const frictionImpulse = tangentialVelDiff * COLLISION_FRICTION_FACTOR;
 
         // I-apply ang "preno" sa tangential velocity (pag-dulas) — BAGO i-transform pabalik
         vel1.y -= frictionImpulse / m1;
