@@ -9288,10 +9288,24 @@ function drawBackgroundLayer() {
     }
 }
 
-// START: BAGONG drawChips() - Crash-Proof, Fake Shadow, at Malaking Number
+
+                // START: BAGONG drawChips() - Nakatago ang ilaw pag umaasinta (May 1-sec delay)
 function drawChips() {
     ctx.shadowColor = 'transparent'; 
     ctx.shadowBlur = 0;
+
+    // === TINGNAN ANG CONTROLS AT TIMER (Isang beses lang bawat frame para mabilis) ===
+    const isActivelyAiming = isRotatingLeft || isRotatingRight || isAimingOnCanvas || isDraggingCueBall;
+    
+    if (isActivelyAiming) {
+        // Laging nire-refresh ang oras habang nakapindot ka
+        window.aimReleaseTime = Date.now(); 
+    }
+    
+    // Alamin kung lumipas na ang 1000ms (1 second) mula nang bumitaw ka
+    const isAimDelayPassed = (Date.now() - (window.aimReleaseTime || 0)) > 1000; 
+    const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
+    // ===================================================================================
 
     chips.forEach(chip => {
         if (chip.inPlay) {
@@ -9399,10 +9413,9 @@ function drawChips() {
             }
             ctx.restore();
 
-            // === RING LIGHT REQUEST ===
-            const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
-            
-            if (isMyTurn && (gameState === 'aiming' || (gameState ==='moving' && canMoveCueBall)) && chip.inPlay && legalTargetChipIds) {
+            // === RING LIGHT REQUEST (MAY 1 SECOND DELAY NA) ===
+            // Ginamit natin dito ang isActivelyAiming at isAimDelayPassed
+            if (isMyTurn && !isActivelyAiming && isAimDelayPassed && (gameState === 'aiming' || (gameState ==='moving' && canMoveCueBall)) && chip.inPlay && legalTargetChipIds) {
                 const isTarget = legalTargetChipIds instanceof Set ? legalTargetChipIds.has(chip.id) : legalTargetChipIds.includes(chip.id);
                 
                 if (isTarget) {
@@ -9423,7 +9436,6 @@ function drawChips() {
         }
     });
 }
-
         
 function drawCueStick() {
     // 1. Check kung dapat ipakita ang tako
