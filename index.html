@@ -9288,7 +9288,7 @@ function drawBackgroundLayer() {
     }
 }
 
-                        // START: BAGONG drawChips() - Yellow Thin Rim & Big Sans-Serif Numbers
+                // START: BAGONG drawChips() - Makapal na Ukit at Malaking Numero
 function drawChips() {
     // TINANGGAL: Global drop shadow para iwas lag
     ctx.shadowColor = 'transparent'; 
@@ -9321,18 +9321,18 @@ function drawChips() {
                 ctx.lineWidth = displayRadius * 0.05;
                 ctx.stroke();
 
-                // 3. Outer Carved Groove (Manipis na linya)
+                // 3. Outer Carved Groove (PINAKAPAL NA LINYA)
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius * 0.70, 0, Math.PI * 2);
-                ctx.strokeStyle = '#B8860B'; // Darker gold groove
-                ctx.lineWidth = displayRadius * 0.05;
+                ctx.strokeStyle = '#996515'; // Mas madilim na gold para litaw
+                ctx.lineWidth = displayRadius * 0.12; // Mula 0.05 ginawang 0.12
                 ctx.stroke();
 
-                // 4. Inner Carved Groove (Manipis na linya)
+                // 4. Inner Carved Groove (PINAKAPAL NA LINYA)
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius * 0.35, 0, Math.PI * 2);
-                ctx.strokeStyle = '#B8860B';
-                ctx.lineWidth = displayRadius * 0.05;
+                ctx.strokeStyle = '#996515'; // Mas madilim na gold
+                ctx.lineWidth = displayRadius * 0.12; // Mula 0.05 ginawang 0.12
                 ctx.stroke();
 
             } else {
@@ -9350,8 +9350,8 @@ function drawChips() {
                 ctx.lineWidth = displayRadius * 0.05;
                 ctx.stroke();
 
-                // 3. Inner Solid Color (Mas pinalaki para numipis ang yellow rim)
-                const innerRadius = displayRadius * 0.84; // Naging 84% para manipis ang gilid
+                // 3. Inner Solid Color 
+                const innerRadius = displayRadius * 0.84; // Manipis ang gilid
                 ctx.beginPath();
                 ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
                 
@@ -9372,29 +9372,26 @@ function drawChips() {
                 ctx.lineWidth = displayRadius * 0.04; 
                 ctx.stroke();
 
-                // 5. Malaking Sans-Serif Number (Tinanggal ang "buntot" / serif)
+                // 5. Malaking Sans-Serif Number (Inalis ang text na "SIX"/"NINE")
                 if (chip.id) {
                     ctx.fillStyle = 'white';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     
-                    let textYOffset = 1 * scale;
-                    
-                    // Special layout para sa 6 at 9
-                    if (chip.id === 6 || chip.id === 9) {
-                        textYOffset = -3 * scale; // Iangat ng konti
-                        // Pinalaki ang numero (x1.4) at ginamit ang modern sans-serif font
-                        ctx.font = `bold ${innerRadius * 1.4}px 'Nunito', 'Arial', sans-serif`;
-                        ctx.fillText(chip.id, 0, textYOffset);
+                    // Pare-pareho na ang laki ng lahat ng numero (Super Laki!)
+                    ctx.font = `bold ${innerRadius * 1.5}px 'Nunito', 'Arial', sans-serif`;
+                    ctx.fillText(chip.id, 0, 1 * scale);
 
-                        // Maliit na text na "SIX" o "NINE" (sans-serif din)
-                        ctx.font = `bold ${innerRadius * 0.35}px 'Nunito', 'Arial', sans-serif`;
-                        const subText = chip.id === 6 ? "SIX" : "NINE";
-                        ctx.fillText(subText, 0, textYOffset + (innerRadius * 0.8));
-                    } else {
-                        // Pinalaki ang numero para sa iba (x1.5)
-                        ctx.font = `bold ${innerRadius * 1.5}px 'Nunito', 'Arial', sans-serif`;
-                        ctx.fillText(chip.id, 0, textYOffset);
+                    // Para hindi malito kung umikot ang 6 at 9, lalagyan natin ng classic na underline!
+                    if (chip.id === 6 || chip.id === 9) {
+                        ctx.beginPath();
+                        // Guhit sa ibaba ng numero
+                        ctx.moveTo(-innerRadius * 0.35, innerRadius * 0.65);
+                        ctx.lineTo(innerRadius * 0.35, innerRadius * 0.65);
+                        ctx.strokeStyle = 'white';
+                        ctx.lineWidth = innerRadius * 0.15;
+                        ctx.lineCap = 'round';
+                        ctx.stroke();
                     }
                 }
             }
@@ -9404,7 +9401,6 @@ function drawChips() {
             const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
             
             if (isMyTurn && (gameState === 'aiming' || (gameState ==='moving' && canMoveCueBall)) && chip.inPlay && legalTargetChipIds) {
-                // Safe check para suportado kahit Set o Array ang object
                 const isTarget = legalTargetChipIds instanceof Set ? legalTargetChipIds.has(chip.id) : legalTargetChipIds.includes(chip.id);
                 
                 if (isTarget) {
@@ -9426,6 +9422,7 @@ function drawChips() {
         }
     });
 }
+
 
 
 
