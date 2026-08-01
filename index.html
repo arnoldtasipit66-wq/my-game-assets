@@ -8943,87 +8943,7 @@ function playCoinSound() {
 
                         
 
-        // =========================================
-// ✨ PARTICLE SYSTEM (SPARKS & TRAILS) ✨
-// =========================================
-let particles = [];
-
-function spawnSparks(x, y, impactSpeed) {
-    // BINAWASAN: Mula 20 maximum sparks, ginawa nating 8 lang
-    let numSparks = Math.min(8, Math.floor(impactSpeed * 0.8));
-    
-    for(let i = 0; i < numSparks; i++) {
-        let angle = Math.random() * Math.PI * 2;
-        let speed = Math.random() * impactSpeed * 3;
-        particles.push({
-            x: x,
-            y: y,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            radius: (Math.random() * 3 + 1.5) * scale,
-            color: '255, 215, 0', // Gold Sparks
-            alpha: 1,
-            decay: 2.0 + Math.random() * 2 // Pinabilis natin ang pag-fade out
-        });
-    }
-}
-
-function updateParticles(dt) {
-    for (let i = particles.length - 1; i >= 0; i--) {
-        let p = particles[i];
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        p.alpha -= p.decay * dt;
-        if (p.alpha <= 0) particles.splice(i, 1); 
-    }
-}
-
-function drawParticles() {
-    if (particles.length === 0) return;
-    
-    ctx.save();
-    // TINANGGAL ANG: ctx.globalCompositeOperation = 'lighter';
-    
-    particles.forEach(p => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${p.color}, ${p.alpha})`;
-        ctx.fill();
-    });
-    
-    ctx.restore();
-}
-
-
-        // =========================================
-// 💬 HTML FLOATING TEXT SYSTEM (Lulusot sa Kahoy!)
-// =========================================
-function spawnFloatingText(x, y, text, color) {
-    // 1. Gumawa ng text element
-    const floatDiv = document.createElement('div');
-    floatDiv.className = 'floating-point-text';
-    floatDiv.textContent = text;
-    floatDiv.style.color = color || '#00FF7F';
-    
-    // 2. Hanapin ang eksaktong posisyon sa screen ng butas (Hole)
-    const canvasRect = canvas.getBoundingClientRect();
-    const scaleX = canvasRect.width / canvas.width;
-    const scaleY = canvasRect.height / canvas.height;
-    
-    // I-convert ang posisyon sa mesa papunta sa posisyon sa screen ng phone
-    const screenX = canvasRect.left + (x * scaleX);
-    const screenY = canvasRect.top + (y * scaleY);
-    
-    floatDiv.style.left = `${screenX}px`;
-    floatDiv.style.top = `${screenY}px`;
-    
-    // 3. Ilagay sa pinakalabas ng page (Body) para hindi matakpan ng kahit ano
-    document.body.appendChild(floatDiv);
-        // 4. Burahin kusa pagkatapos ng animation (3.5 seconds na ngayon)
-    setTimeout(() => {
-        floatDiv.remove();
-    }, 3500); 
-
+        
 }
 
 
@@ -9063,31 +8983,7 @@ function spawnFloatingText(x, y, text, color) {
                 maxLoops--; // <--- DINAGDAG
             }
 
-                    // --- 🌠 METEOR TRAILS GENERATOR ---
-            if (chipsMoving) {
-                chips.forEach(chip => {
-                    if (chip.inPlay && !chip.isPocketing) {
-                        let speed = Math.sqrt(chip.vx*chip.vx + chip.vy*chip.vy);
-                        if (speed > 15) { 
-                            let trailColor = chip.id === 0 ? '0, 255, 255' : '255, 69, 0'; 
-                            if (Math.random() < 0.6) { 
-                                particles.push({
-                                    x: chip.x + (Math.random()-0.5)*10, 
-                                    y: chip.y + (Math.random()-0.5)*10,
-                                    vx: -chip.vx * 0.05, 
-                                    vy: -chip.vy * 0.05,
-                                    radius: (Math.random() * 4 + 2) * scale,
-                                    color: trailColor,
-                                    alpha: 0.7,
-                                    decay: 2 + Math.random() 
-                                });
-                            }
-                        }
-                    }
-                });
-            }
-            // I-galaw ang mga particles
-            updateParticles(deltaTime / 1000);
+                    
                         
 
 
@@ -9109,7 +9005,7 @@ function draw() {
     // 2. I-drawing ang mga bagay na gumagalaw (Walang babaguhin dito)
     drawChips(); 
         // --- I-DRAWING ANG MGA SPARKS AT TRAILS ---
-    drawParticles();
+    
         // --- I-DRAWING ANG MGA FLOATING TEXT ---
     
 
@@ -9288,7 +9184,7 @@ function drawBackgroundLayer() {
     }
 }
 
-                // START: BAGONG drawChips() - Makapal na Ukit at Malaking Numero
+// START: BAGONG drawChips() - May Fake Shadow
 function drawChips() {
     // TINANGGAL: Global drop shadow para iwas lag
     ctx.shadowColor = 'transparent'; 
@@ -9296,96 +9192,95 @@ function drawChips() {
 
     chips.forEach(chip => {
         if (chip.inPlay) {
-            // SAFE CHECK: Para iwas freeze/crash kapag nahuhulog ang bola
             let displayRadius = Math.max(0.1, chip.radius); 
             if (chip.isPocketing) {
                 displayRadius = Math.max(0.1, displayRadius * (1 - chip.pocketingProgress));
             }
 
             ctx.save();
+            // 1. I-translate muna sa posisyon ng picha
             ctx.translate(chip.x, chip.y);
+            
+            // === FAKE SHADOW (Iwas Lag) ===
+            // Idro-drawing natin ito BAGO i-rotate ang picha para laging nasa iisang direksyon ang anino
+            ctx.beginPath();
+            // Naka-offset ng 4 pixels pakanan at pababa para magmukhang anino
+            ctx.arc(4 * scale, 4 * scale, displayRadius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)'; // Semi-transparent na itim
+            ctx.fill();
+            // ==============================
+
+            // 2. I-rotate na ang canvas para sa mga ukit at numero
             ctx.rotate(chip.rotation);
 
             if (chip.id === 0) {
                 // --- CUE CHIP (PAMATO) - BUONG DILAW/GOLD ---
-                // 1. Base Yellow/Gold Color
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius, 0, Math.PI * 2);
-                ctx.fillStyle = '#E4B93D'; // Solid Gold/Yellow
+                ctx.fillStyle = '#E4B93D'; 
                 ctx.fill();
 
-                // 2. Subtle Edge Highlight
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius * 0.95, 0, Math.PI * 2);
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
                 ctx.lineWidth = displayRadius * 0.05;
                 ctx.stroke();
 
-                // 3. Outer Carved Groove (PINAKAPAL NA LINYA)
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius * 0.70, 0, Math.PI * 2);
-                ctx.strokeStyle = '#996515'; // Mas madilim na gold para litaw
-                ctx.lineWidth = displayRadius * 0.12; // Mula 0.05 ginawang 0.12
+                ctx.strokeStyle = '#996515'; 
+                ctx.lineWidth = displayRadius * 0.12; 
                 ctx.stroke();
 
-                // 4. Inner Carved Groove (PINAKAPAL NA LINYA)
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius * 0.35, 0, Math.PI * 2);
-                ctx.strokeStyle = '#996515'; // Mas madilim na gold
-                ctx.lineWidth = displayRadius * 0.12; // Mula 0.05 ginawang 0.12
+                ctx.strokeStyle = '#996515'; 
+                ctx.lineWidth = displayRadius * 0.12; 
                 ctx.stroke();
 
             } else {
-                // --- OBJECT CHIPS (THIN YELLOW RIM + SOLID COLOR CENTER) ---
-                // 1. Yellow Outer Rim
+                // --- OBJECT CHIPS ---
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius, 0, Math.PI * 2);
-                ctx.fillStyle = '#E4B93D'; // Gold/Yellow
+                ctx.fillStyle = '#E4B93D'; 
                 ctx.fill();
 
-                // 2. Edge Highlight
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius * 0.95, 0, Math.PI * 2);
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
                 ctx.lineWidth = displayRadius * 0.05;
                 ctx.stroke();
 
-                // 3. Inner Solid Color 
-                const innerRadius = displayRadius * 0.84; // Manipis ang gilid
+                const innerRadius = displayRadius * 0.84; 
                 ctx.beginPath();
                 ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
                 
-                // Vibrant colors base sa reference image
                 if (chip.type === 'red' || chip.color === '#C8102E' || chip.color === '#FF0000') {
-                    ctx.fillStyle = '#B21A1A'; // Deep rich red
+                    ctx.fillStyle = '#B21A1A'; 
                 } else if (chip.type === 'blue' || chip.color === '#0033A0' || chip.color === '#0000FF') {
-                    ctx.fillStyle = '#1A36B8'; // Deep vibrant blue
+                    ctx.fillStyle = '#1A36B8'; 
                 } else {
-                    ctx.fillStyle = chip.color; // Fallback
+                    ctx.fillStyle = chip.color; 
                 }
                 ctx.fill();
 
-                // 4. Inner Shadow (Para magmukhang 3D/nakalubog yung gitna)
                 ctx.beginPath();
                 ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
                 ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)'; 
                 ctx.lineWidth = displayRadius * 0.04; 
                 ctx.stroke();
 
-                // 5. Malaking Sans-Serif Number (Inalis ang text na "SIX"/"NINE")
                 if (chip.id) {
                     ctx.fillStyle = 'white';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     
-                    // Pare-pareho na ang laki ng lahat ng numero (Super Laki!)
                     ctx.font = `bold ${innerRadius * 1.5}px 'Nunito', 'Arial', sans-serif`;
                     ctx.fillText(chip.id, 0, 1 * scale);
 
-                    // Para hindi malito kung umikot ang 6 at 9, lalagyan natin ng classic na underline!
+                    // Underline para sa 6 at 9
                     if (chip.id === 6 || chip.id === 9) {
                         ctx.beginPath();
-                        // Guhit sa ibaba ng numero
                         ctx.moveTo(-innerRadius * 0.35, innerRadius * 0.65);
                         ctx.lineTo(innerRadius * 0.35, innerRadius * 0.65);
                         ctx.strokeStyle = 'white';
@@ -9397,7 +9292,7 @@ function drawChips() {
             }
             ctx.restore();
 
-            // === START: RING LIGHT REQUEST (SAFE VERSION) ===
+            // === RING LIGHT REQUEST ===
             const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
             
             if (isMyTurn && (gameState === 'aiming' || (gameState ==='moving' && canMoveCueBall)) && chip.inPlay && legalTargetChipIds) {
@@ -9418,10 +9313,10 @@ function drawChips() {
                     ctx.restore();
                 }
             }
-            // === END: RING LIGHT REQUEST ===
         }
     });
 }
+
 
 
 
