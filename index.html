@@ -9288,116 +9288,118 @@ function drawBackgroundLayer() {
     }
 }
 
-                // START: BAGONG drawChips() - Makapal na Ukit at Malaking Numero
+// START: BAGONG drawChips() - Crash-Proof, Fake Shadow, at Malaking Number
 function drawChips() {
-    // TINANGGAL: Global drop shadow para iwas lag
     ctx.shadowColor = 'transparent'; 
     ctx.shadowBlur = 0;
 
     chips.forEach(chip => {
         if (chip.inPlay) {
-            // SAFE CHECK: Para iwas freeze/crash kapag nahuhulog ang bola
-            let displayRadius = Math.max(0.1, chip.radius); 
+            // SAFE CHECK 1: Gawing 1 ang pinakamaliit na radius para hindi mag-error ang canvas
+            let displayRadius = Math.max(1, chip.radius); 
             if (chip.isPocketing) {
-                displayRadius = Math.max(0.1, displayRadius * (1 - chip.pocketingProgress));
+                displayRadius = Math.max(1, displayRadius * (1 - chip.pocketingProgress));
             }
 
             ctx.save();
             ctx.translate(chip.x, chip.y);
+            
+            // === FAKE SHADOW ===
+            ctx.beginPath();
+            ctx.arc(4 * scale, 4 * scale, displayRadius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)'; 
+            ctx.fill();
+
             ctx.rotate(chip.rotation);
 
+            // --- CUE CHIP (PAMATO) ---
             if (chip.id === 0) {
-                // --- CUE CHIP (PAMATO) - BUONG DILAW/GOLD ---
-                // 1. Base Yellow/Gold Color
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius, 0, Math.PI * 2);
-                ctx.fillStyle = '#E4B93D'; // Solid Gold/Yellow
+                ctx.fillStyle = '#E4B93D'; 
                 ctx.fill();
 
-                // 2. Subtle Edge Highlight
-                ctx.beginPath();
-                ctx.arc(0, 0, displayRadius * 0.95, 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-                ctx.lineWidth = displayRadius * 0.05;
-                ctx.stroke();
+                // SAFE CHECK 2: I-drawing lang ang ukit kung malaki pa ang bola
+                if (displayRadius > 3) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, displayRadius * 0.95, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                    ctx.lineWidth = Math.max(0.5, displayRadius * 0.05);
+                    ctx.stroke();
 
-                // 3. Outer Carved Groove (PINAKAPAL NA LINYA)
-                ctx.beginPath();
-                ctx.arc(0, 0, displayRadius * 0.70, 0, Math.PI * 2);
-                ctx.strokeStyle = '#996515'; // Mas madilim na gold para litaw
-                ctx.lineWidth = displayRadius * 0.12; // Mula 0.05 ginawang 0.12
-                ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(0, 0, displayRadius * 0.70, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#996515'; 
+                    ctx.lineWidth = Math.max(0.5, displayRadius * 0.12); 
+                    ctx.stroke();
 
-                // 4. Inner Carved Groove (PINAKAPAL NA LINYA)
-                ctx.beginPath();
-                ctx.arc(0, 0, displayRadius * 0.35, 0, Math.PI * 2);
-                ctx.strokeStyle = '#996515'; // Mas madilim na gold
-                ctx.lineWidth = displayRadius * 0.12; // Mula 0.05 ginawang 0.12
-                ctx.stroke();
-
-            } else {
-                // --- OBJECT CHIPS (THIN YELLOW RIM + SOLID COLOR CENTER) ---
-                // 1. Yellow Outer Rim
+                    ctx.beginPath();
+                    ctx.arc(0, 0, displayRadius * 0.35, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#996515'; 
+                    ctx.lineWidth = Math.max(0.5, displayRadius * 0.12); 
+                    ctx.stroke();
+                }
+            } 
+            // --- OBJECT CHIPS ---
+            else {
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius, 0, Math.PI * 2);
-                ctx.fillStyle = '#E4B93D'; // Gold/Yellow
+                ctx.fillStyle = '#E4B93D'; 
                 ctx.fill();
 
-                // 2. Edge Highlight
-                ctx.beginPath();
-                ctx.arc(0, 0, displayRadius * 0.95, 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-                ctx.lineWidth = displayRadius * 0.05;
-                ctx.stroke();
+                if (displayRadius > 3) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, displayRadius * 0.95, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                    ctx.lineWidth = Math.max(0.5, displayRadius * 0.05);
+                    ctx.stroke();
+                }
 
-                // 3. Inner Solid Color 
-                const innerRadius = displayRadius * 0.84; // Manipis ang gilid
+                const innerRadius = displayRadius * 0.84; 
                 ctx.beginPath();
                 ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
                 
-                // Vibrant colors base sa reference image
                 if (chip.type === 'red' || chip.color === '#C8102E' || chip.color === '#FF0000') {
-                    ctx.fillStyle = '#B21A1A'; // Deep rich red
+                    ctx.fillStyle = '#B21A1A'; 
                 } else if (chip.type === 'blue' || chip.color === '#0033A0' || chip.color === '#0000FF') {
-                    ctx.fillStyle = '#1A36B8'; // Deep vibrant blue
+                    ctx.fillStyle = '#1A36B8'; 
                 } else {
-                    ctx.fillStyle = chip.color; // Fallback
+                    ctx.fillStyle = chip.color; 
                 }
                 ctx.fill();
 
-                // 4. Inner Shadow (Para magmukhang 3D/nakalubog yung gitna)
-                ctx.beginPath();
-                ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)'; 
-                ctx.lineWidth = displayRadius * 0.04; 
-                ctx.stroke();
+                if (displayRadius > 3) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)'; 
+                    ctx.lineWidth = Math.max(0.5, displayRadius * 0.04); 
+                    ctx.stroke();
 
-                // 5. Malaking Sans-Serif Number (Inalis ang text na "SIX"/"NINE")
-                if (chip.id) {
-                    ctx.fillStyle = 'white';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    
-                    // Pare-pareho na ang laki ng lahat ng numero (Super Laki!)
-                    ctx.font = `bold ${innerRadius * 1.5}px 'Nunito', 'Arial', sans-serif`;
-                    ctx.fillText(chip.id, 0, 1 * scale);
+                    // SAFE CHECK 3: Huwag mag-draw ng text kapag sobrang liit na ng font (iwas freeze)
+                    if (chip.id) {
+                        ctx.fillStyle = 'white';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        
+                        const fontSize = Math.max(2, innerRadius * 1.5);
+                        ctx.font = `bold ${fontSize}px 'Nunito', 'Arial', sans-serif`;
+                        ctx.fillText(chip.id, 0, 1 * scale);
 
-                    // Para hindi malito kung umikot ang 6 at 9, lalagyan natin ng classic na underline!
-                    if (chip.id === 6 || chip.id === 9) {
-                        ctx.beginPath();
-                        // Guhit sa ibaba ng numero
-                        ctx.moveTo(-innerRadius * 0.35, innerRadius * 0.65);
-                        ctx.lineTo(innerRadius * 0.35, innerRadius * 0.65);
-                        ctx.strokeStyle = 'white';
-                        ctx.lineWidth = innerRadius * 0.15;
-                        ctx.lineCap = 'round';
-                        ctx.stroke();
+                        if (chip.id === 6 || chip.id === 9) {
+                            ctx.beginPath();
+                            ctx.moveTo(-innerRadius * 0.35, innerRadius * 0.65);
+                            ctx.lineTo(innerRadius * 0.35, innerRadius * 0.65);
+                            ctx.strokeStyle = 'white';
+                            ctx.lineWidth = Math.max(0.5, innerRadius * 0.15);
+                            ctx.lineCap = 'round';
+                            ctx.stroke();
+                        }
                     }
                 }
             }
             ctx.restore();
 
-            // === START: RING LIGHT REQUEST (SAFE VERSION) ===
+            // === RING LIGHT REQUEST ===
             const isMyTurn = isOnlineGame ? isMyTurnOnline : playerTurn;
             
             if (isMyTurn && (gameState === 'aiming' || (gameState ==='moving' && canMoveCueBall)) && chip.inPlay && legalTargetChipIds) {
@@ -9411,20 +9413,16 @@ function drawChips() {
 
                     ctx.save();
                     ctx.beginPath();
-                    ctx.arc(chip.x, chip.y, Math.max(0.1, displayRadius + ringWidth + (2*scale)), 0, Math.PI * 2);
+                    ctx.arc(chip.x, chip.y, Math.max(0.5, displayRadius + ringWidth + (2*scale)), 0, Math.PI * 2);
                     ctx.strokeStyle = ringColor;
-                    ctx.lineWidth = ringWidth;
+                    ctx.lineWidth = Math.max(0.5, ringWidth);
                     ctx.stroke();
                     ctx.restore();
                 }
             }
-            // === END: RING LIGHT REQUEST ===
         }
     });
 }
-
-
-
 
         
 function drawCueStick() {
