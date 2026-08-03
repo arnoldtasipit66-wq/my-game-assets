@@ -8122,41 +8122,51 @@ div.game-card.secondary-card:hover, div.game-card.secondary-card:active {
 </button>
 
     <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, serverTimestamp, increment, collection, query, orderBy, limit, getDocs, addDoc, runTransaction, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { getDatabase, ref, onValue, onDisconnect, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+    // --- 3. DYNAMIC FIREBASE INITIALIZATION (OFFLINE FIX) ---
+window.initializeFirebase = async function() {
+    // Kapag walang internet, skip agad para iwas 0% stuck
+    if (!navigator.onLine) {
+        console.log("Offline mode: Firebase modules skipped.");
+        return;
+    }
 
-    // ==========================================
-    // 🌐 GAWING GLOBAL ANG FIREBASE PARA GUMANA SA UI
-    // ==========================================
-    window.initializeApp = initializeApp;
-    window.getAuth = getAuth;
-    window.signInAnonymously = signInAnonymously;
-    window.onAuthStateChanged = onAuthStateChanged;
-    window.getFirestore = getFirestore;
-    window.doc = doc;
-    window.setDoc = setDoc;
-    window.onSnapshot = onSnapshot;
-    window.updateDoc = updateDoc;
-    window.getDoc = getDoc;
-    window.deleteDoc = deleteDoc;
-    window.serverTimestamp = serverTimestamp;
-    window.increment = increment;
-    window.collection = collection;
-    window.query = query;
-    window.orderBy = orderBy;
-    window.limit = limit;
-    window.getDocs = getDocs;
-    window.addDoc = addDoc;
-    window.where = where;
-    window.runTransaction = runTransaction;
-    window.getDatabase = getDatabase;
-    window.ref = ref;
-    window.onValue = onValue;
-    window.onDisconnect = onDisconnect;
-    window.set = set;
+    try {
+        // I-download lang ang Firebase modules kapag online
+        const fApp = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+        const fAuth = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+        const fStore = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+        const fDb = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js");
 
+        // Gawing global ang mga kailangan ng game logic mo para mabasa ng ibang function
+        window.doc = fStore.doc;
+        window.getDoc = fStore.getDoc;
+        window.setDoc = fStore.setDoc;
+        window.updateDoc = fStore.updateDoc;
+        window.deleteDoc = fStore.deleteDoc;
+        window.serverTimestamp = fStore.serverTimestamp;
+        window.increment = fStore.increment;
+        window.collection = fStore.collection;
+        window.query = fStore.query;
+        window.orderBy = fStore.orderBy;
+        window.limit = fStore.limit;
+        window.where = fStore.where;
+        window.getDocs = fStore.getDocs;
+        window.onSnapshot = fStore.onSnapshot;
+        window.addDoc = fStore.addDoc;
+        window.runTransaction = fStore.runTransaction;
+        
+        window.ref = fDb.ref;
+        window.onValue = fDb.onValue;
+        window.onDisconnect = fDb.onDisconnect;
+        window.set = fDb.set;
+
+        
+
+        isFirebaseInitialized = true;
+    } catch (e) {
+        console.log("Firebase load failed (Network unstable):", e);
+    }
+};
     // --- GENERIC APP SHIM (dating "Telegram Setup") ---
     // Dati Telegram Mini App ito kaya umaasa sa window.Telegram.WebApp SDK.
     // Ngayon, standalone/native-wrapped app na (Sketchware) — pinapalitan natin
