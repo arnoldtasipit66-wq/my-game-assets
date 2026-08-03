@@ -8254,62 +8254,6 @@ window.db = null;             // Idagdag ito
         // ▲▲▲ END OF SILENT MODE ▲▲▲
 
 
-        // --- 3. FIREBASE INITIALIZATION AT LOGIN ---
-
-// Ang totoong config ng iyong Firebase project
-const firebaseConfig = {
-    apiKey: "AIzaSyD0gZfJxpA_4fO-SEOjX9JNs0v7IzQ0iSc",
-    authDomain: "pinoy-pool-master.firebaseapp.com",
-    databaseURL: "https://pinoy-pool-master-default-rtdb.asia-southeast1.firebasedatabase.app/",
-    projectId: "pinoy-pool-master",
-    storageBucket: "pinoy-pool-master.appspot.com",
-    messagingSenderId: "1003592334290",
-    appId: "1:1003592334290:web:2982cdc8691e8ef7c6260b"
-};
-
-// I-setup ang Firebase
-const app = initializeApp(firebaseConfig);
-auth = getAuth(app);
-db = getFirestore(app);
-rtdb = getDatabase(app);
-
-window.db = db; // Para ma-access mo sa ibang functions
-
-// Pakinggan kung naka-login na ba ang user
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        // ✅ NAKA-LOGIN NA! Papasa na ito sa rules mo na "auth != null"
-        console.log("✅ Firebase Auth Success! UID:", user.uid);
-        window.localPlayerUid = user.uid; // Gamitin ang Firebase UID
-        isAuthReady = true;
-
-        // I-save ang profile nila sa Firestore under their Firebase UID
-        // (dati Telegram first_name/last_name ang pinagkukunan ng displayName; ngayon
-        // localStorage/"Enter Name" screen na ang pinagmumulan nito — see loadPlayerName())
-        const savedName = localStorage.getItem('pinoyPoolPlayerName');
-        const profileDisplayName = savedName || "Guest Player";
-
-        // Gumawa/Mag-update ng Profile sa 'players' collection
-        setDoc(doc(db, "players", user.uid), {
-            displayName: profileDisplayName,
-            isOnline: true,
-            lastActive: serverTimestamp()
-        }, { merge: true })
-        .then(() => {
-            console.log("Player profile updated on Firestore!");
-            // DITO MO NA PWEDENG TAWAGIN YUNG FUNCTION PARA MAG-LOAD NG CHAT AT MULTIPLAYER
-            if (typeof loadCurrency === 'function') loadCurrency(); // Halimbawa kung gusto mong i-load agad ang coins
-        })
-        .catch(err => console.error("Error saving profile:", err));
-
-    } else {
-        // 🔄 KUNG HINDI PA NAKA-LOGIN, I-TRIGGER ANG ANONYMOUS LOGIN
-        console.log("🔄 Logging in to Firebase...");
-        signInAnonymously(auth).catch((error) => {
-            console.error("❌ Firebase Login Failed:", error.code, error.message);
-        });
-    }
-});
 
 
 
