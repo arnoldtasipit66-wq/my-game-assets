@@ -11518,8 +11518,7 @@ function drawChips() {
                         ctx.textBaseline = 'middle';
                         
                         const fontSize = Math.max(2, innerRadius * 1.5);
-                        if (fontSize !== lastFontSizeSet) {
-                            ctx.font = `bold ${fontSize}px 'Nunito', 'Arial', sans-serif`;
+ctx.font = `bold ${fontSize}px 'Nunito', 'Arial', sans-serif`;
                             lastFontSizeSet = fontSize;
                         }
                         ctx.fillText(chip.id, 0, 1 * scale);
