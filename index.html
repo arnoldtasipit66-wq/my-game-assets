@@ -11511,16 +11511,15 @@ function drawChips() {
                     ctx.lineWidth = Math.max(0.5, displayRadius * 0.04); 
                     ctx.stroke();
 
-                    // SAFE CHECK 3: Huwag mag-draw ng text kapag sobrang liit na ng font (iwas freeze)
+                                        // SAFE CHECK 3: Huwag mag-draw ng text kapag sobrang liit na ng font (iwas freeze)
                     if (chip.id) {
                         ctx.fillStyle = 'white';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
                         
                         const fontSize = Math.max(2, innerRadius * 1.5);
-ctx.font = `bold ${fontSize}px 'Nunito', 'Arial', sans-serif`;
-                            lastFontSizeSet = fontSize;
-                        }
+                        ctx.font = `bold ${fontSize}px 'Nunito', 'Arial', sans-serif`;
+                        
                         ctx.fillText(chip.id, 0, 1 * scale);
 
                         if (chip.id === 6 || chip.id === 9) {
