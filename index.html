@@ -11219,13 +11219,13 @@ function spawnFloatingText(x, y, text, color) {
         // ▼▼▼ PALITAN MO ANG BUONG draw FUNCTION NITO ▼▼▼
 
 function draw() { 
-    // 1. I-drawing ang "master copy" (litrato) ng mesa. Sobrang bilis nito.
-    // (Pinalitan nito ang dating ctx.clearRect at drawTable)
-    ctx.drawImage(backgroundCanvas, 0, 0);
+    // 1. Burahin lang ang lumang frame. Lilitaw ang #C89646 na kulay galing sa CSS!
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        
-    // 2. I-drawing ang mga bagay na gumagalaw (Walang babaguhin dito)
+    // 2. I-drawing ang mga bola at tako
     drawChips(); 
+    
+    // ... at yung iba pang code pababa
 
 
     
