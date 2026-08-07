@@ -9379,6 +9379,11 @@ let currentShotStats = { Power: 2, Aim: 3, Spin: 1 };
         let watchedShotStartedAt = 0;           // kailan nagsimulang mag-'turnInProgress: true' yung shot na ito
         let shotWatchdogInterval = null;        // ang setInterval handle ng watchdog checker
         const SHOT_WATCHDOG_TIMEOUT_MS = 12000; // kung ganito katagal stuck ang isang tira, mag-a-attempt tayo ng recovery
+
+        // --- OPTION A: SERVER-FRAME REPLAY (sabay-sabay/real-time na animation) ---
+        let activeReplay = null;                // { frames, pocketEvents, frameIntervalSteps, stepCounter, frameIndex, pocketEventCursor }
+        let pendingAuthoritativeChips = null;    // final na `chips` mula sa Firestore, naka-hold hanggang matapos ang replay
+        let lastAnimatedShotTimestamp = null;    // timestamp ng huling shot na na-trigger na natin ang animation (iwas doble)
         const AIM_UPDATE_INTERVAL = 50;
         let lastTurnControllerUid = null, unsubscribeFromQueue, matchmakingTimeoutId = null, isAiTakeoverActive = false, matchmakingPollIntervalId = null;
 let fireworks = [];
@@ -9396,6 +9401,15 @@ const feltTextureImage = new Image();
 const tableSurfaceImage = new Image();
 tableSurfaceImage.crossOrigin = "Anonymous";
 tableSurfaceImage.src = 'assets_images/Gemini_Generated_Image_qtberbqtberbqtbe.png';
+
+// --- LOAD BALL IMAGES ---
+const ballImages = {};
+for (let i = 0; i <= 15; i++) {
+    ballImages[i] = new Image();
+    // Siguraduhing na-rename mo na ang mga ito sa Sketchware assets!
+    ballImages[i].src = `assets_images/ball_${i}.png`;
+}
+
         let unsubscribeFromChat, isInitialChatLoad = true;
         let legalTargetChipIds = new Set(); // <-- BAGONG DAGDAG para sa ring light
 
@@ -11182,13 +11196,17 @@ function spawnFloatingText(x, y, text, color) {
             let maxLoops = 5; // Limitahan sa 5 physics update bawat frame
 
             // Habang may sapat na oras na naipon, patakbuhin ang physics
-            while (accumulator >= FIXED_DELTA_TIME_MS && maxLoops > 0) { // <--- BINAGO
-                if (chipsMoving) {
-                    updateChipPositions(FIXED_DELTA_TIME_SEC); 
-                }
-                accumulator -= FIXED_DELTA_TIME_MS;
-                maxLoops--; // <--- DINAGDAG
-            }
+      while (accumulator >= FIXED_DELTA_TIME_MS && maxLoops > 0) { // <--- BINAGO
+        if (chipsMoving) {
+          if (activeReplay) {
+            advanceServerFramePlayback();
+          } else {
+            updateChipPositions(FIXED_DELTA_TIME_SEC); 
+          }
+        }
+        accumulator -= FIXED_DELTA_TIME_MS;
+        maxLoops--; // <--- DINAGDAG
+      }
 
             // (Meteor trail / particle generator tinanggal na)
 
@@ -11256,9 +11274,16 @@ function toggleMusic() { const isMuted = backgroundPlaylist[0].muted; background
     canvas.width = VIRTUAL_WIDTH;
     canvas.height = VIRTUAL_HEIGHT;
 
+    // NAKA-RESET ang smoothing settings tuwing binabago ang canvas.width/height,
+    // kaya kailangang i-set ulit ito dito sa loob ng resizeCanvas
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
     
     backgroundCanvas.width = VIRTUAL_WIDTH;
     backgroundCanvas.height = VIRTUAL_HEIGHT;
+    backgroundCtx.imageSmoothingEnabled = true;
+    backgroundCtx.imageSmoothingQuality = "high";
 
     table.width = VIRTUAL_WIDTH;
     table.height = VIRTUAL_HEIGHT;
@@ -11448,91 +11473,17 @@ function drawChips() {
 
             ctx.rotate(chip.rotation);
 
-            // --- CUE CHIP (PAMATO) ---
-            if (chip.id === 0) {
+            // --- BALL IMAGE STAMPING (pinalitan ang dating manual na drawing) ---
+            const img = ballImages[chip.id];
+            if (img && img.complete && img.naturalHeight !== 0) {
+                // I-stamp ang PNG saktong gitna (0,0 dahil naka-translate na tayo sa chip.x/chip.y)
+                ctx.drawImage(img, -displayRadius, -displayRadius, displayRadius * 2, displayRadius * 2);
+            } else {
+                // FALLBACK: Kung mabagal mag-load ang picture, simpleng bilog muna
                 ctx.beginPath();
                 ctx.arc(0, 0, displayRadius, 0, Math.PI * 2);
-                ctx.fillStyle = '#E4B93D'; 
+                ctx.fillStyle = chip.id === 0 ? '#F5E9D3' : (chip.color || '#C0392B');
                 ctx.fill();
-
-                // SAFE CHECK 2: I-drawing lang ang ukit kung malaki pa ang bola
-                if (displayRadius > 3) {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, displayRadius * 0.95, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-                    ctx.lineWidth = Math.max(0.5, displayRadius * 0.05);
-                    ctx.stroke();
-
-                    ctx.beginPath();
-                    ctx.arc(0, 0, displayRadius * 0.70, 0, Math.PI * 2);
-                    ctx.strokeStyle = '#996515'; 
-                    ctx.lineWidth = Math.max(0.5, displayRadius * 0.12); 
-                    ctx.stroke();
-
-                    ctx.beginPath();
-                    ctx.arc(0, 0, displayRadius * 0.35, 0, Math.PI * 2);
-                    ctx.strokeStyle = '#996515'; 
-                    ctx.lineWidth = Math.max(0.5, displayRadius * 0.12); 
-                    ctx.stroke();
-                }
-            } 
-            // --- OBJECT CHIPS ---
-            else {
-                ctx.beginPath();
-                ctx.arc(0, 0, displayRadius, 0, Math.PI * 2);
-                ctx.fillStyle = '#E4B93D'; 
-                ctx.fill();
-
-                if (displayRadius > 3) {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, displayRadius * 0.95, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-                    ctx.lineWidth = Math.max(0.5, displayRadius * 0.05);
-                    ctx.stroke();
-                }
-
-                const innerRadius = displayRadius * 0.84; 
-                ctx.beginPath();
-                ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
-                
-                if (chip.type === 'red' || chip.color === '#C8102E' || chip.color === '#FF0000') {
-                    ctx.fillStyle = '#B21A1A'; 
-                } else if (chip.type === 'blue' || chip.color === '#0033A0' || chip.color === '#0000FF') {
-                    ctx.fillStyle = '#1A36B8'; 
-                } else {
-                    ctx.fillStyle = chip.color; 
-                }
-                ctx.fill();
-
-                if (displayRadius > 3) {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)'; 
-                    ctx.lineWidth = Math.max(0.5, displayRadius * 0.04); 
-                    ctx.stroke();
-
-                                        // SAFE CHECK 3: Huwag mag-draw ng text kapag sobrang liit na ng font (iwas freeze)
-                    if (chip.id) {
-                        ctx.fillStyle = 'white';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        
-                        const fontSize = Math.max(2, innerRadius * 1.5);
-                        ctx.font = `bold ${fontSize}px 'Nunito', 'Arial', sans-serif`;
-                        
-                        ctx.fillText(chip.id, 0, 1 * scale);
-
-                        if (chip.id === 6 || chip.id === 9) {
-                            ctx.beginPath();
-                            ctx.moveTo(-innerRadius * 0.35, innerRadius * 0.65);
-                            ctx.lineTo(innerRadius * 0.35, innerRadius * 0.65);
-                            ctx.strokeStyle = 'white';
-                            ctx.lineWidth = Math.max(0.5, innerRadius * 0.15);
-                            ctx.lineCap = 'round';
-                            ctx.stroke();
-                        }
-                    }
-                }
             }
             ctx.restore();
 
@@ -12873,6 +12824,50 @@ async function shoot(shotPowerValue) {
     const safeScale = (typeof scale !== 'undefined' && !isNaN(scale)) ? scale : 1;
     const endPullback = -30 * safeScale;
 
+    // ▼▼▼ OPTION A: SABAY-SABAY NA REPLAY ▼▼▼
+    // Para eksaktong magkatugma ang ANIMATION mismo (hindi lang ang huling
+    // resulta) sa dalawang screen, kailangan muna nating hintayin ang
+    // TOTOONG recording ng server (frames) bago pa gumalaw ang mga bola --
+    // kaya sinisimulan na natin ang request papunta sa /api/shoot DITO,
+    // KASABAY (parallel) ng ~100ms na windup ng tako, para matago ang
+    // network delay sa likod ng animation na 'yon (kapag mabilis ang net,
+    // wala nang naramdamang lag; kapag mabagal, maghihintay lang ng konti
+    // bago gumalaw ang mga bola — trade-off para sa tunay na "sabay").
+    let shotApiPromise = null;
+    let shotApiRoomId = null;
+    if (typeof isOnlineGame !== 'undefined' && isOnlineGame) {
+        shotApiRoomId = (typeof currentRoomId !== 'undefined' && currentRoomId) || (typeof gameId !== 'undefined' && gameId) || null;
+        if (shotApiRoomId && typeof auth !== 'undefined' && auth && auth.currentUser) {
+            shotApiPromise = (async () => {
+                try {
+                    const idToken = await auth.currentUser.getIdToken();
+                    const apiResponse = await fetch(SHOOT_API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            gameId: shotApiRoomId,
+                            idToken,
+                            angle: safeAngle,
+                            power: safePower,
+                            pektus: shotPektusOffset,
+                            cueStats: stats,
+                        }),
+                    });
+                    if (!apiResponse.ok) {
+                        console.error('❌ /api/shoot error:', apiResponse.status, await apiResponse.text());
+                        return { usedServerApi: false, apiResult: null };
+                    }
+                    const apiResult = await apiResponse.json().catch(() => ({}));
+                    return { usedServerApi: true, apiResult };
+                } catch (apiErr) {
+                    console.error('❌ Hindi ma-reach ang shoot API:', apiErr);
+                    return { usedServerApi: false, apiResult: null };
+                }
+            })();
+        }
+    }
+    // ▲▲▲ END OPTION A SETUP ▲▲▲
+
     function animateLocalShot(timestamp) {
         if (!startTime) startTime = timestamp;
         const progress = Math.min((timestamp - startTime) / animationDuration, 1);
@@ -12888,7 +12883,61 @@ async function shoot(shotPowerValue) {
                 cueStickElement.style.display = 'none';
             }
 
-            // APPLY SHOT LOCALLY
+            finishShotRelease();
+        }
+    }
+
+    async function finishShotRelease() {
+        if (typeof lastTurnControllerUid !== 'undefined') {
+            lastTurnControllerUid = localPlayerUid;
+        }
+
+        if (shotApiPromise) {
+            // ONLINE: hintayin muna ang totoong recording ng server (karaniwan
+            // ay mabilis na lang dahil kasabay na itong tumatakbo ng windup) --
+            // tapos lang gagalaw ang mga bola, kaya EKSAKTONG parehong "video"
+            // ang mapapanood ng dalawang manlalaro (tingnan ang applyShot()
+            // at ang server-frame replay engine sa itaas).
+            const outcome = await shotApiPromise.catch(() => ({ usedServerApi: false, apiResult: null }));
+            const usedServerApi = outcome && outcome.usedServerApi;
+            const apiResult = outcome && outcome.apiResult;
+
+            if (usedServerApi && apiResult) {
+                // STEP 5: kapag POKER SCRATCH, isusulat ng /api/shoot ang
+                // pendingCardPick sa Firestore (naka-lock pa rin ang turn),
+                // pero ang 5 candidates mismo ay ibinabalik dito lang sa
+                // RESPONSE -- dito lang dapat kunin ng UI ang laman ng 5
+                // face-down cards.
+                if (apiResult.needsCardPick && Array.isArray(apiResult.cardChoices)) {
+                    handlePokerServerCardPick(shotApiRoomId, apiResult.cardChoices);
+                }
+                try {
+                    if (typeof applyShot === 'function') {
+                        applyShot({
+                            ...shotData,
+                            frames: apiResult.frames,
+                            pocketEvents: apiResult.pocketEvents,
+                            frameIntervalSteps: apiResult.frameIntervalSteps,
+                        });
+                    } else {
+                        console.error("❌ applyShot function is missing!");
+                    }
+                } catch (err) {
+                    console.error("❌ Error in applyShot (server result):", err);
+                }
+                return; // TAPOS NA -- huwag nang tumuloy sa fallback path sa ibaba
+            }
+
+            // FALLBACK (INILIPAT NA SA BACKEND): kung sa anumang dahilan ay
+            // nabigo ang server (offline si Vercel, walang net papunta doon,
+            // atbp.), HUWAG na direktang isulat ng client ang sarili niyang
+            // resulta sa Firestore (dating paraan). Sa halip, i-apply muna
+            // lokal ang tira (lumang physics, para hindi ma-stuck ang
+            // manlalaro), tapos i-queue ito para i-retry PA RIN papunta mismo
+            // sa /api/shoot — SERVER pa rin ang huling magdedesisyon at
+            // magsusulat. Awtomatiko itong mare-resolve kapag bumalik ang
+            // koneksyon (window 'online' listener) o kada ilang segundo
+            // habang naka-queue pa.
             try {
                 if (typeof applyShot === 'function') {
                     applyShot(shotData);
@@ -12898,98 +12947,28 @@ async function shoot(shotPowerValue) {
             } catch (err) {
                 console.error("❌ Error in applyShot (balls will not be cleared):", err);
             }
-
-            // SYNC SA DATABASE
-            if (typeof isOnlineGame !== 'undefined' && isOnlineGame) {
-                try {
-                    let roomId = null;
-                    if (typeof currentRoomId !== 'undefined') roomId = currentRoomId;
-                    else if (typeof gameId !== 'undefined') roomId = gameId;
-
-                    if (roomId) {
-                        if (typeof lastTurnControllerUid !== 'undefined') {
-                            lastTurnControllerUid = localPlayerUid;
-                        }
-
-                        // FIX (Step 3): sa halip na direktang isulat ng
-                        // client ang resulta (dating paraan sa ibaba bilang
-                        // fallback na lang), tinatawag muna natin ang
-                        // server-authoritative na /api/shoot — siya na ang
-                        // magko-compute at magsusulat ng TUNAY na huling
-                        // resulta. Kahit ma-close/mag-crash ang app pagkatapos
-                        // nating i-send ang request na ito, kumpleto na ang
-                        // pagsulat sa Firestore.
-                        (async () => {
-                            let usedServerApi = false;
-                            try {
-                                if (auth && auth.currentUser) {
-                                    const idToken = await auth.currentUser.getIdToken();
-                                    const apiResponse = await fetch(SHOOT_API_URL, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({
-                                            gameId: roomId,
-                                            idToken,
-                                            angle: safeAngle,
-                                            power: safePower,
-                                            pektus: shotPektusOffset,
-                                            cueStats: stats,
-                                        }),
-                                    });
-
-                                    if (apiResponse.ok) {
-                                        usedServerApi = true;
-
-                                        // STEP 5: kapag POKER SCRATCH, isusulat ng
-                                        // /api/shoot ang pendingCardPick sa Firestore
-                                        // (naka-lock pa rin ang turn), pero ang 5
-                                        // candidates mismo ay ibinabalik dito lang sa
-                                        // RESPONSE -- dito lang dapat kunin ng UI ang
-                                        // laman ng 5 face-down cards.
-                                        const apiResult = await apiResponse.json().catch(() => ({}));
-                                        if (apiResult && apiResult.needsCardPick && Array.isArray(apiResult.cardChoices)) {
-                                            handlePokerServerCardPick(roomId, apiResult.cardChoices);
-                                        }
-                                    } else {
-                                        console.error('❌ /api/shoot error:', apiResponse.status, await apiResponse.text());
-                                    }
-                                }
-                            } catch (apiErr) {
-                                console.error('❌ Hindi ma-reach ang shoot API, gagamit ng fallback:', apiErr);
-                            }
-
-                            // FALLBACK (INILIPAT NA SA BACKEND): kung sa
-                            // anumang dahilan ay nabigo ang server (offline
-                            // si Vercel, walang net papunta doon, atbp.),
-                            // HUWAG na direktang isulat ng client ang sarili
-                            // niyang resulta sa Firestore (dating paraan —
-                            // ibinabalik nito ang client-authoritative
-                            // exploit na sinara na natin noong Step 3). Sa
-                            // halip, i-queue lang lokal ang tira at i-retry
-                            // PA RIN papunta mismo sa /api/shoot — SERVER pa
-                            // rin ang huling magdedesisyon at magsusulat.
-                            // Nananatili munang naka-"aiming" sa lokal na
-                            // view ang manlalaro (naka-lock na ang UI dahil
-                            // 'shooting_animation'/'shooting' na ang
-                            // gameState), at automatic itong mare-resolve
-                            // kapag bumalik ang koneksyon (window 'online'
-                            // listener) o kada ilang segundo habang
-                            // naka-queue pa.
-                            if (!usedServerApi) {
-                                queuePendingShot({
-                                    gameId: roomId,
-                                    angle: safeAngle,
-                                    power: safePower,
-                                    pektus: shotPektusOffset,
-                                    cueStats: stats,
-                                });
-                            }
-                        })();
-                    }
-                } catch (syncErr) {
-                    console.error("❌ Error preparing sync data:", syncErr);
-                }
+            if (shotApiRoomId) {
+                queuePendingShot({
+                    gameId: shotApiRoomId,
+                    angle: safeAngle,
+                    power: safePower,
+                    pektus: shotPektusOffset,
+                    cueStats: stats,
+                });
             }
+            return;
+        }
+
+        // OFFLINE / AI: dati ring paraan -- walang server na hihintayin,
+        // agad na lokal na physics simulation.
+        try {
+            if (typeof applyShot === 'function') {
+                applyShot(shotData);
+            } else {
+                console.error("❌ applyShot function is missing!");
+            }
+        } catch (err) {
+            console.error("❌ Error in applyShot (balls will not be cleared):", err);
         }
     }
     
@@ -13010,6 +12989,132 @@ function exportChipsForSync() {
     return chips.map(c => ({ ...c, x: c.x / canvas.width, y: c.y / canvas.height }));
 }
 
+// ============================================================================
+// OPTION A: SERVER-FRAME REPLAY ENGINE
+//
+// Dati, ang bawat panig (shooter at kalaban) ay hiwalay na nag-co-compute ng
+// sarili niyang physics gamit lang ang panimulang angle/power/spin --
+// magkatugma lang sila sa DULO, pero hindi habang tumatakbo pa ang mga bola
+// (magkaibang device/frame rate = magkaibang "biyahe"). Ngayon, "pinapanood"
+// na lang ng dalawang panig ang EKSAKTONG parehong recording na ibinalik ng
+// /api/shoot (tingnan ang lib/physics.js -> simulateShot() frames/
+// pocketEvents), kaya magkatugma na rin sila HABANG gumagalaw ang mga bola,
+// hindi lang pagkatapos.
+// ============================================================================
+
+function startServerFramePlayback(frames, pocketEvents, frameIntervalSteps) {
+    if (!Array.isArray(frames) || frames.length === 0) {
+        // Walang laman ang recording (hal. hindi gumalaw ang cue ball) --
+        // ituring na tapos na agad ang tira para hindi ma-stuck ang turn.
+        activeReplay = null;
+        chipsMoving = false;
+        return;
+    }
+    activeReplay = {
+        frames,
+        pocketEvents: Array.isArray(pocketEvents) ? pocketEvents : [],
+        frameIntervalSteps: (typeof frameIntervalSteps === 'number' && frameIntervalSteps > 0) ? frameIntervalSteps : 2,
+        stepCounter: 0,
+        frameIndex: 0,
+        pocketEventCursor: 0,
+    };
+}
+
+// Tinatawag ito ng pangunahing update() loop kapalit ng updateChipPositions()
+// habang aktibo ang isang replay -- ISANG "fixed step" (1/60 sec) bawat
+// tawag, kasing-tugma ng ginamit ng server (FIXED_DELTA_TIME_SEC), para
+// tumpak ang bilis ng "video" na pinapanood.
+function advanceServerFramePlayback() {
+    if (!activeReplay) return;
+
+    // Ang mga chips na "pumapasok sa butas" (cosmetic animation lang) ay may
+    // sarili nilang munting pag-galaw kada frame, hiwalay sa totoong
+    // posisyon na kina-kontrol ng recording.
+    advancePocketingCosmetics(FIXED_DELTA_TIME_SEC);
+
+    activeReplay.stepCounter++;
+    if (activeReplay.stepCounter % activeReplay.frameIntervalSteps !== 0) return;
+
+    const frame = activeReplay.frames[activeReplay.frameIndex];
+    if (!frame) {
+        finishServerFramePlayback();
+        return;
+    }
+
+    frame.forEach((fc) => {
+        const chip = chips.find((c) => c.id === fc.id);
+        if (chip && !chip.isPocketing) {
+            chip.x = fc.x;
+            chip.y = fc.y;
+            chip.rotation = fc.rotation;
+        }
+    });
+
+    // I-trigger ang cosmetic pocketing animation sa TAMANG frame (base sa
+    // eksaktong na-record na hakbang ng server, hindi basta pagtantya).
+    while (
+        activeReplay.pocketEventCursor < activeReplay.pocketEvents.length &&
+        activeReplay.pocketEvents[activeReplay.pocketEventCursor].frameIndex === activeReplay.frameIndex
+    ) {
+        const ev = activeReplay.pocketEvents[activeReplay.pocketEventCursor];
+        const chip = chips.find((c) => c.id === ev.id);
+        if (chip && chip.inPlay && !chip.isPocketing) {
+            let nearestHole = holes[0];
+            let nearestDist = Infinity;
+            holes.forEach((h) => {
+                const d = Math.hypot(h.x - chip.x, h.y - chip.y);
+                if (d < nearestDist) { nearestDist = d; nearestHole = h; }
+            });
+            chip.isPocketing = true;
+            chip.pocketingProgress = 0;
+            chip.pocketingHole = nearestHole;
+            if (typeof playPocketSound === 'function') playPocketSound();
+        }
+        activeReplay.pocketEventCursor++;
+    }
+
+    activeReplay.frameIndex++;
+    if (activeReplay.frameIndex >= activeReplay.frames.length) {
+        finishServerFramePlayback();
+    }
+}
+
+// Minimal na bersyon lang ng "pocketing" cosmetic block na dati'y nasa loob
+// ng updateChipPositions() -- ginagamit habang naka-replay mode dahil hindi
+// natin tinatawag doon ang buong updateChipPositions().
+function advancePocketingCosmetics(dt_sec) {
+    chips.forEach((chip) => {
+        if (chip.inPlay && chip.isPocketing) {
+            chip.pocketingProgress += 0.05;
+            chip.rotation += (chip.rotationSpeed || 0) * dt_sec;
+            chip.x += (chip.pocketingHole.x - chip.x) * 0.1;
+            chip.y += (chip.pocketingHole.y - chip.y) * 0.1;
+            if (chip.pocketingProgress >= 1) {
+                chip.inPlay = false;
+                chip.isPocketing = false;
+            }
+        }
+    });
+}
+
+function finishServerFramePlayback() {
+    activeReplay = null;
+    chipsMoving = false;
+    // Ito ang huling "safety net": kahit na-round/na-throttle ang recording
+    // habang tumatakbo, sa sandaling matapos ang replay ay dito na natin
+    // isasabay ang chips sa TUNAY na authoritative na data mula sa Firestore
+    // (kung meron nang dumating habang tumatakbo ang animation).
+    if (pendingAuthoritativeChips && typeof canvas !== 'undefined' && canvas && canvas.width > 0) {
+        chips = pendingAuthoritativeChips.map(remoteChip => ({
+            ...remoteChip,
+            x: remoteChip.x * canvas.width,
+            y: remoteChip.y * canvas.height,
+            radius: (remoteChip.id === 0 ? CUE_BALL_RADIUS : BALL_RADIUS) * scale,
+        }));
+        pendingAuthoritativeChips = null;
+    }
+}
+
 function applyShot(shotData) {
     if (chipsMoving) return;
     const cueChip = chips[0];
@@ -13022,27 +13127,39 @@ function applyShot(shotData) {
 
     const stats = shotData.cueStats || getCurrentCueStats();
     currentShotStats = stats;
-
-    const powerBonus = (stats.Power - 2) * 0.05;
-    const finalPowerMultiplier = VELOCITY_MULTIPLIER * (1 + powerBonus);
-
     shotPektusOffset = shotData.pektus || { x: 0, y: 0 };
-    
-    // ▼▼▼ DITO TAYO MAGPAPALIT PARA LUMAKAS ANG SPIN ▼▼▼
-    const spinMultiplier = 1 + (stats.Spin / 5); 
-    
-    // Gawing * 35 (Dati ay * 20). Ito ang "Starting Spin Power".
-    cueChip.currentSideSpin = (shotPektusOffset.x * 35) * spinMultiplier; 
-    // ▲▲▲ ▲▲▲
 
-    cueChip.vx = Math.cos(shotData.angle) * shotData.power * finalPowerMultiplier;
-    cueChip.vy = Math.sin(shotData.angle) * shotData.power * finalPowerMultiplier;
-    
     chipsMoving = true;
     gameState = 'shooting';
     if (isOnlineGame) {
         lastTurnControllerUid = shotData.uid;
     }
+
+    // ▼▼▼ OPTION A: kung may kasamang server-recorded frames ang shotData
+    // (galing sa /api/shoot -- parehong shooter at kalaban makikita ito sa
+    // pamamagitan ng `lastShot`), "panoorin" na lang natin ang EKSAKTONG
+    // parehong recording sa halip na sariling mag-compute ng physics --
+    // dito nagmumula ang tunay na "sabay" na animation, hindi lang
+    // magkatugma sa dulo. ▲▲▲
+    if (isOnlineGame && Array.isArray(shotData.frames) && shotData.frames.length > 0) {
+        startServerFramePlayback(shotData.frames, shotData.pocketEvents, shotData.frameIntervalSteps);
+        return;
+    }
+
+    // FALLBACK / AI-OFFLINE MODE: lumang paraan — sariling lokal na physics
+    // simulation gamit ang panimulang velocity mula sa angle/power/spin.
+    // Ginagamit ito kapag: (a) hindi online (walang server), o (b) online
+    // pero walang natanggap na frames (hal. hindi umabot ang server -- may
+    // fallback-queue na hiwalay na susubok mag-retry papunta rin sa server).
+    const powerBonus = (stats.Power - 2) * 0.05;
+    const finalPowerMultiplier = VELOCITY_MULTIPLIER * (1 + powerBonus);
+    const spinMultiplier = 1 + (stats.Spin / 5);
+
+    // Gawing * 35 (Dati ay * 20). Ito ang "Starting Spin Power".
+    cueChip.currentSideSpin = (shotPektusOffset.x * 35) * spinMultiplier;
+
+    cueChip.vx = Math.cos(shotData.angle) * shotData.power * finalPowerMultiplier;
+    cueChip.vy = Math.sin(shotData.angle) * shotData.power * finalPowerMultiplier;
 }
         async function handleRematchRequest() { 
     // =========================================================
@@ -13758,8 +13875,18 @@ async function cancelWaitingRoom() {
         // Pinalitan ang data.status ng data.gameState para basahin nang tama ang server!
         if (data.gameState === 'playing') {
             
-            // Kapag turn ng kalaban at may ginawa siyang tira
-            if (data.turnInProgress && data.lastShot && data.lastTurnController !== localPlayerUid) {
+            // Kapag may BAGONG tira ang kalaban (base sa timestamp, hindi na
+            // sa turnInProgress -- dati'y doon lang naka-gate ito, kaya
+            // POKER-SCRATCH na lang ang may animation; ngayon LAHAT ng tira
+            // ng kalaban [61-ball, straight-ball, normal poker shot, atbp.]
+            // ay makikita nang "sabay" -- Option A).
+            const isNewOpponentShot = data.lastShot
+                && data.lastTurnController !== localPlayerUid
+                && data.lastShot.timestamp !== lastAnimatedShotTimestamp;
+
+            if (isNewOpponentShot) {
+                lastAnimatedShotTimestamp = data.lastShot.timestamp;
+
                 if (!chipsMoving && gameState === 'aiming') {
                     // Para sigurado, i-lock agad sa 'shooting' para di mag-doble ang animation
                     gameState = 'shooting'; 
@@ -13781,7 +13908,7 @@ async function cancelWaitingRoom() {
                     watchedShotTimestamp = data.lastShot.timestamp;
                     watchedShotStartedAt = Date.now();
                 }
-            } else {
+            } else if (!data.turnInProgress) {
                 pendingRemoteShot = null;
                 watchedShotTimestamp = null;
             }
@@ -13809,15 +13936,28 @@ async function cancelWaitingRoom() {
             // Process Updates if Turn ID increased
             if (data.turnId > lastProcessedTurnId) {
                 lastProcessedTurnId = data.turnId;
-                chipsMoving = false;
 
                 // Teleport Correction
-                if (data.chips && canvas.width > 0) {
-                    chips = data.chips.map(remoteChip => ({ ...remoteChip,
-                        x: remoteChip.x * canvas.width,
-                        y: remoteChip.y * canvas.height,
-                        radius: (remoteChip.id === 0 ? CUE_BALL_RADIUS : BALL_RADIUS) * scale
-                    }));
+                //
+                // Kapag may kasalukuyang tumatakbong replay (Option A -- sarili
+                // nating tira o sa kalaban), HUWAG munang agad na i-overwrite
+                // ang chips -- hintayin munang matapos ang animation
+                // (finishServerFramePlayback() ang bahalang mag-apply ng
+                // authoritative data na ito bilang huling "safety net" sa
+                // sandaling tapos na ang replay). Kung walang aktibong replay
+                // (hal. fallback/local-physics path, o hindi shot-related na
+                // update), i-teleport agad tulad ng dati.
+                if (activeReplay) {
+                    pendingAuthoritativeChips = data.chips || null;
+                } else {
+                    chipsMoving = false;
+                    if (data.chips && canvas.width > 0) {
+                        chips = data.chips.map(remoteChip => ({ ...remoteChip,
+                            x: remoteChip.x * canvas.width,
+                            y: remoteChip.y * canvas.height,
+                            radius: (remoteChip.id === 0 ? CUE_BALL_RADIUS : BALL_RADIUS) * scale
+                        }));
+                    }
                 }
 
                 // Sync Game Specific Data
